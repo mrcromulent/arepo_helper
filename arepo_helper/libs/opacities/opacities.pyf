@@ -1,0 +1,388 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module opalopacities ! in 
+    interface  ! in :opalopacities
+        subroutine opacity(xh,rho,t,kappa) ! in :opalopacities:xztrin21.f
+            real intent(in) :: xh
+            real intent(in) :: rho
+            real intent(in) :: t
+            real intent(out):: kappa
+        end subroutine opacity
+        subroutine init(pathname) ! in :opalopacities:xztrin21.f
+            character*(*) :: pathname
+            character(len=250) :: path
+            common /eeee/ path
+        end subroutine init
+        subroutine opacgn93(z,xh,t6,r) ! in :opalopacities:xztrin21.f
+            real :: z
+            real :: xh
+            real :: t6
+            real :: r
+            real :: opact
+            real :: dopact
+            real :: dopacr
+            real :: dopactd
+            real dimension(10,70,19) :: opl
+            real dimension(10) :: xx
+            real dimension(13) :: zza
+            integer :: mzz
+            real dimension(10,13,70,19) :: xz
+            real dimension(70) :: t6list
+            real dimension(19) :: alr
+            integer dimension(10) :: n
+            real dimension(70) :: alt
+            real dimension(70,19) :: opk
+            real dimension(70,19) :: opk2
+            real dimension(10) :: dfsx
+            real dimension(70) :: dfs
+            real dimension(19) :: dfsr
+            real dimension(13) :: dfsz
+            real dimension(3,10) :: a
+            real dimension(3) :: b
+            integer :: m
+            integer :: mf
+            real dimension(10) :: xa
+            real dimension(19) :: alrf
+            real dimension(70,19) :: xzf
+            real dimension(70) :: t6listf
+            real dimension(13) :: za
+            integer :: m1
+            real :: zval
+            common /e/ opact,dopact,dopacr,dopactd
+            common /ee/ opl,xx,zza
+            common /a/ mzz,xz,t6list,alr,n,alt,opk,opk2,dfsx,dfs,dfsr,dfsz,a,b,m,mf,xa,alrf,xzf,t6listf,za
+            common /eee/ m1,zval
+        end subroutine opacgn93
+        subroutine opac(izi,mzin,xh,t6,r) ! in :opalopacities:xztrin21.f
+            integer :: izi
+            integer :: mzin
+            real :: xh
+            real :: t6
+            real :: r
+            real :: dkap
+            real dimension(10,70,19) :: opl
+            real dimension(10) :: xx
+            real dimension(13) :: zza
+            integer :: l1
+            integer :: l2
+            integer :: l3
+            integer :: l4
+            integer :: k1
+            integer :: k2
+            integer :: k3
+            integer :: k4
+            integer :: ip
+            integer :: iq
+            real dimension(4) :: q
+            real dimension(4) :: h
+            real :: xxh
+            integer :: m1
+            real :: zval
+            integer :: mzz
+            real dimension(10,13,70,19) :: xz
+            real dimension(70) :: t6list
+            real dimension(19) :: alr
+            integer dimension(10) :: n
+            real dimension(70) :: alt
+            real dimension(70,19) :: opk
+            real dimension(70,19) :: opk2
+            real dimension(10) :: dfsx
+            real dimension(70) :: dfs
+            real dimension(19) :: dfsr
+            real dimension(13) :: dfsz
+            real dimension(3,10) :: a
+            real dimension(3) :: b
+            integer :: m
+            integer :: mf
+            real dimension(10) :: xa
+            real dimension(19) :: alrf
+            real dimension(70,19) :: xzf
+            real dimension(70) :: t6listf
+            real dimension(13) :: za
+            real :: opact
+            real :: dopact
+            real :: dopacr
+            real :: dopactd
+            integer dimension(10,13) :: itab
+            integer dimension(19) :: nta
+            real dimension(10,13) :: x
+            real dimension(10,13) :: y
+            real dimension(10,13) :: zz
+            common /d/ dkap
+            common /ee/ opl,xx,zza
+            common /bb/ l1,l2,l3,l4,k1,k2,k3,k4,ip,iq
+            common /aa/ q,h,xxh
+            common /eee/ m1,zval
+            common /a/ mzz,xz,t6list,alr,n,alt,opk,opk2,dfsx,dfs,dfsr,dfsz,a,b,m,mf,xa,alrf,xzf,t6listf,za
+            common /e/ opact,dopact,dopacr,dopactd
+            common /b/ itab,nta,x,y,zz
+        end subroutine opac
+        subroutine t6rinterp(slr,slt) ! in :opalopacities:xztrin21.f
+            real :: slr
+            real :: slt
+            real dimension(10,70,19) :: opl
+            real dimension(10) :: xx
+            real dimension(13) :: zza
+            real :: dkap
+            integer :: l1
+            integer :: l2
+            integer :: l3
+            integer :: l4
+            integer :: k1
+            integer :: k2
+            integer :: k3
+            integer :: k4
+            integer :: ip
+            integer :: iq
+            real dimension(4) :: q
+            real dimension(4) :: h
+            real :: xxh
+            real :: opact
+            real :: dopact
+            real :: dopacr
+            real :: dopactd
+            integer :: mzz
+            real dimension(10,13,70,19) :: xz
+            real dimension(70) :: t6list
+            real dimension(19) :: alr
+            integer dimension(10) :: n
+            real dimension(70) :: alt
+            real dimension(70,19) :: opk
+            real dimension(70,19) :: opk2
+            real dimension(10) :: dfsx
+            real dimension(70) :: dfs
+            real dimension(19) :: dfsr
+            real dimension(13) :: dfsz
+            real dimension(3,10) :: a
+            real dimension(3) :: b
+            integer :: m
+            integer :: mf
+            real dimension(10) :: xa
+            real dimension(19) :: alrf
+            real dimension(70,19) :: xzf
+            real dimension(70) :: t6listf
+            real dimension(13) :: za
+            common /ee/ opl,xx,zza
+            common /d/ dkap
+            common /bb/ l1,l2,l3,l4,k1,k2,k3,k4,ip,iq
+            common /aa/ q,h,xxh
+            common /e/ opact,dopact,dopacr,dopactd
+            common /a/ mzz,xz,t6list,alr,n,alt,opk,opk2,dfsx,dfs,dfsr,dfsz,a,b,m,mf,xa,alrf,xzf,t6listf,za
+        end subroutine t6rinterp
+        subroutine readco ! in :opalopacities:xztrin21.f
+            real :: opact
+            real :: dopact
+            real :: dopacr
+            real :: dopactd
+            real dimension(10,70,19) :: opl
+            real dimension(10) :: xx
+            real dimension(13) :: zza
+            real dimension(4) :: q
+            real dimension(4) :: h
+            real :: xxh
+            character(len=250) :: path
+            integer :: nrl
+            real :: rls
+            integer :: nset
+            real :: tmax  ! modified
+            integer :: mzz
+            real dimension(10,13,70,19) :: xz
+            real dimension(70) :: t6list
+            real dimension(19) :: alr
+            integer dimension(10) :: n
+            real dimension(70) :: alt
+            real dimension(70,19) :: opk
+            real dimension(70,19) :: opk2
+            real dimension(10) :: dfsx
+            real dimension(70) :: dfs
+            real dimension(19) :: dfsr
+            real dimension(13) :: dfsz
+            real dimension(3,10) :: a
+            real dimension(3) :: b
+            integer :: m
+            integer :: mf
+            real dimension(10) :: xa
+            real dimension(19) :: alrf
+            real dimension(70,19) :: xzf
+            real dimension(70) :: t6listf
+            real dimension(13) :: za
+            integer :: ntemp
+            integer :: nsm
+            integer :: nrlow
+            integer :: nrhigh
+            real :: rle
+            real dimension(100) :: t6arr
+            real dimension(100,19) :: xzff
+            integer dimension(10,13) :: itab
+            integer dimension(19) :: nta
+            real dimension(10,13) :: x
+            real dimension(10,13) :: y
+            real dimension(10,13) :: zz
+            common /e/ opact,dopact,dopacr,dopactd
+            common /ee/ opl,xx,zza
+            common /aa/ q,h,xxh
+            common /eeee/ path
+            common /cst/ nrl,rls,nset,tmax  ! modified
+            common /a/ mzz,xz,t6list,alr,n,alt,opk,opk2,dfsx,dfs,dfsr,dfsz,a,b,m,mf,xa,alrf,xzf,t6listf,za
+            common /alink/ ntemp,nsm,nrlow,nrhigh,rle,t6arr,xzff
+            common /b/ itab,nta,x,y,zz
+        end subroutine readco
+        function quad(ic,i,x,y1,y2,y3,x1,x2,x3) ! in :opalopacities:xztrin21.f
+            integer :: ic
+            integer :: i
+            real :: x
+            real :: y1
+            real :: y2
+            real :: y3
+            real :: x1
+            real :: x2
+            real :: x3
+            real :: dkap
+            real :: quad
+            common /d/ dkap
+        end function quad
+!        block data  ! in :opalopacities:xztrin21.f
+!            integer :: mzz
+!            real dimension(10,13,70,19) :: xz
+!            real dimension(70) :: t6list
+!            real dimension(19) :: alr
+!            integer dimension(10) :: n
+!            real dimension(70) :: alt
+!            real dimension(70,19) :: opk
+!            real dimension(70,19) :: opk2
+!            real dimension(10) :: dfsx
+!            real dimension(70) :: dfs
+!            real dimension(19) :: dfsr
+!            real dimension(13) :: dfsz
+!            real dimension(3,10) :: a
+!            real dimension(3) :: b
+!            integer :: m
+!            integer :: mf
+!            real dimension(10) :: xa
+!            real dimension(19) :: alrf
+!            real dimension(70,19) :: xzf
+!            real dimension(70) :: t6listf
+!            real dimension(13) :: za
+!            real dimension(4) :: q
+!            real dimension(4) :: h
+!            real :: xxh
+!            integer dimension(10,13) :: itab
+!            integer dimension(19) :: nta
+!            real dimension(10,13) :: x
+!            real dimension(10,13) :: y
+!            real dimension(10,13) :: zz
+!            integer, parameter,optional :: mz=13
+!            integer, parameter,optional :: ntm=70
+!            integer, parameter,optional :: nrb=1
+!            integer, parameter,optional :: mx=10
+!            integer, parameter,optional :: nt=70
+!            integer, parameter,optional :: ntb=1
+!            integer, parameter,optional :: nre=19
+!            integer, parameter,optional :: nrm=19
+!            integer, parameter,optional :: nr=19
+!            common /a/ mzz,xz,t6list,alr,n,alt,opk,opk2,dfsx,dfs,dfsr,dfsz,a,b,m,mf,xa,alrf,xzf,t6listf,za
+!            common /aa/ q,h,xxh
+!            common /b/ itab,nta,x,y,zz
+!        end block data 
+        subroutine opaltab ! in :opalopacities:xztrin21.f
+            integer :: nrl
+            real :: rls
+            integer :: nset
+            real :: tmax  ! modified
+            integer :: n
+            integer :: nsm
+            integer :: nrlow
+            integer :: nrhigh
+            real :: rle
+            real dimension(100) :: t6arr
+            real dimension(100,19) :: xzff
+            real dimension(85,20) :: f
+            real dimension(85,20) :: fx
+            real dimension(85,20) :: fy
+            real dimension(85,20) :: fxy
+            common /cst/ nrl,rls,nset,tmax  ! modified
+            common /alink/ n,nsm,nrlow,nrhigh,rle,t6arr,xzff
+            common /cf/ f,fx,fy,fxy
+        end subroutine opaltab
+        subroutine spline(x,y,n,y2) ! in :opalopacities:xztrin21.f
+            real dimension(n) :: x
+            real dimension(n),depend(n) :: y
+            integer, optional,check(len(x)>=n),depend(x) :: n=len(x)
+            real dimension(n),depend(n) :: y2
+        end subroutine spline
+        subroutine splint(xa,ya,n,y2a,x,y,yp) ! in :opalopacities:xztrin21.f
+            real dimension(n) :: xa
+            real dimension(n),depend(n) :: ya
+            integer, optional,check(len(xa)>=n),depend(xa) :: n=len(xa)
+            real dimension(n),depend(n) :: y2a
+            real :: x
+            real :: y
+            real :: yp
+        end subroutine splint
+        subroutine fity ! in :opalopacities:xztrin21.f
+            integer :: nrl
+            real :: rls
+            integer :: nset
+            real :: tmax  ! modified
+            real dimension(85,20) :: f
+            real dimension(85,20) :: fx
+            real dimension(85,20) :: fy
+            real dimension(85,20) :: fxy
+            common /cst/ nrl,rls,nset,tmax  ! modified
+            common /cf/ f,fx,fy,fxy
+        end subroutine fity
+        subroutine fitx ! in :opalopacities:xztrin21.f
+            integer :: nrl
+            real :: rls
+            integer :: nset
+            real :: tmax  ! modified
+            real dimension(85,20) :: f
+            real dimension(85,20) :: fx
+            real dimension(85,20) :: fy
+            real dimension(85,20) :: fxy
+            common /cst/ nrl,rls,nset,tmax  ! modified
+            common /cf/ f,fx,fy,fxy
+        end subroutine fitx
+        subroutine getd(f,n,d,fp1,fpn) ! in :opalopacities:xztrin21.f
+            real dimension(n) :: f
+            integer, optional,check(len(f)>=n),depend(f) :: n=len(f)
+            real dimension(n),depend(n) :: d
+            real :: fp1
+            real :: fpn
+        end subroutine getd
+        subroutine interp(flt,flrho,g,dgdt,dgdrho,ierr) ! in :opalopacities:xztrin21.f
+            real :: flt
+            real :: flrho
+            real :: g
+            real :: dgdt
+            real :: dgdrho
+            logical :: ierr
+            integer :: nrl
+            real :: rls
+            integer :: nset
+            real :: tmax  ! modified
+            real dimension(85,20) :: f
+            real dimension(85,20) :: fx
+            real dimension(85,20) :: fy
+            real dimension(85,20) :: fxy
+            common /cst/ nrl,rls,nset,tmax  ! modified
+            common /cf/ f,fx,fy,fxy
+        end subroutine interp
+        subroutine smooth ! in :opalopacities:xztrin21.f
+            integer :: nrl
+            real :: rls
+            integer :: nset
+            real :: tmax  ! modified
+            real dimension(85,20) :: f
+            real dimension(85,20) :: fx
+            real dimension(85,20) :: fy
+            real dimension(85,20) :: fxy
+            common /cst/ nrl,rls,nset,tmax  ! modified
+            common /cf/ f,fx,fy,fxy
+        end subroutine smooth
+    end interface 
+end python module opalopacities
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
