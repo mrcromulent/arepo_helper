@@ -9,3 +9,8 @@ python:
 install:
     - pip install --upgrade pip setuptools
 
+script:
+    - pytest
+
+after_success:
+    - codecov
