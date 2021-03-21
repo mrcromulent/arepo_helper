@@ -74,4 +74,3 @@ if __name__ == "__main__":
     ah.export_animation([0, 45], n.DENSITY, ["x", "y"], "PColor")
     ah.export_group_frames([7], [n.DENSITY, n.MASSES], [["x", "y"], ["x", "z"]], "PColor")
     ah.export_group_animation([0, 9], [n.MASSES, n.MAGNETICFIELD], [["x", "y"], ["x", "z"]], "PColor")
-
