@@ -126,6 +126,7 @@ class ArepoICs(ArepoH5File):
                     else:
                         this_dtype = dtype
 
+                    print(f"Writing PartType{i}: {quantity_name}")
                     group.create_dataset(quantity_name, shape=(nparticles, dim), dtype=this_dtype, data=quantity)
 
         print("Done.")

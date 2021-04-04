@@ -130,6 +130,7 @@ ruediger_conversion_table = {n.COORDINATES: "pos",
                              n.PRESSURE: "pres",
                              n.PASSIVESCALARS: "pass",
                              n.DENSITY: "rho",
+                             n.TEMPERATURE: "temp",
                              n.POTENTIAL: "pot"}
 
 

@@ -2,10 +2,12 @@ from utilities import suppress_stdout_stderr
 from scipy.interpolate import interp1d
 from collections import OrderedDict
 import utilities
-import createICs
 from names import n
 from createICs import create_particles_healpix
 from ics import ArepoICs
+from ic import create_wd
+import scipy.interpolate as interpolate
+import scipy.optimize as opt
 from species import ArepoSpeciesList
 from pyhelm_eos import loadhelm_eos
 import matplotlib.pyplot as plt
@@ -282,7 +284,7 @@ class WDECResults(object):
     """
 
     def convert_to_healpix(self, helm_table, species_file, boxsize, pmass,
-                           makebox=False,
+                           makebox=True,
                            minenergy=1e14,
                            boxfactor=10.0,
                            boxres=32,
@@ -290,50 +292,109 @@ class WDECResults(object):
                            randomizeshells=True,
                            randomizeradii=False):
 
+        wdmass = 0.55 * msol
+        c12prop = 0.5
+        o16prop = 1 - c12prop
+
+        def wdCOgetMassFromRhoCExact(rhoc, eos, mass=0., temp=5e5):
+            import ic
+            wd = ic.create_wd(eos, rhoc, temp=temp, xC12=0.5, xO16=0.5)
+            print(rhoc, wd['dm'].sum() / msol)
+            return wd['dm'].sum() / msol - mass
+
+        def wdCOgetRhoCFromMassExact(mass, eos, temp=5e5, xtol=1e2):
+            rhoguess = 1e4
+            massguess = wdCOgetMassFromRhoCExact(rhoguess, eos, temp) * msol
+
+            if massguess > mass:
+                print("Already a central density of 1e4 g/ccm produces a WD more massive than %g msun (%g)." % (
+                mass / msol, massguess / msol))
+
+            while massguess <= mass:
+                rhoguess *= 10.
+                massguess = wdCOgetMassFromRhoCExact(rhoguess, eos, temp=temp) * msol
+
+            print("Guess for central density: %g g/ccm." % rhoguess)
+            rhoc = opt.bisect(wdCOgetMassFromRhoCExact, 0.1 * rhoguess, rhoguess, args=(eos, mass / msol, temp,),
+                              xtol=xtol)
+            print("Actual central density for %g msun WD: %g g/ccm." % (mass / msol, rhoc))
+            return rhoc
+
+
+
         eos = loadhelm_eos(helm_table, species_file, True)  # Unused (hopefully)
+        rhoc = wdCOgetRhoCFromMassExact(wdmass, eos)
+
+        wd = create_wd(eos, rhoc, xC12=c12prop, xO16=o16prop)
+        frho = interpolate.interp1d(wd['r'], wd['rho'], kind='cubic')
+        fpres = interpolate.interp1d(wd['r'], wd['p'], kind='cubic')
+
         sp = ArepoSpeciesList(species_file)
-        df = self.data
-        gamma = 5. / 3.
+        wd['v'] = np.zeros(wd['ncells'])
+        wd['xnuc'] = np.zeros(sp.num_species)
+        wd['xnuc'][sp.index_of('C12')] = c12prop
+        wd['xnuc'][sp.index_of('O16')] = o16prop
+        wd['count'] = wd['ncells']
 
-        wd = dict()
-        npoints = df.shape[0]
-        wd['count'] = npoints
-        wd['ncells'] = npoints
-        wd['v'] = np.zeros(npoints)
-        wd['r'] = np.array(df['r'])
-        wd['p'] = np.array(df['P'])
-        wd['rho'] = np.array(df['Rho'])
-        wd['csnd'] = np.sqrt(gamma * wd['p'] / wd['rho'])
-        wd['u'] = wd['p'] / (wd['rho'] * (gamma - 1))
+        # df = self.data
+        # gamma = 5. / 3.
+        #
+        # wd = dict()
+        #
+        # # Fill in the missing middle
+        #
+        # # n_extra_points = 200
+        # n_extra_points = 0
+        # npoints = df.shape[0] + n_extra_points
+        #
+        # extra_r = np.linspace(0, df['r'][0], n_extra_points)
+        # extra_p = np.linspace(df['P'][0], df['P'][0], n_extra_points)
+        # extra_rho = np.linspace(df['Rho'][0], df['Rho'][0], n_extra_points)
+        #
+        # wd['count'] = npoints
+        # wd['ncells'] = npoints
+        # wd['v'] = np.zeros(npoints)
+        # wd['r'] = np.insert(np.array(df['r']), 0, extra_r)
+        # wd['p'] = np.insert(np.array(df['P']), 0, extra_p)
+        # wd['rho'] = np.insert(np.array(df['Rho']), 0, extra_rho)
+        #
+        # wd['csnd'] = np.sqrt(gamma * wd['p'] / wd['rho'])
+        # wd['u'] = wd['p'] / (wd['rho'] * (gamma - 1))
+        #
+        # dm = np.zeros(npoints, dtype=np.float64)
+        # wdec_q = df['-log(1-Mr/M*)']
+        # qframe = np.array(wdec_q)
+        # qframe = np.delete(qframe, 0)
+        # qframe = np.delete(qframe, 0)
+        # qframe = np.insert(qframe, 0, np.linspace(0, wdec_q[1], n_extra_points + 1))
 
-        dm = np.zeros(npoints, dtype=np.float64)
-        qframe = df['-log(1-Mr/M*)']
-        for index, q in enumerate(qframe):
-
-            if index > 0:
-                q2 = q
-                q1 = qframe[index - 1]
-
-                val2 = np.power(10.0, -q2, dtype=np.float64)
-                val1 = np.power(10.0, -q1, dtype=np.float64)
-                dm[index] = msol * (val1 - val2)
-
-        # When computing dm, I found that it was short by approximately 0.1 solar masses so I have added this as a
-        # kludge to ensure the dms have approximately the right distribution. Essentially, I am scaling up the whole
-        # distribution to sum to the correct value.
-        wd['dm'] = self.gp["m_tot"] * msol * dm / dm.sum()
-
-        wd['xnuc'] = np.zeros((1, sp.num_species))
-        wd['xnuc'][0, sp.index_of("He4")] = df["X_He"][0]
-        wd['xnuc'][0, sp.index_of("C12")] = df["X_C"][0]
-        wd['xnuc'][0, sp.index_of("O16")] = df["X_O"][0]
+        # for index, q in enumerate(qframe):
+        #
+        #     if index > 0:
+        #         q2 = q
+        #         q1 = qframe[index - 1]
+        #
+        #         val2 = np.power(10.0, -q2, dtype=np.float64)
+        #         val1 = np.power(10.0, -q1, dtype=np.float64)
+        #         dm[index] = msol * (val1 - val2)
+        #
+        # # When computing dm, I found that it was short by approximately 0.1 solar masses so I have added this as a
+        # # kludge to ensure the dms have approximately the right distribution. Essentially, I am scaling up the whole
+        # # distribution to sum to the correct value.
+        # wd['dm'] = self.gp["m_tot"] * msol * dm / dm.sum()
+        #
+        # wd['xnuc'] = np.zeros((1, sp.num_species))
+        # wd['xnuc'][0, sp.index_of("He4")] = df["X_He"][0]
+        # wd['xnuc'][0, sp.index_of("C12")] = df["X_C"][0]
+        # wd['xnuc'][0, sp.index_of("O16")] = df["X_O"][0]
+        #
+        # print(f"Input radii: {wd['r']}")
 
         with suppress_stdout_stderr():
-            data = create_particles_healpix(wd, eos,
+            data = create_particles_healpix(wd, eos, npart,
                                             minenergy=minenergy,
                                             boxfactor=boxfactor,
                                             boxres=boxres,
-                                            npart=npart,
                                             randomizeshells=randomizeshells,
                                             randomizeradii=randomizeradii,
                                             makebox=makebox,
@@ -341,38 +402,74 @@ class WDECResults(object):
                                             boxsize=boxsize,
                                             pmass=pmass)
 
+        # data['pos'] += 0.5 * boxsize
+        # center = np.array([boxsize / 2, boxsize / 2, boxsize / 2])
+        #
+        # r = np.linalg.norm(data['pos'] - center, axis=1)
+        # r.sort()
+        # print(r)
+        # allowable_wdec_names = ["H1", "He4", "C12", "O16"]
 
-        data['pos'] += 0.5 * boxsize
-        center = np.array([boxsize / 2, boxsize / 2, boxsize / 2])
+        # for species in sp.species_dict:
+        #     print(f"Interpolating species: {species}")
+        #     sp_index = sp.index_of(species)
+        #
+        #     if species not in allowable_wdec_names:
+        #         f = lambda rad: 0.0
+        #     else:
+        #
+        #         yy = np.array(df[self.convert_species_name(species)])
+        #
+        #         x = np.array(wd['r'])
+        #         y = np.insert(yy, 0, np.linspace(yy[0], yy[0], n_extra_points))
+        #         f = interp1d(x, y)
+        #
+        #         # x = df['r']
+        #         # y = df[self.convert_species_name(species)]
+        #         #
+        #         # if species == "He4":
+        #         #     final_val = 1.0
+        #         # else:
+        #         #     final_val = 0.0
+        #         #
+        #         # def f(rad):
+        #         #     if rad >= r_star:
+        #         #         return final_val
+        #         #     else:
+        #         #         return interp1d(x, y)(rad)
+        #
+        #     for i, radius in enumerate(r):
+        #         data['xnuc'][i, sp_index] = f(radius)
 
-        r = np.linalg.norm(data['pos'] - center, axis=1)
-        allowable_wdec_names    = ["H1", "He4", "C12", "O16"]
-        r_star                  = max(df['r'])
+        # data['pres'] = np.zeros(data['rho'].shape[0])
+        # data['temp'] = np.zeros(data['rho'].shape[0])
+        # nparticles = data['xnuc'].shape[0]
+        # data["id"] = np.array(range(1, nparticles + 1))
 
-        for species in sp.species_dict:
-            print(f"Interpolating species: {species}")
-            sp_index = sp.index_of(species)
+        print(f"rmax = {wd['r'].max()}")
 
-            if species not in allowable_wdec_names:
-                f = lambda rad: 0.0
-            else:
+        rad = np.sqrt(((data['pos'] - 0.5 * boxsize) ** 2.).sum(axis=1))
+        i, = np.where(rad < wd['r'].max())
+        rho = frho(rad[i])
+        pres = fpres(rad[i])
+        xnuc = np.zeros(sp.num_species)
+        xnuc[sp.index_of('C12')] = c12prop
+        xnuc[sp.index_of('O16')] = o16prop
 
-                x = df['r']
-                y = df[self.convert_species_name(species)]
+        # For the cells included in the WD, find the internal energy and temperature
+        for index in range(np.size(i)):
+            idx = i[index]
+            temp, data['u'][idx] = eos.pgiven(rho[index], xnuc, pres[index])
+            if (data['u'][idx] < 1):
+                print(data['u'][idx])
+            # data['pres'][idx] = pres[index]
 
-                if species == "He4":
-                    finalVal = 1.0
-                else:
-                    finalVal = 0.0
+        if not (np.all(data['pos'] > 0)):
+            print("BREAK")
 
-                def f(rad):
-                    if rad >= r_star:
-                        return finalVal
-                    else:
-                        return interp1d(x, y)(rad)
-
-            for i, radius in enumerate(r):
-                data['xnuc'][i, sp_index] = f(radius)
+        # Set mass equal to density in the WD, zero everywhere else
+        data['mass'][:] = 0.
+        data['mass'][i] = rho
 
         return data
 
@@ -467,32 +564,173 @@ class WDECResults(object):
 
 
 if __name__ == '__main__':
-
     wdec_directory = "/home/pierre/wdec/"
-    helm_directory = "./snapshots/helm_table.dat"
-    spec_directory = "./eostable/species13.txt"
-    boxsize = 1e12
+    helm_directory = "./data/snapshots/helm_table.dat"
+    spec_directory = "./data/eostable/species13.txt"
+    boxsize = 1e10
     pmass = 1e-6 * msol
 
     test = WDECResults(wdec_directory)
     data = test.convert_to_healpix(helm_directory, spec_directory, boxsize, pmass)
+
     # abund_sum = np.apply_along_axis(np.sum, 1, data['xnuc'])
     # fig, ax = plt.subplots()
     # ax.plot(abund_sum)
     # fig.show()
 
-    nparticles = data['xnuc'].shape[0]
-    data["id"] = np.array(range(1, nparticles + 1))
+    # nparticles = data['xnuc'].shape[0]
+    #
+    # particle_list = np.array([nparticles, 0, 0, 0, 0, 0], dtype=np.int32)
+    # particle_dict = OrderedDict({"PartType0": utilities.convert_from_ruediger_dict(data)})
+    # header = {n.NUMPARTTOTAL: particle_list,
+    #           n.NUMPARTTHISFILE: particle_list,
+    #           n.NUMPARTTOTALHIGHWORD: np.zeros(6, dtype=np.int32),
+    #           n.FLAGDOUBLEPRECISION: np.array(True, dtype=np.int32),
+    #           n.BOXSIZE: boxsize}
 
-    particle_list = np.array([nparticles, 0, 0, 0, 0, 0], dtype=np.int32)
-    particle_dict = OrderedDict({"PartType0": utilities.convert_from_ruediger_dict(data)})
-    header = {n.NUMPARTTOTAL: particle_list,
-              n.NUMPARTTHISFILE: particle_list,
-              n.NUMPARTTOTALHIGHWORD: np.zeros(6, dtype=np.int32),
-              n.FLAGDOUBLEPRECISION: np.array(True, dtype=np.int32),
-              n.BOXSIZE: boxsize}
+    # aic = ArepoICs("bin.dat.ic.hdf5")
+    # aic.write_ics(particle_dict, header)
+    #
+    # print(f"Number of unique values: {len(set(data['xnuc'][:, 2]))}")
 
-    aic = ArepoICs("bin.dat.ic.hdf5")
-    aic.write_ics(particle_dict, header)
+    def gadget_write_ics(filename, data, format='hdf5', transpose=True, time=0., skipxnuc=False, double=False,
+                         longids=False, num_files=1, boxsize=0., verbose=False, masses=None):
+        if format == 'gadget1':
+            # gadget_write_ics_format1(filename, data, transpose, time, skipxnuc, double, longids, num_files, boxsize,
+            #                          verbose, masses)
+            pass
+        elif format == 'gadget2':
+            # gadget_write_ics_format2(filename, data, transpose, time, skipxnuc, double, longids, num_files, boxsize,
+            #                          verbose, masses)
+            pass
+        elif format == 'hdf5':
+            gadget_write_ics_format3(filename, data, time, double, longids, num_files, boxsize, masses)
+        else:
+            raise ValueError('Choose a valid file format')
 
-    print(f"Number of unique values: {len(set(data['xnuc'][:, 2]))}")
+
+    def gadget_write_ics_format3(filename, data, time, double, longids, num_files, boxsize, masses, skipxnuc=False):
+        import h5py
+
+        filename += '.hdf5'
+        print("Writing gadget file: ", filename)
+        f = h5py.File(filename, 'w')
+
+        npart = np.zeros(6, dtype=np.int32)
+        nparthighword = np.zeros(6, dtype=np.int32)
+        offset = np.zeros(6, dtype=np.int32)
+        npartmass = np.zeros(6, dtype=np.int32)
+        massoffset = np.zeros(6, dtype=np.int32)
+
+        if 'type' in data:
+            for ptype in range(6):
+                npart[ptype] = np.size(np.where(data['type'] == ptype))
+        else:
+            npart[0] = data['count']
+
+        offset[1:] = np.cumsum(npart[:-1])
+
+        if not masses is None:
+            massarr = masses
+        else:
+            massarr = np.zeros(6, dtype=np.float64)
+
+        npartmass[:] = npart[:]
+        j, = np.where(massarr > 0.0)
+        npartmass[j] = 0
+        massoffset[1:] = np.cumsum(npartmass[:-1])
+
+        header = f.create_group("/Header")
+
+        header.attrs['NumPart_ThisFile'] = npart
+        header.attrs['NumPart_Total'] = npart
+        header.attrs['NumPart_Total_HighWord'] = nparthighword
+        header.attrs['MassTable'] = massarr
+        header.attrs['Time'] = time
+        header.attrs['NumFilesPerSnapshot'] = np.array(num_files, dtype=np.int32)
+        header.attrs['BoxSize'] = boxsize
+        header.attrs['Flag_DoublePrecision'] = np.array(double, dtype=np.int32)
+        header.attrs['Flag_IC_info'] = np.array(0, dtype=np.int32)
+        header.attrs['Flag_Entropy_ICs'] = np.array(0, dtype=np.int32)
+        header.attrs['Redshift'] = np.array(0, dtype=np.float64)
+        header.attrs['Omega0'] = np.array(0, dtype=np.float64)
+        header.attrs['OmegaLambda'] = np.array(0, dtype=np.float64)
+        header.attrs['HubbleParam'] = np.array(0, dtype=np.float64)
+        header.attrs['Flag_Sfr'] = np.array(0, dtype=np.int32)
+        header.attrs['Flag_Cooling'] = np.array(0, dtype=np.int32)
+        header.attrs['Flag_StellarAge'] = np.array(0, dtype=np.int32)
+        header.attrs['Flag_Metals'] = np.array(0, dtype=np.int32)
+        header.attrs['Flag_Feedback'] = np.array(0, dtype=np.int32)
+
+        if double:
+            dtype = np.float64
+        else:
+            dtype = np.float32
+
+        if longids:
+            dtypeids = np.uint64
+        else:
+            dtypeids = np.uint32
+
+        fields = []
+        if 'bfld' in data:
+            fields += ['bfld']
+        if not skipxnuc and ('xnuc' in data):
+            fields += ['xnuc']
+        if 'temp' in data:
+            fields += ['temp']
+        if 'rho' in data:
+            fields += ["rho"]
+        if 'pass' in data:
+            fields += ["pass"]
+        if 'erad' in data:
+            fields += ["erad"]
+
+        fields_to_names = {
+            'bfld': 'MagneticField',
+            'xnuc': 'NuclearComposition',
+            'temp': 'Temperature',
+            'rho': 'Density',
+            'pass': 'PassiveScalars',
+            'erad': 'Erad'
+        }
+
+        for ptype in range(6):
+            if npart[ptype] > 0:
+                group = f.create_group('/PartType%d' % ptype)
+
+                pos = group.create_dataset("Coordinates", (npart[ptype], 3), dtype)
+                pos[:, :] = data['pos'][offset[ptype]:offset[ptype] + npart[ptype], :]
+
+                vel = group.create_dataset("Velocities", (npart[ptype], 3), dtype)
+                vel[:, :] = data['vel'][offset[ptype]:offset[ptype] + npart[ptype], :]
+
+                id = group.create_dataset("ParticleIDs", (npart[ptype],), dtypeids)
+                if 'id' in data:
+                    id[:] = data['id'][offset[ptype]:offset[ptype] + npart[ptype]]
+                else:
+                    id[:] = np.arange(offset[ptype] + 1, offset[ptype] + npart[ptype] + 1, dtype=dtypeids)
+
+                if massarr[ptype] == 0:
+                    mass = group.create_dataset("Masses", (npart[ptype],), dtype)
+                    mass[:] = data['mass'][massoffset[ptype]:massoffset[ptype] + npart[ptype]]
+
+                if ptype == 0:
+                    u = group.create_dataset("InternalEnergy", (npart[ptype],), dtype)
+                    u[:] = data['u'][offset[ptype]:offset[ptype] + npart[ptype]]
+                    # loop over the other fields
+                    for field in fields:
+                        hdf5key = fields_to_names[field]
+                        if field in ['bfld', 'xnuc', 'pass']:
+                            val = group.create_dataset(hdf5key, (npart[ptype], data[field].shape[1]), dtype)
+                            val[:, :] = data[field][offset[ptype]:offset[ptype] + npart[ptype], :]
+                        else:
+                            val = group.create_dataset(hdf5key, (npart[ptype],), dtype)
+                            val[:] = data[field][offset[ptype]:offset[ptype] + npart[ptype]]
+        f.close()
+
+        print("Done.")
+        return
+
+
+    gadget_write_ics("bin.dat.ic", data, boxsize=boxsize)
