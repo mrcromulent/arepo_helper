@@ -284,111 +284,52 @@ class WDECResults(object):
     """
 
     def convert_to_healpix(self, helm_table, species_file, boxsize, pmass,
+                           # makebox=False,
                            makebox=True,
-                           minenergy=1e14,
+                           # minenergy=1e14,
+                           minenergy=0.0,
                            boxfactor=10.0,
                            boxres=32,
                            npart=0,
-                           randomizeshells=True,
+                           randomizeshells=False,
                            randomizeradii=False):
 
-        wdmass = 0.55 * msol
-        c12prop = 0.5
-        o16prop = 1 - c12prop
+        eos     = loadhelm_eos(helm_table, species_file, True)  # Unused (hopefully)
+        sp      = ArepoSpeciesList(species_file)
+        df      = self.data
+        gamma   = 5. / 3.
 
-        def wdCOgetMassFromRhoCExact(rhoc, eos, mass=0., temp=5e5):
-            import ic
-            wd = ic.create_wd(eos, rhoc, temp=temp, xC12=0.5, xO16=0.5)
-            print(rhoc, wd['dm'].sum() / msol)
-            return wd['dm'].sum() / msol - mass
+        wd              = dict()
+        npoints         = df.shape[0]
+        wd['count']     = npoints
+        wd['ncells']    = npoints
+        wd['v']         = np.zeros(npoints)
+        wd['r']         = np.array(df['r'])
+        wd['p']         = np.array(df['P'])
+        wd['rho']       = np.array(df['Rho'])
+        wd['csnd']      = np.sqrt(gamma * wd['p'] / wd['rho'])
+        wd['u']         = wd['p'] / (wd['rho'] * (gamma - 1))
+        dm              = np.zeros(npoints, dtype=np.float64)
 
-        def wdCOgetRhoCFromMassExact(mass, eos, temp=5e5, xtol=1e2):
-            rhoguess = 1e4
-            massguess = wdCOgetMassFromRhoCExact(rhoguess, eos, temp) * msol
+        qframe = df['-log(1-Mr/M*)']
+        for index, q in enumerate(qframe):
+            if index > 0:
+                q2 = q
+                q1 = qframe[index - 1]
 
-            if massguess > mass:
-                print("Already a central density of 1e4 g/ccm produces a WD more massive than %g msun (%g)." % (
-                mass / msol, massguess / msol))
+                val2 = np.power(10.0, -q2, dtype=np.float64)
+                val1 = np.power(10.0, -q1, dtype=np.float64)
+                dm[index] = msol * (val1 - val2)
 
-            while massguess <= mass:
-                rhoguess *= 10.
-                massguess = wdCOgetMassFromRhoCExact(rhoguess, eos, temp=temp) * msol
+        # When computing dm, I found that it was short by approximately 0.1 solar masses so I have added this as a
+        # kludge to ensure the dms have approximately the right distribution. Essentially, I am scaling up the whole
+        # distribution to sum to the correct value.
+        wd['dm'] = self.gp["m_tot"] * msol * dm / dm.sum()
 
-            print("Guess for central density: %g g/ccm." % rhoguess)
-            rhoc = opt.bisect(wdCOgetMassFromRhoCExact, 0.1 * rhoguess, rhoguess, args=(eos, mass / msol, temp,),
-                              xtol=xtol)
-            print("Actual central density for %g msun WD: %g g/ccm." % (mass / msol, rhoc))
-            return rhoc
-
-
-
-        eos = loadhelm_eos(helm_table, species_file, True)  # Unused (hopefully)
-        rhoc = wdCOgetRhoCFromMassExact(wdmass, eos)
-
-        wd = create_wd(eos, rhoc, xC12=c12prop, xO16=o16prop)
-        frho = interpolate.interp1d(wd['r'], wd['rho'], kind='cubic')
-        fpres = interpolate.interp1d(wd['r'], wd['p'], kind='cubic')
-
-        sp = ArepoSpeciesList(species_file)
-        wd['v'] = np.zeros(wd['ncells'])
-        wd['xnuc'] = np.zeros(sp.num_species)
-        wd['xnuc'][sp.index_of('C12')] = c12prop
-        wd['xnuc'][sp.index_of('O16')] = o16prop
-        wd['count'] = wd['ncells']
-
-        # df = self.data
-        # gamma = 5. / 3.
-        #
-        # wd = dict()
-        #
-        # # Fill in the missing middle
-        #
-        # # n_extra_points = 200
-        # n_extra_points = 0
-        # npoints = df.shape[0] + n_extra_points
-        #
-        # extra_r = np.linspace(0, df['r'][0], n_extra_points)
-        # extra_p = np.linspace(df['P'][0], df['P'][0], n_extra_points)
-        # extra_rho = np.linspace(df['Rho'][0], df['Rho'][0], n_extra_points)
-        #
-        # wd['count'] = npoints
-        # wd['ncells'] = npoints
-        # wd['v'] = np.zeros(npoints)
-        # wd['r'] = np.insert(np.array(df['r']), 0, extra_r)
-        # wd['p'] = np.insert(np.array(df['P']), 0, extra_p)
-        # wd['rho'] = np.insert(np.array(df['Rho']), 0, extra_rho)
-        #
-        # wd['csnd'] = np.sqrt(gamma * wd['p'] / wd['rho'])
-        # wd['u'] = wd['p'] / (wd['rho'] * (gamma - 1))
-        #
-        # dm = np.zeros(npoints, dtype=np.float64)
-        # wdec_q = df['-log(1-Mr/M*)']
-        # qframe = np.array(wdec_q)
-        # qframe = np.delete(qframe, 0)
-        # qframe = np.delete(qframe, 0)
-        # qframe = np.insert(qframe, 0, np.linspace(0, wdec_q[1], n_extra_points + 1))
-
-        # for index, q in enumerate(qframe):
-        #
-        #     if index > 0:
-        #         q2 = q
-        #         q1 = qframe[index - 1]
-        #
-        #         val2 = np.power(10.0, -q2, dtype=np.float64)
-        #         val1 = np.power(10.0, -q1, dtype=np.float64)
-        #         dm[index] = msol * (val1 - val2)
-        #
-        # # When computing dm, I found that it was short by approximately 0.1 solar masses so I have added this as a
-        # # kludge to ensure the dms have approximately the right distribution. Essentially, I am scaling up the whole
-        # # distribution to sum to the correct value.
-        # wd['dm'] = self.gp["m_tot"] * msol * dm / dm.sum()
-        #
-        # wd['xnuc'] = np.zeros((1, sp.num_species))
-        # wd['xnuc'][0, sp.index_of("He4")] = df["X_He"][0]
-        # wd['xnuc'][0, sp.index_of("C12")] = df["X_C"][0]
-        # wd['xnuc'][0, sp.index_of("O16")] = df["X_O"][0]
-        #
-        # print(f"Input radii: {wd['r']}")
+        wd['xnuc'] = np.zeros((1, sp.num_species))
+        wd['xnuc'][0, sp.index_of("He4")] = df["X_He"][0]
+        wd['xnuc'][0, sp.index_of("C12")] = df["X_C"][0]
+        wd['xnuc'][0, sp.index_of("O16")] = df["X_O"][0]
 
         with suppress_stdout_stderr():
             data = create_particles_healpix(wd, eos, npart,
@@ -402,70 +343,56 @@ class WDECResults(object):
                                             boxsize=boxsize,
                                             pmass=pmass)
 
-        # data['pos'] += 0.5 * boxsize
-        # center = np.array([boxsize / 2, boxsize / 2, boxsize / 2])
-        #
-        # r = np.linalg.norm(data['pos'] - center, axis=1)
-        # r.sort()
-        # print(r)
-        # allowable_wdec_names = ["H1", "He4", "C12", "O16"]
+        if not makebox:
+            data['pos'] += 0.5 * boxsize
 
-        # for species in sp.species_dict:
-        #     print(f"Interpolating species: {species}")
-        #     sp_index = sp.index_of(species)
-        #
-        #     if species not in allowable_wdec_names:
-        #         f = lambda rad: 0.0
-        #     else:
-        #
-        #         yy = np.array(df[self.convert_species_name(species)])
-        #
-        #         x = np.array(wd['r'])
-        #         y = np.insert(yy, 0, np.linspace(yy[0], yy[0], n_extra_points))
-        #         f = interp1d(x, y)
-        #
-        #         # x = df['r']
-        #         # y = df[self.convert_species_name(species)]
-        #         #
-        #         # if species == "He4":
-        #         #     final_val = 1.0
-        #         # else:
-        #         #     final_val = 0.0
-        #         #
-        #         # def f(rad):
-        #         #     if rad >= r_star:
-        #         #         return final_val
-        #         #     else:
-        #         #         return interp1d(x, y)(rad)
-        #
-        #     for i, radius in enumerate(r):
-        #         data['xnuc'][i, sp_index] = f(radius)
+        center = np.array([boxsize / 2, boxsize / 2, boxsize / 2])
 
-        # data['pres'] = np.zeros(data['rho'].shape[0])
-        # data['temp'] = np.zeros(data['rho'].shape[0])
-        # nparticles = data['xnuc'].shape[0]
-        # data["id"] = np.array(range(1, nparticles + 1))
+        r = np.linalg.norm(data['pos'] - center, axis=1)
+        allowable_wdec_names    = ["H1", "He4", "C12", "O16"]
+        r_star                  = max(df['r'])
 
-        print(f"rmax = {wd['r'].max()}")
+        for species in sp.species_dict:
+            print(f"Interpolating species: {species}")
+            sp_index = sp.index_of(species)
 
-        rad = np.sqrt(((data['pos'] - 0.5 * boxsize) ** 2.).sum(axis=1))
-        i, = np.where(rad < wd['r'].max())
-        rho = frho(rad[i])
-        pres = fpres(rad[i])
-        xnuc = np.zeros(sp.num_species)
-        xnuc[sp.index_of('C12')] = c12prop
-        xnuc[sp.index_of('O16')] = o16prop
+            if species not in allowable_wdec_names:
+                f = lambda rad: 0.0
+            else:
+
+                x = df['r']
+                y = df[self.convert_species_name(species)]
+
+                if species == "He4":
+                    finalVal = 1.0
+                else:
+                    finalVal = 0.0
+
+                def f(rad):
+                    if rad >= r_star:
+                        return finalVal
+                    else:
+                        return interp1d(x, y)(rad)
+
+            for i, radius in enumerate(r):
+                data['xnuc'][i, sp_index] = f(radius)
+
+        data['pres'] = np.zeros(data['rho'].shape[0])
+        data['temp'] = np.zeros(data['rho'].shape[0])
+        nparticles = data['xnuc'].shape[0]
+        data["id"] = np.array(range(1, nparticles + 1))
+
+        i, = np.where(r <= r_star)
+        frho = interpolate.interp1d(wd['r'], wd['rho'], kind='cubic')
+        fpres = interpolate.interp1d(wd['r'], wd['p'], kind='cubic')
+
+        rho = frho(r[i])
+        pres = fpres(r[i])
 
         # For the cells included in the WD, find the internal energy and temperature
         for index in range(np.size(i)):
             idx = i[index]
-            temp, data['u'][idx] = eos.pgiven(rho[index], xnuc, pres[index])
-            if (data['u'][idx] < 1):
-                print(data['u'][idx])
-            # data['pres'][idx] = pres[index]
-
-        if not (np.all(data['pos'] > 0)):
-            print("BREAK")
+            temp, data['u'][idx] = eos.pgiven(rho[index], data['xnuc'][index, :], pres[index])
 
         # Set mass equal to density in the WD, zero everywhere else
         data['mass'][:] = 0.
@@ -566,7 +493,7 @@ class WDECResults(object):
 if __name__ == '__main__':
     wdec_directory = "/home/pierre/wdec/"
     helm_directory = "./data/snapshots/helm_table.dat"
-    spec_directory = "./data/eostable/species13.txt"
+    spec_directory = "./data/eostable/species05.txt"
     boxsize = 1e10
     pmass = 1e-6 * msol
 
@@ -733,4 +660,4 @@ if __name__ == '__main__':
         return
 
 
-    gadget_write_ics("bin.dat.ic", data, boxsize=boxsize)
+    gadget_write_ics("bin.dat.ic", data, double=True)

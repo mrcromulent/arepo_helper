@@ -104,8 +104,6 @@ static inline void azbar(t_helm_eos_table* helm_eos_table, const double xnuc[], 
   int nspecies = helm_eos_table->nspecies;
   double xsum = 0.0;
 
-//  printf("nspecies: %d \n", helm_eos_table->nspecies);
-
   // compute abar, zbar
   *abar = 0.0;
   *zbar = 0.0;
