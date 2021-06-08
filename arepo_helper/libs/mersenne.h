@@ -57,9 +57,12 @@
 
 typedef unsigned long uint32;
 
-#define N              (624)                 // length of state vector
-#define M              (397)                 // a period parameter
-#define K              (0x9908B0DFU)         // a magic constant
+//#define N              (624)                 // length of state vector
+//#define M              (397)                 // a period parameter
+//#define K              (0x9908B0DFU)         // a magic constant
+#define N (624)                 // length of state vector
+#define M (397)                 // a period parameter
+#define K (0x9908B0DFU)         // a magic constant
 #define hiBit(u)       ((u) & 0x80000000U)   // mask all but highest   bit of u
 #define loBit(u)       ((u) & 0x00000001U)   // mask all but lowest    bit of u
 #define loBits(u)      ((u) & 0x7FFFFFFFU)   // mask     the highest   bit of u
@@ -70,8 +73,8 @@ static uint32   *next;          // next random value is computed from here
 static int      left = -1;      // can *next++ this many times before reloading
 
 
-void seedMT(uint32 seed)
- {
+inline void seedMT(uint32 seed)
+{
     //
     // We initialize state[0..(N-1)] via the generator
     //
@@ -123,11 +126,11 @@ void seedMT(uint32 seed)
 
     for(left=0, *s++=x, j=N; --j;
         *s++ = (x*=69069U) & 0xFFFFFFFFU);
- }
+}
 
 
-uint32 reloadMT(void)
- {
+inline uint32 reloadMT(void)
+{
     register uint32 *p0=state, *p2=state+2, *pM=state+M, s0, s1;
     register int    j;
 
@@ -147,11 +150,11 @@ uint32 reloadMT(void)
     s1 ^= (s1 <<  7) & 0x9D2C5680U;
     s1 ^= (s1 << 15) & 0xEFC60000U;
     return(s1 ^ (s1 >> 18));
- }
+}
 
 
-uint32 randomMT(void)
- {
+inline uint32 randomMT(void)
+{
     uint32 y;
 
     if(--left < 0)
@@ -162,17 +165,17 @@ uint32 randomMT(void)
     y ^= (y <<  7) & 0x9D2C5680U;
     y ^= (y << 15) & 0xEFC60000U;
     return(y ^ (y >> 18));
- }
+}
 
 inline void seed(void)
- {
+{
     seedMT(4357U);
- }
+}
 
 inline double randMT(void)
- {
+{
     uint32 r = randomMT();
     return (double)r / (double)0xFFFFFFFF;
- }
+}
 
 #endif /* MERSENNE_H */

@@ -9,7 +9,7 @@
 from run import ArepoRun
 from analysis import ArepoAnalyser
 from plot_manager import PlotManager
-from group_frame import GroupFrame
+# from group_frame import GroupFrame
 from group_animation import GroupAnimation
 from plot_options import PColorPlotOptions, RadialPlotOptions, ScatterPlotOptions
 from scatter_2d import Scatter2D
@@ -54,23 +54,29 @@ class ArepoHelper(object):
 
         plot.save(filename)
 
-    def export_group_frames(self, ts, qs, os, plot_type, filename=None):
-
-        poa = self.apm.compute_plot_options_array(ts, qs, os, plot_type)
-        frames = GroupFrame(poa)
-        frames.save(filename)
+    # def export_group_frames(self, ts, qs, os, plot_type, filename=None):
+    #
+    #     poa = self.apm.compute_plot_options_array(ts, qs, os, plot_type)
+    #     frames = GroupFrame(poa)
+    #     frames.save(filename)
 
 
 if __name__ == "__main__":
 
     from names import n
 
-    ar = ArepoRun.from_directory("./snapshots")
-    aa = ArepoAnalyser(analysis_options={"inner_boxsize": 1e10})
+    ar = ArepoRun.from_directory("./data/singular_WD")
+    aa = ArepoAnalyser(analysis_options={"inner_boxsize": 5e9, "slice_wdith": 0.1})
     apm = PlotManager(ar, aa)
     ah = ArepoHelper(apm)
 
-    ah.export_frame(7, n.DENSITY, ["x", "y"], "PColor")
-    ah.export_animation([0, 45], n.DENSITY, ["x", "y"], "PColor")
-    ah.export_group_frames([7], [n.DENSITY, n.MASSES], [["x", "y"], ["x", "z"]], "PColor")
-    ah.export_group_animation([0, 9], [n.MASSES, n.MAGNETICFIELD], [["x", "y"], ["x", "z"]], "PColor")
+    for t in range(0, 24):
+        po = apm.compute_plot_options(t, n.TEMPERATURE, ["x", "y"], "PColor",
+                                      explicit_options={"log_cmap": True})
+        plot = PColorPlot(po)
+        plot.save(f"{t}.png")
+
+    # ah.export_frame(0, n.TEMPERATURE, ["x", "y"], "PColor")
+    # ah.export_animation([0, 45], n.DENSITY, ["x", "y"], "PColor")
+    # ah.export_group_frames([7], [n.DENSITY, n.MASSES], [["x", "y"], ["x", "z"]], "PColor")
+    # ah.export_group_animation([0, 9], [n.MASSES, n.MAGNETICFIELD], [["x", "y"], ["x", "z"]], "PColor")

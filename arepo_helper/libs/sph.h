@@ -1,30 +1,27 @@
 #ifndef SPH_H
 #define SPH_H
 
-#define min(x,y) ((x) < (y) ? (x) : (y))
-#define max(x,y) ((x) > (y) ? (x) : (y))
-
 #define NEIGHBOURTOLERANCE 1
 #define MAXITER 1000
 
 typedef struct {
-	double len;
-	double center[3];
-	int father;
-	int sibling;
-	int firstborn;
-	int son;
-	int sons[8];
-	int npart;
+    double len;
+    double center[3];
+    int father;
+    int sibling;
+    int firstborn;
+    int son;
+    int sons[8];
+    int npart;
 } t_sph_treenode;
 
 typedef struct {
-	int npart;
-	int maxnodes;
-	int nnodes;
-	int topnode;
-	int usednodes;
-	t_sph_treenode *nodes; /* stores the nodes */
+    int npart;
+    int maxnodes;
+    int nnodes;
+    int topnode;
+    int usednodes;
+    t_sph_treenode *nodes; /* stores the nodes */
 } t_sph_tree;
 
 int createTree( t_sph_tree *tree, int npart, double *pos );

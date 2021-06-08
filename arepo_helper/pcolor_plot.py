@@ -39,7 +39,6 @@ class PColorPlot(AbstractPlot):
             data = calcGrid.calcASlice(coords.astype('float64'),
                                        points.astype('float64'),
                                        res, res,
-                                       # ibs, ibs,
                                        ibsx, ibsy,
                                        *c,
                                        xc, yc,

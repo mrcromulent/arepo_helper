@@ -284,9 +284,7 @@ class WDECResults(object):
     """
 
     def convert_to_healpix(self, helm_table, species_file, boxsize, pmass,
-                           # makebox=False,
                            makebox=True,
-                           # minenergy=1e14,
                            minenergy=0.0,
                            boxfactor=10.0,
                            boxres=32,

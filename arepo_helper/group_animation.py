@@ -103,16 +103,14 @@ if __name__ == "__main__":
     from analysis import ArepoAnalyser
     from plot_manager import PlotManager
 
-    ar = ArepoRun.from_directory("./snapshots")
+    ar = ArepoRun.from_directory("/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/singular_WD")
     aa = ArepoAnalyser(analysis_options={"inner_boxsize": 5e9})
     apm = PlotManager(ar, analyser=aa)
 
     poa = np.transpose(np.array((
-        [apm.compute_plot_options(0, n.PRESSURE, ["x", "y"], "Radial", explicit_options={"logscale": True})],
-        [apm.compute_plot_options(0, n.PRESSURE, ["x", "y"], "Scatter", explicit_options={"log_cmap": True})],
-        [apm.compute_plot_options(0, n.PRESSURE, ["x", "y"], "PColor", explicit_options={"log_cmap": True})]
+        [apm.compute_plot_options(0, n.TEMPERATURE, ["x", "y"], "Scatter", explicit_options={"log_cmap": True, })]
     )))
 
-    test = GroupAnimation([0, 130], poa, apm)
+    test = GroupAnimation([0, 24], poa, apm)
     test.animate()
     test.save()
