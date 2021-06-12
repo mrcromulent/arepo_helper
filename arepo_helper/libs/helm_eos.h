@@ -121,7 +121,6 @@ int eos_calc_egiven( t_helm_eos_table* helm_eos_table, double rho, const double 
 int eos_calc_pgiven(t_helm_eos_table* helm_eos_table, double rho, const double xnuc[], double p, double *tempguess, struct eos_result *res);
 int eos_calc_egiven_y( t_helm_eos_table* helm_eos_table, double rho, const double y[], double e, double *tempguess, struct eos_result *res );
 int eos_calc_ptgiven( t_helm_eos_table* helm_eos_table, double p, const double xnuc[], double temp, double *rho, struct eos_result *res );
-
-int helm_eos_update_cache( t_helm_eos_table* helm_eos_table, double rho, double abar, double zbar, struct helm_eos_cache *cache );
+int helm_eos_update_cache(double rho, double abar, double zbar, struct helm_eos_cache *cache );
 
 #endif /* HELM_EOS_H */

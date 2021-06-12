@@ -15,6 +15,8 @@ from plot_options import PColorPlotOptions, RadialPlotOptions, ScatterPlotOption
 from scatter_2d import Scatter2D
 from radial_plot import RadialPlot
 from pcolor_plot import PColorPlot
+from snapshot import ArepoSnapshot
+import matplotlib.pyplot as plt
 
 
 class ArepoHelper(object):
@@ -62,21 +64,4 @@ class ArepoHelper(object):
 
 
 if __name__ == "__main__":
-
-    from names import n
-
-    ar = ArepoRun.from_directory("./data/singular_WD")
-    aa = ArepoAnalyser(analysis_options={"inner_boxsize": 5e9, "slice_wdith": 0.1})
-    apm = PlotManager(ar, aa)
-    ah = ArepoHelper(apm)
-
-    for t in range(0, 24):
-        po = apm.compute_plot_options(t, n.TEMPERATURE, ["x", "y"], "PColor",
-                                      explicit_options={"log_cmap": True})
-        plot = PColorPlot(po)
-        plot.save(f"{t}.png")
-
-    # ah.export_frame(0, n.TEMPERATURE, ["x", "y"], "PColor")
-    # ah.export_animation([0, 45], n.DENSITY, ["x", "y"], "PColor")
-    # ah.export_group_frames([7], [n.DENSITY, n.MASSES], [["x", "y"], ["x", "z"]], "PColor")
-    # ah.export_group_animation([0, 9], [n.MASSES, n.MAGNETICFIELD], [["x", "y"], ["x", "z"]], "PColor")
+    pass

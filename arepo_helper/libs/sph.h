@@ -24,6 +24,7 @@ typedef struct {
     t_sph_treenode *nodes; /* stores the nodes */
 } t_sph_tree;
 
+void _sphgetkernel(double h, double r, double *wk, double *dwk);
 int createTree( t_sph_tree *tree, int npart, double *pos );
 void initTree( t_sph_tree *tree, int npart, int maxnodes );
 void freeTree( t_sph_tree *tree );

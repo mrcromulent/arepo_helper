@@ -23,8 +23,7 @@ class Coordinates:
 common_snapbases = ["snapshot", "snap", "sh"]
 valid_orientations = [["x", "y"], ["x", "z"], ["y", "z"]]
 default_cmap = "viridis"
-plot_quantities = [n.DENSITY, n.TEMPERATURE, n.PRESSURE, n.MASSES, n.MAGNETICFIELD]
-# plot_quantities = [n.DENSITY]
+plot_quantities = [n.DENSITY, n.PRESSURE, n.MASSES, n.INTERNALENERGY]
 
 header_default = {h.NUMPARTTHISFILE: np.zeros(6, dtype=np.int32),
                   h.NUMPARTTOTAL: np.zeros(6, dtype=np.int32),
