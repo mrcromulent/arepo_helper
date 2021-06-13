@@ -8,22 +8,6 @@
 #include "helm_eos.h"
 #include "const.h"
 
-#define NDEBUG
-#ifndef HELM_EOS_MAXITER
-#define HELM_EOS_MAXITER 100
-#endif // HELM_EOS_MAXITER
-
-#ifndef HELM_EOS_EPS
-#define HELM_EOS_EPS 1.0e-10
-#endif // HELM_EOS_EPS
-
-// internal functions
-#ifndef _GNU_SOURCE
-static inline double exp10(double x) {
-  return exp(log(10) * x);
-}
-#endif // _GNU_SOURCE
-
 
 // quintic hermite polynomials
 
@@ -920,7 +904,6 @@ int eos_calc_egiven(t_helm_eos_table* helm_eos_table, double rho, const double x
         have_to_free = true;
     }
 
-//    _tempold = 0.0;
     for (iter = 0; iter < HELM_EOS_MAXITER; iter++) {
         /* update only energy on res */
         if (eos_calc_tgiven_azbar(helm_eos_table, rho, &cache, _temp, res, 1) != 0) return -1;

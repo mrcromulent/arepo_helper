@@ -3,7 +3,6 @@
 #include <arrayobject.h>
 
 #include "make_radial.h"
-#include "make_wdec.h"
 
 
 bool inside_cylinder(const arma::vec& A, const arma::vec& B, const arma::vec& P, double radius, arma::vec& Q) {
@@ -30,35 +29,17 @@ bool inside_cylinder(const arma::vec& A, const arma::vec& B, const arma::vec& P,
 
 }
 
-PyObject * make_radial_check_inputs(PyObject *args,
-                                    PyArrayObject *pos, PyArrayObject *data,
-                                    int nshells) {
-
-    if (!PyArg_ParseTuple(args, "O!O!i:make_radial(pos, data, nshells)",
-                                     &PyArray_Type, &pos, &PyArray_Type, &data, &nshells)) {
-        return nullptr;
-    }
-
-    if (PyArray_NDIM(pos) != 2 || PyArray_DIMS(pos)[1] != 3 || PyArray_TYPE(pos) != NPY_DOUBLE) {
-        PyErr_SetString(PyExc_ValueError, "pos has to be of dimensions [n,3] and type double");
-        return nullptr;
-    }
-
-    if (PyArray_NDIM(data) != 1 || PyArray_TYPE(data) != NPY_DOUBLE) {
-        PyErr_SetString(PyExc_ValueError, "data has to be of dimension [n] and type double");
-        return nullptr;
-    }
-    return args;
-}
-
-//PyObject *make_radial(PyArrayObject *pos, PyArrayObject *data) {
 PyObject *make_radial(PyObject *self, PyObject *args) {
 
-    PyArrayObject *pos, *data;
+    PyArrayObject *pos, *quant, *a, *b;
+    double cylinder_radius;
     int nshells = 0;
 
-    if (!PyArg_ParseTuple(args, "O!O!i:make_radial(pos, data, nshells)",
-                          &PyArray_Type, &pos, &PyArray_Type, &data, &nshells)) {
+    if (!PyArg_ParseTuple(args, "O!O!O!O!di:make_radial(pos, quant, a, b, cylinder_radius, nshells)",
+                          &PyArray_Type, &pos, &PyArray_Type, &quant,
+                          &PyArray_Type, &a, &PyArray_Type, &b,
+                          &cylinder_radius,
+                          &nshells)) {
         return nullptr;
     }
 
@@ -67,28 +48,22 @@ PyObject *make_radial(PyObject *self, PyObject *args) {
         return nullptr;
     }
 
-    if (PyArray_NDIM(data) != 1 || PyArray_TYPE(data) != NPY_DOUBLE) {
-        PyErr_SetString(PyExc_ValueError, "data has to be of dimension [n] and type double");
+    if (PyArray_NDIM(quant) != 1 || PyArray_TYPE(quant) != NPY_DOUBLE) {
+        PyErr_SetString(PyExc_ValueError, "quant has to be of dimension [n] and type double");
         return nullptr;
     }
 
-    auto pyProfile = make_radial_implementation(pos, data, nshells);
-
-    auto value_data = (double *) PyArray_DATA(pyProfile);
-    for (int i = 0; i < nshells; i++) {
-        std::cout << value_data[i] << " ";
-    }
-    std::cout << std::endl;
-    for (int i = 0; i < nshells; i++) {
-        std::cout << value_data[nshells + i] << " ";
-    }
-    std::cout << std::endl;
+    auto pyProfile = make_radial_implementation(pos, quant, a, b, cylinder_radius, nshells);
 
     return PyArray_Return(pyProfile);
 }
 
-PyArrayObject *make_radial_implementation(PyArrayObject *pos, PyArrayObject *data, int nshells) {
-    int npart = PyArray_DIMS(pos)[0];
+PyArrayObject *make_radial_implementation(PyArrayObject *pos,
+                                          PyArrayObject *quant,
+                                          PyArrayObject *a,
+                                          PyArrayObject *b,
+                                          double cylinder_radius,
+                                          int nshells) {
 
     // Guards against segfaults
     if(PyArray_API == nullptr) {
@@ -99,28 +74,28 @@ PyArrayObject *make_radial_implementation(PyArrayObject *pos, PyArrayObject *dat
     npy_intp dims[2] = {2, nshells};
     auto pyProfile = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
-    std::cout << "made py profile" << "\n";
-    auto data_pos = (double *) PyArray_DATA(pos);
-    std::cout << "got data_pos" << "\n";
-    auto data_data = (double *) PyArray_DATA(data);
-    std::cout << "got data_data" << "\n";
+    int npart   = PyArray_DIMS(pos)[0];
+    double a_x  = * (double *) ((char *) PyArray_DATA(a) + 0 * PyArray_STRIDES(a)[0]);
+    double a_y  = * (double *) ((char *) PyArray_DATA(a) + 1 * PyArray_STRIDES(a)[0]);
+    double a_z  = * (double *) ((char *) PyArray_DATA(a) + 2 * PyArray_STRIDES(a)[0]);
+    double b_x  = * (double *) ((char *) PyArray_DATA(b) + 0 * PyArray_STRIDES(a)[0]);
+    double b_y  = * (double *) ((char *) PyArray_DATA(b) + 1 * PyArray_STRIDES(a)[0]);
+    double b_z  = * (double *) ((char *) PyArray_DATA(b) + 2 * PyArray_STRIDES(a)[0]);
 
-    std::cout << "got npart" << "\n";
+    auto data_pos = (double *) PyArray_DATA(pos);
+    auto data_data = (double *) PyArray_DATA(quant);
 
     // Start the clock
     clock_t start = clock();
-
-    std::cout << "clock started" << "\n";
 
     auto count = (int *) malloc(nshells * sizeof(int));
     auto profile = (double *) PyArray_DATA(pyProfile);
     memset(profile, 0, 2 * nshells * sizeof(double));
     memset(count, 0, nshells * sizeof(int));
 
-    double boxsize = 1e10;
-    double cylinder_r = 0.01 * boxsize;
-    arma::vec A = {boxsize/2, boxsize/2, boxsize/2};
-    arma::vec B = {boxsize, boxsize/2, boxsize/2};
+    // A and B denote the 3-vector endpoints of the cylinder axis
+    arma::vec A = {a_x, a_y, a_z};
+    arma::vec B = {b_x, b_y, b_z};
     double d_total = arma::norm(B - A);
 
     arma::vec Q;
@@ -128,10 +103,8 @@ PyArrayObject *make_radial_implementation(PyArrayObject *pos, PyArrayObject *dat
     double px, py, pz, d_i;
     bool inside;
 
-    std::cout << "d_total = " << d_total << std::endl;
-
     data_pos = (double *) PyArray_DATA(pos);
-    data_data = (double *) PyArray_DATA(data);
+    data_data = (double *) PyArray_DATA(quant);
 
 
     for (int part = 0; part < npart; part++) {
@@ -143,26 +116,28 @@ PyArrayObject *make_radial_implementation(PyArrayObject *pos, PyArrayObject *dat
         data_pos = (double *) ((char *) data_pos - 2 * PyArray_STRIDES(pos)[1] + PyArray_STRIDES(pos)[0]);
 
         auto d = *data_data;
-        data_data = (double *) ((char *) data_data + PyArray_STRIDES(data)[0]);
+        data_data = (double *) ((char *) data_data + PyArray_STRIDES(quant)[0]);
 
         P = {px, py, pz};
 
-        inside = inside_cylinder(A, B, P, cylinder_r, Q);
+        inside = inside_cylinder(A, B, P, cylinder_radius, Q);
 
+        // Add a contribution for every point within the cylinder
         if (inside) {
-//            std::cout << "Just about to perform subtraction" << "\n";
             d_i = arma::norm(Q - A);
 
             int shell = floor(d_i / d_total * nshells);
-//            std::cout << shell << std::endl;
             profile[shell]  += d;
             count[shell]    += 1;
         }
     }
 
     for (int shell = 0; shell < nshells; shell++) {
+
+        // Record the radius of the shell
         profile[nshells + shell] = (double) shell / (double) nshells * d_total;
 
+        // Divide the sum by the count to obtain the average
         if (count[shell] > 0) {
             profile[shell] = profile[shell] / count[shell];
         }
@@ -185,7 +160,7 @@ static PyMethodDef radial_methods[] = {
 
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
-        "radial_pierre",
+        "arepo_radial",
         nullptr,
         -1,
         radial_methods,
@@ -195,7 +170,7 @@ static struct PyModuleDef moduledef = {
         nullptr,
 };
 
-PyMODINIT_FUNC PyInit_radial_pierre(void) {
+PyMODINIT_FUNC PyInit_arepo_radial(void) {
     import_array();
 
     return PyModule_Create(&moduledef);

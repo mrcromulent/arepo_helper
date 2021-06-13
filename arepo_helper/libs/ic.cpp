@@ -9,14 +9,13 @@
 #include "helm_eos.h"
 #include "pyhelm_eos.h"
 #include <gsl/gsl_errno.h>
-//#include <gsl/gsl_matrix.h>
 #include <gsl/gsl_odeiv.h>
 
 #include "ic.h"
 #include "const.h"
 #include "utils.h"
 
-int createWDIntegrator( double r, const double y[], double f[], void *params)
+int create_wd_integrator(double r, const double *y, double *f, void *params)
 {
     double temp = ((struct paramsWD*)params)->temp;
     double *xnuc = ((struct paramsWD*)params)->xnuc;
@@ -36,266 +35,370 @@ int createWDIntegrator( double r, const double y[], double f[], void *params)
     return GSL_SUCCESS;
 }
 
-PyObject* _createWhiteDwarf(PyObject *self, PyObject *args, PyObject *kwargs) {
-    double rho0, temp; /* central density and temperature */
-    double xHe4, xC12, xO16, xNe20, xMg24; /* mass fractions */
-    double tol;
-    t_helm_eos_table *eos;
-    double *r, *p, *e, *rho, *dm, *csnd;
-    int i, arraylen, count;
-    PyObject* dict;
+PyObject *create_wd_implementation(t_helm_eos_table *eos,
+                                   double rho_c,
+                                   double temp_c,
+                                   PyArrayObject *xnuc_py,
+                                   double tolerance) {
+
+
+    int max_profile_length  = 0x7FFFFFFF;
+    double rho_cutoff       = 1e-5;
+    double r_cutoff         = 1e10;
+    double r_c              = 1e2;
+    double r_c_deriv        = 1e3;
+    int count               = 0;
+
+    auto xnuc = (double *) PyArray_DATA(xnuc_py);
+
+    // Initialise the profile primitive variable containers
+    auto r = (double * ) malloc( max_profile_length * sizeof(double) );
+    auto p = (double * ) malloc( max_profile_length * sizeof(double) );
+    auto u = (double * ) malloc(max_profile_length * sizeof(double) );
+    auto rho = (double * ) malloc( max_profile_length * sizeof(double) );
+    auto dm = (double * ) malloc( max_profile_length * sizeof(double) );
+    auto mr = (double * ) malloc( max_profile_length * sizeof(double) );
+    auto csnd = (double * ) malloc( max_profile_length * sizeof(double) );
+
+    // Find the state in the centre
     struct eos_result res{};
+    eos_calc_tgiven(eos, rho_c, xnuc, temp_c, &res );
+    double initial_mass = rho_c * 4.0 / 3.0 * M_PI * r_c * r_c * r_c;
+    dm[0]               = initial_mass;
+    mr[0]               = initial_mass;
+    rho[0]              = rho_c;
+    r[0]                = r_c;
+    p[0]                = res.p.v;
+    u[0]                = res.e.v;
+    csnd[0]             = res.sound;
+    count++;
 
-    const char *kwlist[] = { "eos", "rho0", "temp", "xHe4", "xC12", "xO16", "xNe20", "xMg24", "tol", nullptr };
-    auto keywords = (char **) kwlist;
+    // Initialise the ODE solver
+    struct paramsWD params {.temp = temp_c, .xnuc = xnuc, .eos = eos, .rho = rho_c};
+    const gsl_odeiv_step_type * T   = gsl_odeiv_step_rkf45;
+    gsl_odeiv_step * s              = gsl_odeiv_step_alloc (T, 2);
+    gsl_odeiv_control * c           = gsl_odeiv_control_y_new (0.0, tolerance);
+    gsl_odeiv_evolve * ev           = gsl_odeiv_evolve_alloc (2);
+    gsl_odeiv_system sys            = {create_wd_integrator, nullptr, 2, &params};
 
-    tol = 1e-6;
-    temp = 5e5;
-    xHe4 = xC12 = xO16 = xNe20 = xMg24 = 0.;
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&d|ddddddd:create_wd( eos, rho0, [temp, xHe4, xC12, xO16, xNe20, xMg24, tol] )", keywords, &pyConvertHelmEos, &eos, &rho0, &temp,
-                                     &xHe4, &xC12, &xO16, &xNe20, &xMg24, &tol )) {
-        return nullptr;
-    }
+    // Pressure and total mass within radius r
+    double y[2]     = {p[0], 0.0};
+    double rad      = r_c;
+    double drad     = r_c_deriv;
+    bool success    = true;
 
-    arraylen = 0x10000;
-    r = (double*)malloc( arraylen * sizeof(double) );
-    p = (double*)malloc( arraylen * sizeof(double) );
-    e = (double*)malloc( arraylen * sizeof(double) );
-    rho = (double*)malloc( arraylen * sizeof(double) );
-    dm = (double*)malloc( arraylen * sizeof(double) );
-    csnd = (double*)malloc( arraylen * sizeof(double) );
+    while (rho[count - 1] > rho_cutoff && rad < r_cutoff && count < max_profile_length) {
 
-    double xtot = xHe4 + xC12 + xO16 + xNe20 + xMg24;
-    printf("Abundances: He4=%g, C12=%g O16=%g Ne20=%g, Mg24=%g, sum=%g.\n", xHe4, xC12, xO16, xNe20, xMg24, xtot );
-    if(fabs(xtot-1.0) > 1e-14)
-    {
-        PyErr_SetString( PyExc_ValueError, "Inconsistent Abundances.\n" );
-        return nullptr;
-    }
+        int evolution_status = gsl_odeiv_evolve_apply(ev, c, s, &sys, &rad, 1e10, &drad, y);
 
-    double xnuc[eos->nspecies];
-    for(i = 0; i < eos->nspecies; i++)
-    {
-        xnuc[i] = 0.;
-        if(eos->nz[i] == 2 && eos->na[i] == 4) xnuc[i] = xHe4;
-        if(eos->nz[i] == 6 && eos->na[i] == 12) xnuc[i] = xC12;
-        if(eos->nz[i] == 8 && eos->na[i] == 16) xnuc[i] = xO16;
-        if(eos->nz[i] == 10 && eos->na[i] == 20) xnuc[i] = xNe20;
-        if(eos->nz[i] == 12 && eos->na[i] == 24) xnuc[i] = xMg24;
-    }
-
-    eos_calc_tgiven( eos, rho0, xnuc, temp, &res );
-    rho[0] = rho0;
-    r[0] = 1e2;
-    p[0] = res.p.v;
-    e[0] = res.e.v;
-    dm[0] = rho0 * 4. / 3. * M_PI * r[0] * r[0] * r[0];
-    csnd[0] = res.sound;
-    count = 1;
-
-    double y[2];
-    y[0] = p[0];
-    y[1] = 0.;
-
-    struct paramsWD params {};
-    params.temp = temp;
-    params.xnuc = xnuc;
-    params.eos = eos;
-    params.rho = rho0;
-
-    const gsl_odeiv_step_type * T = gsl_odeiv_step_rkf45;
-    gsl_odeiv_step * s = gsl_odeiv_step_alloc (T, 2);
-    gsl_odeiv_control * c = gsl_odeiv_control_y_new (0.0, tol);
-    gsl_odeiv_evolve * ev = gsl_odeiv_evolve_alloc (2);
-    gsl_odeiv_system sys = {createWDIntegrator, nullptr, 2, &params};
-
-    double mass = dm[0];
-    double rad = 1e2;
-    double drad = 1e3;
-    while (rho[count-1] > 1e-5 && rad < 1e10)
-    {
-        int status = gsl_odeiv_evolve_apply(ev, c, s, &sys, &rad, 1e10, &drad, y);
-
-        if (status != GSL_SUCCESS)
-        {
-            PyErr_SetString( PyExc_ValueError, "ODE Solver failed.\n" );
-            return nullptr;
+        // Quit the loop early if evolution failed
+        if (evolution_status != GSL_SUCCESS || y[0] < 0.0) {
+            success = false;
+            break;
         }
 
-        /* increase arraylen if necessary */
-        if (count == arraylen) {
-            rho = resize( rho, arraylen, 2*arraylen );
-            r = resize( r, arraylen, 2*arraylen );
-            p = resize( p, arraylen, 2*arraylen );
-            e = resize( e, arraylen, 2*arraylen );
-            dm = resize( dm, arraylen, 2*arraylen );
-            csnd = resize( csnd, arraylen, 2*arraylen );
-            arraylen *= 2;
-        }
-
-        if(y[0] <= 0.)
-            break;
-
-        rho[count] = rho[count-1];
-        if(rho[count] < 1e-5)
-            break;
-
-        eos_calc_ptgiven( eos, y[0], xnuc, temp, &rho[count], &res );
-        r[count] = rad;
-        p[count] = y[0];
-        e[count] = res.e.v;
-        dm[count] = y[1] - mass;
+        // Compute the new values of the primitive quantities
+        rho[count]  = rho[count-1];
+        eos_calc_ptgiven(eos, y[0], xnuc, temp_c, &rho[count], &res);
+        r[count]    = rad;
+        p[count]    = y[0];
+        u[count]    = res.e.v;
         csnd[count] = res.sound;
-        mass = y[1];
+        mr[count]   = y[1];
+        dm[count]   = y[1] - mr[count - 1];
         count++;
     }
 
-    dict = PyDict_New();
-    PyDict_SetStolenItem( dict, "rho", (PyObject*)createPyArray( rho, count ) );
-    PyDict_SetStolenItem( dict, "u", (PyObject*)createPyArray( e, count ) );
-    PyDict_SetStolenItem( dict, "p", (PyObject*)createPyArray( p, count ) );
-    PyDict_SetStolenItem( dict, "r", (PyObject*)createPyArray( r, count ) );
-    PyDict_SetStolenItem( dict, "dm", (PyObject*)createPyArray( dm, count ) );
-    PyDict_SetStolenItem( dict, "csnd", (PyObject*)createPyArray( csnd, count ) );
-    PyDict_SetStolenItem( dict, "ncells", (PyObject*)PyLong_FromLong( count ) );
+    // Free all unused space
+    r = (double * ) realloc(r, count * sizeof(double) );
+    p = (double * ) realloc(p, count * sizeof(double) );
+    u = (double * ) realloc(u, count * sizeof(double) );
+    rho = (double * ) realloc(rho, count * sizeof(double) );
+    dm = (double * ) realloc(dm, count * sizeof(double) );
+    mr = (double * ) realloc(mr, count * sizeof(double) );
+    csnd = (double * ) realloc(csnd, count * sizeof(double) );
 
-    free( r );
-    free( p );
-    free( e );
-    free( rho );
-    free( dm );
-    free( csnd );
+    PyObject* dict = PyDict_New();
+    PyDict_SetStolenItem( dict, "rho", (PyObject *) createPyArray(rho, count));
+    PyDict_SetStolenItem( dict, "u", (PyObject *) createPyArray(u, count));
+    PyDict_SetStolenItem( dict, "p", (PyObject *) createPyArray(p, count));
+    PyDict_SetStolenItem( dict, "r", (PyObject *) createPyArray(r, count));
+    PyDict_SetStolenItem( dict, "dm", (PyObject *) createPyArray(dm, count));
+    PyDict_SetStolenItem( dict, "mr", (PyObject *) createPyArray(mr, count));
+    PyDict_SetStolenItem( dict, "csnd", (PyObject *) createPyArray(csnd, count));
+    PyDict_SetStolenItem( dict, "count", (PyObject *) PyLong_FromLong(count));
+
+    free(r);
+    free(p);
+    free(u);
+    free(rho);
+    free(dm);
+    free(mr);
+    free(csnd);
 
     gsl_odeiv_evolve_free(ev);
     gsl_odeiv_control_free(c);
     gsl_odeiv_step_free(s);
 
+    if (success) {
+        return dict;
+    } else {
+        return nullptr;
+    }
+
+}
+
+PyObject *create_polytrope_implementation(t_helm_eos_table *eos,
+                                          double n,
+                                          double rho_c,
+                                          PyArrayObject *xnuc_py,
+                                          double pres_c,
+                                          double temp_c,
+                                          double dr) {
+
+    int max_profile_length  = 0x7FFFFFFF;
+    double density_cutoff   = 1.0e-3;
+    auto xnuc               = (double *) PyArray_DATA(xnuc_py);
+
+    // Allocate memory for profiles
+    auto r      = (double *) malloc( max_profile_length * sizeof(double) );
+    auto rho    = (double *) malloc( max_profile_length * sizeof(double) );
+    auto p      = (double *) malloc( max_profile_length * sizeof(double) );
+    auto u      = (double *) malloc(max_profile_length * sizeof(double) );
+    auto dm     = (double *) malloc( max_profile_length * sizeof(double) );
+    auto mr     = (double *) malloc( max_profile_length * sizeof(double) );
+
+    // Find the state in the center
+    struct eos_result res{};
+    double temp;
+
+    if (pres_c == 0.0) {
+        temp = temp_c;
+        eos_calc_tgiven(eos, rho_c, xnuc, temp, &res);
+        p[0] = res.p.v;
+    } else {
+        temp = -1.0;
+        eos_calc_pgiven(eos, rho_c, xnuc, pres_c, &temp, &res);
+        p[0] = pres_c;
+    }
+
+    rho[0]  = rho_c;
+    u[0]    = res.e.v;
+    dm[0]   = 0.0;
+    r[0]    = 0.0;
+
+    // Find the power law constant K and display info
+    double gamma            = (n + 1.0) / n;
+    double one_over_gamma   = 1.0 / gamma;
+    double K                = p[0] / pow(rho[0], gamma);
+    printf("Central density: %g\n", rho[0]);
+    printf("Central temperature: %g\n", temp);
+    printf("Polytropic index: %g\n", n);
+    printf("Polytropic constant: %g\n", K);
+
+    // Fill in further profile points using dpdr and eos_calc_pgiven
+    int i = 1;
+    double mass = 0;
+    double rad = 0;
+    double dpdr, density_av, shell_volume, r_squared;
+
+    while (i < max_profile_length && rho[i - 1] > density_cutoff) {
+
+        rad         += dr;
+        r[i]        = rad;
+        r_squared   = std::max(r[i - 1] * r[i - 1], 0.1);
+
+        dpdr        = -G * mass * rho[i - 1] / r_squared;
+        p[i]        = p[i-1] + dr * dpdr;
+        rho[i]      = pow(p[i] / K, one_over_gamma);
+
+
+        eos_calc_pgiven(eos, rho[i], xnuc, p[i], &temp, &res);
+        u[i] = res.e.v;
+
+        density_av      = 0.5 * (rho[i-1] + rho[i]);
+        shell_volume    = 4.0 * M_PI * pow((rad - 0.5 * dr), 2.0) * dr;
+        dm[i] = density_av * shell_volume;
+        mass += dm[i];
+        mr[i] = mass;
+
+        i++;
+    }
+
+    // Free unused memory
+    r      = (double *) realloc(r, i * sizeof(double));
+    rho    = (double *) realloc(rho, i * sizeof(double));
+    p      = (double *) realloc(p, i * sizeof(double));
+    u      = (double *) realloc(u, i * sizeof(double));
+    dm     = (double *) realloc(dm, i * sizeof(double));
+    mr     = (double *) realloc(mr, i * sizeof(double));
+
+    // Write profiles to Python dict and free all other memory
+    auto dict = PyDict_New();
+    PyDict_SetStolenItem( dict, "r", (PyObject*)createPyArray(r, i));
+    PyDict_SetStolenItem( dict, "rho", (PyObject*)createPyArray(rho, i));
+    PyDict_SetStolenItem( dict, "u", (PyObject*)createPyArray(u, i));
+    PyDict_SetStolenItem( dict, "p", (PyObject*)createPyArray(p, i));
+    PyDict_SetStolenItem( dict, "dm", (PyObject*)createPyArray(dm, i));
+    PyDict_SetStolenItem( dict, "mr", (PyObject*)createPyArray(mr, i));
+    PyDict_SetStolenItem( dict, "count", (PyObject*)PyLong_FromLong(i));
+
+    free(r);
+    free(rho);
+    free(dm);
+    free(mr);
+    free(p);
+    free(u);
+
     return dict;
 }
 
-PyObject* _createPolytrope(PyObject *self, PyObject *args, PyObject *kwargs) {
-    t_helm_eos_table *helm_eos_table;
-    double rho0, pres0, temp0, K, dr;
-    int maxiter;
-    PyArrayObject *pyXnuc;
-    double *xnuc, n, fac, ifac;
-    double *rho, *p, *e, *dm, *r;
-    double rad, mass, dpdr, temp;
-    long arraylen;
-    int i, j;
-    PyObject* dict;
-    struct eos_result res{};
+PyObject *create_wd_wdec_implementation(const char *wdec_dir) {
 
-    const char *kwlist[] = { "eos", "n", "rho0", "composition", "pres0", "temp0", "dr", "maxiter", nullptr };
+    auto wd_results = WdecResults(wdec_dir);
+    double gamma = 5.0 / 3.0;
+
+    int npoints = wd_results.n_points;
+    auto r     = convert_to_double_star(wd_results.radii, 1);
+    auto mr    = convert_to_double_star(wd_results.mr, 1);
+    auto temp  = convert_to_double_star(wd_results.temp, 1);
+    auto rho   = convert_to_double_star(wd_results.density, 1);
+    auto p     = convert_to_double_star(wd_results.pres, 1);
+    auto xo    = convert_to_double_star(wd_results.xo, 1);
+    auto xc    = convert_to_double_star(wd_results.xc, 1);
+
+    std::vector<double> u_vec;
+    u_vec.reserve(npoints);
+    for (int i = 0; i < npoints; i++) {
+        u_vec.push_back(p[i] / (rho[i] * (gamma - 1)));
+    }
+    auto u = convert_to_double_star(u_vec, 1);
+
+    double mtot = mr[npoints - 1];
+    printf("Total mass: %g solar masses\n", mtot / msol);
+
+
+    auto dict = PyDict_New();
+    PyDict_SetStolenItem(dict, "r", (PyObject*) createPyArray(r, npoints));
+    PyDict_SetStolenItem(dict, "rho", (PyObject*) createPyArray(rho, npoints));
+    PyDict_SetStolenItem(dict, "temp", (PyObject*) createPyArray(temp, npoints));
+    PyDict_SetStolenItem(dict, "u", (PyObject*) createPyArray(u, npoints));
+    PyDict_SetStolenItem(dict, "p", (PyObject*) createPyArray(p, npoints));
+    PyDict_SetStolenItem(dict, "mr", (PyObject*) createPyArray(mr, npoints));
+    PyDict_SetStolenItem(dict, "xc", (PyObject*) createPyArray(xc, npoints));
+    PyDict_SetStolenItem(dict, "xo", (PyObject*) createPyArray(xo, npoints));
+    PyDict_SetStolenItem(dict, "count", (PyObject*) PyLong_FromLong(npoints));
+
+    return dict;
+
+}
+
+PyObject *create_wd(PyObject *self, PyObject *args, PyObject *kwargs) {
+    t_helm_eos_table *eos;
+    double rho_c;
+    double temp_c           = 5e5;
+    double tolerance        = 1e-6;
+    double xnuc_tolerance   = 1e-14;
+    double xtot             = 0.0;
+    PyArrayObject *xnuc_py;
+
+    const char *kwlist[] = {"eos", "rho_c", "temp_c", "xnuc_py", "tolerance", nullptr};
     auto keywords = (char **) kwlist;
 
-    maxiter = 20;
-    dr = 1e5;
-    pres0 = 0.;
-    temp0 = 0.;
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&ddO!|dddi:create_polytrope( eos, n, rho0, composition, [pres0, temp0, dr, maxiter] )", keywords, &pyConvertHelmEos, &helm_eos_table, &n, &rho0, &PyArray_Type, &pyXnuc, &pres0, &temp0, &dr, &maxiter )) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                                     "O&d|ddddddd:create_wd("
+                                     "eos, rho_c, "
+                                     "[temp_c, "
+                                     "xnuc_py, "
+                                     "tolerance])",
+                                     keywords,
+                                     &pyConvertHelmEos, &eos,
+                                     &rho_c, &temp_c,
+                                     &PyArray_Type, &xnuc_py,
+                                     &tolerance )) {
         return nullptr;
     }
 
-    xnuc = (double*)PyArray_DATA(pyXnuc);
-
-    arraylen = 0x10000;
-    rho = (double*)malloc( arraylen * sizeof(double) );
-    p = (double*)malloc( arraylen * sizeof(double) );
-    e = (double*)malloc( arraylen * sizeof(double) );
-    dm = (double*)malloc( arraylen * sizeof(double) );
-
-    fac = (n+1.) / n;
-    ifac = 1. / fac;
-
-    rho[0] = rho0;
-    dm[0] = 0.0;
-
-    temp = -1.;
-    if (pres0 > 0) {
-        p[0] = pres0;
-        eos_calc_pgiven( helm_eos_table, rho[0], xnuc, p[0], &temp, &res );
-        e[0] = res.e.v;
-        K = p[0] / pow( rho[0], fac );
-    } else if (temp0 > 0) {
-        temp = temp0;
-        eos_calc_tgiven( helm_eos_table, rho[0], xnuc, temp, &res );
-        p[0] = res.p.v;
-        e[0] = res.e.v;
-        K = p[0] / pow( rho[0], fac );
-    } else {
-        PyErr_SetString( PyExc_ValueError, "pres0 or temp0 have to be set.\n" );
+    if (PyArray_DIMS(xnuc_py)[1] != eos->nspecies) {
+        PyErr_SetString( PyExc_ValueError, "Nspecies mismatch between EOS and xnuc_py. \n" );
         return nullptr;
     }
 
-    printf( "Central density: %g\n", rho[0] );
-    printf( "Central temperature: %g\n", temp );
-    printf( "Polytropic index: %g\n", n );
-    printf( "Polytropic constant: %g\n", K );
-
-    mass = 0;
-    rad = 0;
-    i = 1;
-
-    /* stop loop in case of integer overflow */
-    while (i < 0x7FFFFFFF) {
-        dpdr = -G*mass*rho[i-1] / std::max( rad*rad, 0.1 );
-        rad += dr;
-        p[i] = p[i-1] + dr*dpdr;
-        rho[i] = pow( p[i] / K, ifac );
-
-        eos_calc_pgiven( helm_eos_table, rho[i], xnuc, p[i], &temp, &res );
-        e[i] = res.e.v;
-
-        dm[i] = 0.5 * (rho[i-1]+rho[i]) * 4.0 * M_PI * pow( (rad-0.5*dr), 2.0 ) * dr;
-        mass += dm[i];
-
-        if (rho[i] < 1.0e-3) {
-            printf( "EXIT: %g %g\n", rho[i], rad );
-            break;
-        }
-
-        i++;
-
-        if (i == arraylen) {
-            auto curr_length    = (int) arraylen;
-            auto new_length     = static_cast<int>(2*arraylen);
-
-            rho = resize(rho, curr_length, new_length);
-            p = resize(p, curr_length, new_length);
-            e = resize(e, curr_length, new_length);
-            dm = resize(dm, curr_length, new_length);
-            arraylen *= 2;
-        }
+    auto xnuc   = (double *) PyArray_DATA(xnuc_py);
+    for (int i = 0; eos->nspecies; i++) {
+        xtot += xnuc[i];
     }
 
-    r = (double*)malloc( i * sizeof(double) );
-    for (j=0; j<i; j++) {
-        r[j] = dr*j;
+    if(fabs(xtot - 1.0) > xnuc_tolerance)
+    {
+        PyErr_SetString( PyExc_ValueError, "Inconsistent Abundances. \n" );
+        return nullptr;
     }
 
-    dict = PyDict_New();
-    PyDict_SetStolenItem( dict, "rho", (PyObject*)createPyArray( rho, i ) );
-    PyDict_SetStolenItem( dict, "u", (PyObject*)createPyArray( e, i ) );
-    PyDict_SetStolenItem( dict, "p", (PyObject*)createPyArray( p, i ) );
-    PyDict_SetStolenItem( dict, "dm", (PyObject*)createPyArray( dm, i ) );
-    PyDict_SetStolenItem( dict, "r", (PyObject*)createPyArray( r, i ) );
-    PyDict_SetStolenItem( dict, "ncells", (PyObject*)PyLong_FromLong( i ) );
-    PyDict_SetStolenItem( dict, "dr", (PyObject*)PyFloat_FromDouble( dr ) );
+    auto dict = create_wd_implementation(eos, rho_c, temp_c, xnuc_py, tolerance);
 
-    free( r );
-    free( dm );
-    free( p );
-    free( e );
-    free( rho );
+    if (dict == nullptr) {
+    PyErr_SetString(PyExc_ValueError, "ODE Solver failed.\n");
+    return nullptr;
+    }
 
+
+    return dict;
+}
+
+PyObject *create_polytrope(PyObject *self, PyObject *args, PyObject *kwargs) {
+    t_helm_eos_table *eos;
+    double rho_c;
+    double n;
+    double pres_c = 0.0;
+    double temp_c = 0.0;
+    double dr = 1e5;
+    PyArrayObject *xnuc_py;
+
+    const char *kwlist[] = { "eos", "n", "rho_c", "composition", "pres_c", "temp_c", "dr", nullptr };
+    auto keywords = (char **) kwlist;
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                                     "O&ddO!|dddi:create_polytrope( eos, n, rho_c, composition, [pres_c, temp_c, dr] )",
+                                     keywords,
+                                     &pyConvertHelmEos, &eos,
+                                     &n, &rho_c,
+                                     &PyArray_Type, &xnuc_py,
+                                     &pres_c, &temp_c, &dr)) {
+        return nullptr;
+    }
+
+    if (PyArray_DIMS(xnuc_py)[1] != eos->nspecies) {
+        PyErr_SetString( PyExc_ValueError, "Nspecies mismatch between EOS and xnuc_py. \n" );
+        return nullptr;
+    }
+
+    if (pres_c == 0.0 && temp_c == 0.0) {
+        PyErr_SetString( PyExc_ValueError, "pres_c or temp_c have to be set.\n" );
+        return nullptr;
+    }
+
+    auto dict = create_polytrope_implementation(eos, n, rho_c, xnuc_py, pres_c, temp_c, dr);
+
+    return dict;
+}
+
+PyObject *create_wd_wdec(PyObject *self, PyObject *args) {
+    char *wdec_dir;
+
+    if (!PyArg_ParseTuple(args, "s:create_wd_wdec(wdec_dir)",
+                          &wdec_dir)) {
+        return nullptr;
+    }
+
+    auto dict = create_wd_wdec_implementation(wdec_dir);
     return dict;
 }
 
 // Python Module Definition
 static PyMethodDef icmethods[] = {
-        { "create_wd", (PyCFunction)_createWhiteDwarf, METH_VARARGS|METH_KEYWORDS, "" },
-        { "create_polytrope", (PyCFunction)_createPolytrope, METH_VARARGS|METH_KEYWORDS, "" },
+        {"create_wd",        (PyCFunction) create_wd,      METH_VARARGS | METH_KEYWORDS, ""},
+        {"create_polytrope", (PyCFunction) create_polytrope, METH_VARARGS | METH_KEYWORDS, ""},
+        {"create_wd_wdec",   (PyCFunction) create_wd_wdec,METH_VARARGS | METH_KEYWORDS, ""},
         { nullptr, nullptr, 0, nullptr }
 };
 
@@ -314,6 +417,5 @@ static struct PyModuleDef moduledef = {
 PyMODINIT_FUNC PyInit_ic(void)
 {
     import_array();
-
     return PyModule_Create(&moduledef);
 }

@@ -6,6 +6,19 @@
 #include <vector>
 #include <hdf5.h>
 
+inline std::vector<double> convert_to_std_vector(PyArrayObject *obj) {
+    int npoints     = PyArray_DIMS(obj)[0];
+    auto obj_data   = (double *) PyArray_DATA(obj);
+
+    std::vector<double> vec;
+    vec.reserve(npoints);
+
+    for (int i = 0; i < npoints; i++) {
+        vec.push_back(obj_data[i]);
+    }
+
+    return vec;
+}
 
 inline long PyDict_SetStolenItem(PyObject *dict, const char *key, PyObject *object) {
 
@@ -44,14 +57,35 @@ inline PyArrayObject *createPyArray(double *data, int dim1, int dim2) {
 
     return pyData;
 }
-inline PyArrayObject* createPyArray( double *data, int length ) {
+inline PyArrayObject *createPyArray( double *data, int length ) {
     PyArrayObject* pyData;
+
+    if(PyArray_API == nullptr) {
+        Py_Initialize();
+        import_array()
+    }
 
     npy_intp dims[1];
     dims[0] = length;
 
     pyData = (PyArrayObject *)PyArray_SimpleNew( 1, dims, NPY_DOUBLE );
     memcpy( PyArray_DATA(pyData), data, length*sizeof(double) );
+
+    return pyData;
+}
+inline PyArrayObject *createPyArray(int *data, int length ) {
+    PyArrayObject* pyData;
+
+    if(PyArray_API == nullptr) {
+        Py_Initialize();
+        import_array()
+    }
+
+    npy_intp dims[1];
+    dims[0] = length;
+
+    pyData = (PyArrayObject *)PyArray_SimpleNew( 1, dims, NPY_INT);
+    memcpy( PyArray_DATA(pyData), data, length*sizeof(int) );
 
     return pyData;
 }
@@ -76,6 +110,17 @@ inline void print_vector(const std::vector<double> &vec) {
     for (double d : vec)
         std::cout << d << " ";
     std::cout << std::endl;
+}
+
+inline void print_pyobj(PyArrayObject *pyobj) {
+
+    int n_value = PyArray_DIMS(pyobj)[0];
+    auto value_obj = (double *) PyArray_DATA(pyobj);
+
+    std::cout << n_value << std::endl;
+    for (int i = 0; i < n_value; i++) {
+        std::cout << " i = " << i << ". val = " << value_obj[i] << std::endl;
+    }
 }
 
 inline double *convert_to_double_star(std::vector<double> vector, int n) {
@@ -222,9 +267,6 @@ struct HDFDataField {
     void write() const {
 
         long hdf_datatype, dataspace_id, dataset_id;
-//        int status;
-//        int rank;
-
         hdf_datatype = H5Tcopy(datatype);
 
         if (num_columns > 1) { // two dimensional

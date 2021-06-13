@@ -36,19 +36,19 @@ create_ics = Extension('create_ics',
                        define_macros=define_macros,
                        sources=['create_ics.cpp', 'pyhelm_eos.cpp', 'helm_eos.cpp'])
 
-pcolor_pierre = Extension('pcolor_pierre',
-                          include_dirs=incl_dirs,
-                          libraries=libs,
-                          library_dirs=libs_dirs,
-                          define_macros=define_macros,
-                          sources=['make_pcolor.cpp', 'sph.cpp', 'ic.cpp', 'pyhelm_eos.cpp', 'helm_eos.cpp'])
+arepo_pcolor = Extension('arepo_pcolor',
+                         include_dirs=incl_dirs,
+                         libraries=libs,
+                         library_dirs=libs_dirs,
+                         define_macros=define_macros,
+                         sources=['make_pcolor.cpp', 'sph.cpp', 'ic.cpp', 'pyhelm_eos.cpp', 'helm_eos.cpp'])
 
-radial_pierre = Extension('radial_pierre',
-                          include_dirs=incl_dirs,
-                          libraries=libs,
-                          library_dirs=libs_dirs,
-                          define_macros=define_macros,
-                          sources=['make_radial.cpp', 'sph.cpp', 'ic.cpp', 'pyhelm_eos.cpp', 'helm_eos.cpp'])
+arepo_radial = Extension('arepo_radial',
+                         include_dirs=incl_dirs,
+                         libraries=libs,
+                         library_dirs=libs_dirs,
+                         define_macros=define_macros,
+                         sources=['make_radial.cpp', 'sph.cpp', 'ic.cpp', 'pyhelm_eos.cpp', 'helm_eos.cpp'])
 
 setup(name='Arepo Helper Libs',
       version='1.0',
@@ -59,5 +59,5 @@ setup(name='Arepo Helper Libs',
           pyhelm_eos,
           ic,
           create_ics,
-          pcolor_pierre,
-          radial_pierre])
+          arepo_pcolor,
+          arepo_radial])

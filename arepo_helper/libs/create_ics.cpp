@@ -12,6 +12,8 @@
 #include "pix2vec_ring.h"
 #include "utils.h"
 #include "create_ics.h"
+#include "spline.h"
+#include "const.h"
 
 int compare_points(const void *o1, const void *o2) {
     t_point *p1, *p2;
@@ -175,523 +177,15 @@ PyObject *create_particles_cube(PyObject *self, PyObject *args) {
     free(cube);
 
     dict = PyDict_New();
-    PyDict_SetStolenItem(dict, "pos", (PyObject *) createPyArray(ndata_pos, p, 3));
+    PyDict_SetStolenItem(dict, "ndata_pos", (PyObject *) createPyArray(ndata_pos, p, 3));
     free(ndata_pos);
-    PyDict_SetStolenItem(dict, "mass", (PyObject *) createPyArray(ndata_mass, p, 1));
+    PyDict_SetStolenItem(dict, "ndata_mass", (PyObject *) createPyArray(ndata_mass, p, 1));
     free(ndata_mass);
-    PyDict_SetStolenItem(dict, "u", (PyObject *) createPyArray(ndata_u, p, 1));
+    PyDict_SetStolenItem(dict, "ndata_u", (PyObject *) createPyArray(ndata_u, p, 1));
     free(ndata_u);
-    PyDict_SetStolenItem(dict, "vel", (PyObject *) createPyArray(ndata_vel, p, 3));
+    PyDict_SetStolenItem(dict, "ndata_vel", (PyObject *) createPyArray(ndata_vel, p, 3));
     free(ndata_vel);
-    PyDict_SetStolenItem(dict, "xnuc", (PyObject *) createPyArray(ndata_xnuc, p, nspecies));
-    free(ndata_xnuc);
-    PyDict_SetStolenItem(dict, "count", (PyObject *) PyLong_FromLong(p));
-
-    return dict;
-}
-
-PyObject *create_particles_healpix(PyObject *self, PyObject *args, PyObject *kwargs) {
-    PyObject *data, *dict;
-    t_helm_eos_table *helm_eos_table;
-    PyArrayObject *dm, *r, *u, *xnuc, *H, *HE, *rho;
-    double *data_dm, *data_r, *data_u, *data_xnuc, *data_H, *data_HE, *data_rho;
-    double pmass, mass, mtot, masslast, width;
-    int npart, nspecies, ncells, np;
-    double cx, cy, cz;
-    double *ndata_pos, *ndata_mass, *ndata_rho, *ndata_u, *ndata_vel, *ndata_xnuc;
-    int idxlast, i, j, k, p, found, index, npart_allocated;
-    double n1, n2, n, nlast, rad1, rad2, rad, vec[3];
-    int makebox, boxres, nbox, ix, iy, iz;
-    double boxsize, hboxsize, boxcellsize, minenergy;
-    int randomizeshells, randomizeradii, noxnuc, fixgridpressure, transition_done;
-    double phi1, phi2, phi3, x, y, z, x2, y2, z2;
-    double gridenergy, griddensity, gridtemp, radius, boxfactor;
-    double radius_last, dr, vol, volboxcell, volcell;
-    double transition_radius, transition_pmass;
-
-    const char *kwlist[] = {"data", "eos", "npart", "nspecies", "pmass", "makebox", "boxsize", "boxres",
-                             "randomizeshells", "randomizeradii", "minenergy", "fixgridpressure", "griddensity",
-                             "boxfactor", "gridtemp", "cx", "cy", "cz", "transition_radius", "transition_pmass", nullptr};
-    auto keywords = (char **) kwlist;
-
-    nspecies = 3;
-    pmass = 0;
-    makebox = 0;
-    boxsize = 0;
-    boxres = 16;
-    randomizeshells = 0;
-    randomizeradii = 0;
-    minenergy = 0;
-    fixgridpressure = 0;
-    griddensity = 1e-5;
-    boxfactor = 10;
-    gridtemp = 1e8;
-    cx = cy = cz = 0;
-    transition_radius = 0;
-    transition_pmass = 0;
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                                     "OO&i|ididiiididddddddd:create_particles_healpix( data, eos, npart, [nspecies, pmass, makebox, boxsize, boxres, randomizeshells, randomizeradii, minenergy, fixgridpressure, griddensity, boxfactor, gridtemp, cx, cy, cz, transition_radius, transition_pmass] )",
-                                     keywords, &data, &pyConvertHelmEos, &helm_eos_table, &npart, &nspecies, &pmass,
-                                     &makebox, &boxsize, &boxres, &randomizeshells, &randomizeradii, &minenergy,
-                                     &fixgridpressure, &griddensity, &boxfactor, &gridtemp, &cx, &cy, &cz,
-                                     &transition_radius, &transition_pmass)) {
-        return nullptr;
-    }
-
-    dm = (PyArrayObject *) PyDict_GetItemString(data, "dm");
-    ncells = PyArray_DIMS(dm)[0];
-    data_dm = (double *) PyArray_DATA(dm);
-    r = (PyArrayObject *) PyDict_GetItemString(data, "r");
-    data_r = (double *) PyArray_DATA(r);
-    rho = (PyArrayObject *) PyDict_GetItemString(data, "rho");
-    data_rho = (double *) PyArray_DATA(rho);
-    u = (PyArrayObject *) PyDict_GetItemString(data, "u");
-    data_u = (double *) PyArray_DATA(u);
-
-    data_H = data_HE = data_xnuc = nullptr;
-    if (nspecies == 3 && !PyDict_Contains(data, PyUnicode_FromString("xnuc"))) {
-        noxnuc = 1;
-        H = (PyArrayObject *) PyDict_GetItemString(data, "H");
-        data_H = (double *) PyArray_DATA(H);
-        HE = (PyArrayObject *) PyDict_GetItemString(data, "HE");
-        data_HE = (double *) PyArray_DATA(HE);
-    } else {
-        noxnuc = 0;
-        xnuc = (PyArrayObject *) PyDict_GetItemString(data, "xnuc");
-        data_xnuc = (double *) PyArray_DATA(xnuc);
-    }
-
-    mtot = 0.0;
-    for (i = 0; i < ncells; i++) mtot += data_dm[i];
-
-    printf("Total mass: %g solar masses\n", mtot / 1.989e33);
-
-    if (pmass > 0) {
-        npart = floor(mtot / pmass + 0.5);
-    } else {
-        pmass = mtot / npart;
-    }
-
-    if (transition_radius > 0) {
-        transition_done = 0;
-        printf("Doing transition at r=%g to pmass=%g\n", transition_radius, transition_pmass);
-    } else {
-        transition_done = 1;
-        printf("Using %d particles of mass %g (%g solar masses)\n", npart, pmass, pmass / 1.989e33);
-    }
-
-    seed();
-
-    npart_allocated = npart;
-    ndata_pos = (double *) malloc(3 * npart_allocated * sizeof(double));
-    ndata_mass = (double *) malloc(npart_allocated * sizeof(double));
-    ndata_rho = (double *) malloc(npart_allocated * sizeof(double));
-    ndata_u = (double *) malloc(npart_allocated * sizeof(double));
-    ndata_vel = (double *) malloc(3 * npart_allocated * sizeof(double));
-    ndata_xnuc = (double *) malloc(nspecies * npart_allocated * sizeof(double));
-    p = 0;
-
-    idxlast = 0;
-    nlast = 0;
-    masslast = 0;
-    mass = 0;
-    rad1 = data_r[0];
-    rad2 = rad1;
-    found = 0;
-    volcell = 0;
-    phi1 = phi2 = phi3 = 0;
-    np = 0;
-
-    i = 0;
-    while (i < ncells - 1) {
-        rad2 = data_r[i + 1]; /* increases with index */
-        n1 = sqrt(M_PI / 12.) * (rad2 + rad1) / (rad2 - rad1); /* decreases with index */
-
-        if ((!transition_done) && (rad2 > transition_radius)) {
-            pmass = transition_pmass;
-            transition_done = 1;
-            printf("Transition done at rad2=%g, index=%d, mass=%g, particles before: %d.\n", rad2, i, mass / 1.989e33,
-                   p);
-        }
-
-        mass += data_dm[i]; /* increases with index */
-        n2 = sqrt(mass / pmass / 12.); /* increases with index */
-
-        if (floor(n2) > nlast) {
-            nlast = floor(n2);
-            idxlast = i;
-            masslast = mass;
-        }
-
-        if (n2 > n1 && !found) {
-            n = floor(n2 + 0.5);
-            found = 1;
-        }
-
-        if (found && nlast >= n) {
-            i = idxlast;
-            mass = masslast;
-            rad2 = data_r[i + 1];
-
-            rad = 0.5 * (rad2 + rad1);
-            width = rad2 - rad1;
-            index = i;
-            while (data_r[index] > rad) index--;
-
-            np = static_cast<int>(12 * n * n);
-
-            if (randomizeshells) {
-                phi1 = randMT() * 2. * M_PI;
-                phi2 = randMT() * 2. * M_PI;
-                phi3 = randMT() * 2. * M_PI;
-            }
-
-            while (p + np >= npart_allocated) {
-                npart_allocated *= 2;
-
-                ndata_pos = (double *) realloc(ndata_pos, 3 * npart_allocated * sizeof(double));
-                ndata_mass = (double *) realloc(ndata_mass, npart_allocated * sizeof(double));
-                ndata_rho = (double *) realloc(ndata_rho, npart_allocated * sizeof(double));
-                ndata_u = (double *) realloc(ndata_u, npart_allocated * sizeof(double));
-                ndata_vel = (double *) realloc(ndata_vel, 3 * npart_allocated * sizeof(double));
-                ndata_xnuc = (double *) realloc(ndata_xnuc, nspecies * npart_allocated * sizeof(double));
-            }
-
-            for (j = 0; j < np; j++) {
-                auto n_int = (int) n;
-                pix2vec_ring(n_int, j, vec);
-
-                double prad = rad;
-                if (randomizeradii)
-                    prad += 0.1 * width * (randMT() - 0.5);
-
-                if (randomizeshells) {
-                    x = vec[0];
-                    y = cos(phi1) * vec[1] - sin(phi1) * vec[2];
-                    z = sin(phi1) * vec[1] + cos(phi1) * vec[2];
-
-                    x2 = cos(phi2) * x + sin(phi2) * z;
-                    y2 = y;
-                    z2 = -sin(phi2) * x + cos(phi2) * z;
-
-                    ndata_pos[p * 3 + 0] = prad * (cos(phi3) * x2 - sin(phi3) * y2);
-                    ndata_pos[p * 3 + 1] = prad * (sin(phi3) * x2 + cos(phi3) * y2);
-                    ndata_pos[p * 3 + 2] = prad * z2;
-                } else {
-                    for (k = 0; k < 3; k++)
-                        ndata_pos[p * 3 + k] = vec[k] * prad;
-                }
-
-                if (makebox) {
-                    int inbox = 1;
-                    for (k = 0; k < 3; k++)
-                        if (ndata_pos[p * 3 + k] < -0.5 * boxsize || ndata_pos[p * 3 + k] > +0.5 * boxsize) {
-                            inbox = 0;
-                            break;
-                        }
-                    if (!inbox)
-                        continue;
-                }
-
-                ndata_mass[p] = pmass;
-                ndata_rho[p] = data_rho[index];
-                ndata_u[p] = data_u[index];
-                if (noxnuc) {
-                    ndata_xnuc[p * 3] = data_H[index];
-                    ndata_xnuc[p * 3 + 1] = data_HE[index];
-                    ndata_xnuc[p * 3 + 2] = 1. - data_H[index] - data_HE[index];
-                } else {
-                    for (k = 0; k < nspecies; k++)
-                        ndata_xnuc[p * nspecies + k] = data_xnuc[k];
-                }
-
-                p++;
-            }
-
-            volcell = 4. / 3. * M_PI * (rad2 * rad2 * rad2 - rad1 * rad1 * rad1) / np;
-
-            rad1 = rad2;
-            mass -= pmass * 12. * n * n;
-            found = 0;
-            nlast = 0;
-        }
-
-        i++;
-    }
-
-    n = floor(sqrt(mass / pmass / 12.) + 0.5);
-    /* put last point near radius of star
-    if (ncells > 50) {
-      rad1 = data_r[i - 6];
-    } else {
-      rad1 = data_r[i - 1];
-    }
-    */
-    rad = 0.5 * (rad2 + rad1);
-    width = rad2 - rad1;
-    index = i;
-    while (data_r[index] > rad) index--;
-
-    if (randomizeshells) {
-        phi1 = randMT() * 2. * M_PI;
-        phi2 = randMT() * 2. * M_PI;
-        phi3 = randMT() * 2. * M_PI;
-    }
-
-    double prad = rad;
-    if (randomizeradii)
-        prad += 0.1 * width * (randMT() - 0.5);
-
-    while (p + np >= npart_allocated) {
-        npart_allocated *= 2;
-
-        ndata_pos = (double *) realloc(ndata_pos, 3 * npart_allocated * sizeof(double));
-        ndata_mass = (double *) realloc(ndata_mass, npart_allocated * sizeof(double));
-        ndata_rho = (double *) realloc(ndata_rho, npart_allocated * sizeof(double));
-        ndata_u = (double *) realloc(ndata_u, npart_allocated * sizeof(double));
-        ndata_vel = (double *) realloc(ndata_vel, 3 * npart_allocated * sizeof(double));
-        ndata_xnuc = (double *) realloc(ndata_xnuc, nspecies * npart_allocated * sizeof(double));
-    }
-
-    np = static_cast<int>(12 * n * n);
-    for (j = 0; j < np; j++) {
-        auto n_int = (int) n;
-        pix2vec_ring(n_int, j, vec);
-
-        if (randomizeshells) {
-            x = vec[0];
-            y = cos(phi1) * vec[1] - sin(phi1) * vec[2];
-            z = sin(phi1) * vec[1] + cos(phi1) * vec[2];
-
-            x2 = cos(phi2) * x + sin(phi2) * z;
-            y2 = y;
-            z2 = -sin(phi2) * x + cos(phi2) * z;
-
-            ndata_pos[p * 3 + 0] = prad * (cos(phi3) * x2 - sin(phi3) * y2);
-            ndata_pos[p * 3 + 1] = prad * (sin(phi3) * x2 + cos(phi3) * y2);
-            ndata_pos[p * 3 + 2] = prad * z2;
-        } else {
-            for (k = 0; k < 3; k++)
-                ndata_pos[p * 3 + k] = vec[k] * prad;
-        }
-
-        if (makebox) {
-            int inbox = 1;
-            for (k = 0; k < 3; k++)
-                if (ndata_pos[p * 3 + k] < -0.5 * boxsize || ndata_pos[p * 3 + k] > +0.5 * boxsize) {
-                    inbox = 0;
-                    break;
-                }
-            if (inbox == 0)
-                continue;
-        }
-
-        ndata_mass[p] = pmass;
-        ndata_rho[p] = data_rho[index];
-
-        ndata_u[p] = data_u[index];
-        if (ndata_u[p] < minenergy) ndata_u[p] = minenergy;
-        if (noxnuc) {
-            ndata_xnuc[p * 3] = data_H[index];
-            ndata_xnuc[p * 3 + 1] = data_HE[index];
-            ndata_xnuc[p * 3 + 2] = 1. - data_H[index] - data_HE[index];
-        } else {
-            for (k = 0; k < nspecies; k++)
-                ndata_xnuc[p * nspecies + k] = data_xnuc[k];
-        }
-
-        p++;
-    }
-
-    if (makebox) {
-        auto *grid_xnuc = static_cast<double *>(malloc(nspecies * sizeof(double)));
-        if (noxnuc) {
-            grid_xnuc[0] = data_H[index];
-            grid_xnuc[1] = data_HE[index];
-            grid_xnuc[2] = 1. - data_H[index] - data_HE[index];
-        } else {
-            for (k = 0; k < nspecies; k++)
-                grid_xnuc[k] = data_xnuc[k];
-        }
-
-        if (fixgridpressure) {
-            struct eos_result res {};
-            double pressure, temp;
-
-            temp = -1.;
-            eos_calc_egiven(helm_eos_table, data_rho[index], grid_xnuc, data_u[index], &temp, &res);
-            printf("rho=%g, u=%g, temp=%g, p=%g\n", data_rho[index], data_u[index], temp, res.p.v);
-
-            temp = -1;
-            pressure = res.p.v;
-            eos_calc_pgiven(helm_eos_table, griddensity, grid_xnuc, pressure, &temp, &res);
-            printf("rho=%g, u=%g, temp=%g, p=%g\n", griddensity, res.e.v, temp, res.p.v);
-            gridenergy = res.e.v;
-
-            if (temp == -1)
-                temp = gridtemp;
-            eos_calc_tgiven(helm_eos_table, griddensity, grid_xnuc, temp, &res);
-            printf("rho=%g, u=%g, temp=%g, p=%g\n", griddensity, res.e.v, temp, res.p.v);
-            gridenergy = res.e.v;
-        } else {
-            gridenergy = minenergy;
-        }
-
-        hboxsize = boxsize / 2.;
-        boxcellsize = boxsize / (double) boxres;
-        volboxcell = boxcellsize * boxcellsize * boxcellsize;
-
-        radius_last = rad2;
-        //volcell = 4./3. * M_PI * (rad2*rad2*rad2 - rad1*rad1*rad1);
-        printf("volcell=%g, volboxcell=%g\n", volcell, volboxcell);
-        volcell *= boxfactor;
-        while (volcell < volboxcell && boxfactor > 0.) {
-            dr = pow(volcell, 1. / 3.);
-
-            vol = 4. / 3. * M_PI * (pow(radius_last + dr, 3) - pow(radius_last, 3));
-            n = floor(sqrt(vol / (12. * volcell)) + 0.5);
-            np = static_cast<int>(12 * n * n);
-            radius = radius_last + 0.5 * dr;
-
-            printf("volcell=%g, volboxcell=%g, np=%d\n", volcell, volboxcell, np);
-
-            while (p + np >= npart_allocated) {
-                npart_allocated *= 2;
-
-                ndata_pos = (double *) realloc(ndata_pos, 3 * npart_allocated * sizeof(double));
-                ndata_mass = (double *) realloc(ndata_mass, npart_allocated * sizeof(double));
-                ndata_rho = (double *) realloc(ndata_rho, npart_allocated * sizeof(double));
-                ndata_u = (double *) realloc(ndata_u, npart_allocated * sizeof(double));
-                ndata_vel = (double *) realloc(ndata_vel, 3 * npart_allocated * sizeof(double));
-                ndata_xnuc = (double *) realloc(ndata_xnuc, nspecies * npart_allocated * sizeof(double));
-            }
-
-            if (randomizeshells) {
-                phi1 = randMT() * 2. * M_PI;
-                phi2 = randMT() * 2. * M_PI;
-                phi3 = randMT() * 2. * M_PI;
-            }
-
-            for (j = 0; j < np; j++) {
-                auto n_int = (int) n;
-                pix2vec_ring(n_int, j, vec);
-
-                if (randomizeshells) {
-                    x = vec[0];
-                    y = cos(phi1) * vec[1] - sin(phi1) * vec[2];
-                    z = sin(phi1) * vec[1] + cos(phi1) * vec[2];
-
-                    x2 = cos(phi2) * x + sin(phi2) * z;
-                    y2 = y;
-                    z2 = -sin(phi2) * x + cos(phi2) * z;
-
-                    ndata_pos[p * 3 + 0] = radius * (cos(phi3) * x2 - sin(phi3) * y2);
-                    ndata_pos[p * 3 + 1] = radius * (sin(phi3) * x2 + cos(phi3) * y2);
-                    ndata_pos[p * 3 + 2] = radius * z2;
-                } else {
-                    for (k = 0; k < 3; k++)
-                        ndata_pos[p * 3 + k] = vec[k] * radius;
-                }
-
-                int inbox = 1;
-                for (k = 0; k < 3; k++)
-                    if (ndata_pos[p * 3 + k] < -hboxsize || ndata_pos[p * 3 + k] > +hboxsize) {
-                        inbox = 0;
-                        break;
-                    }
-                if (inbox == 0)
-                    continue;
-
-                ndata_rho[p] = griddensity;
-                ndata_mass[p] = griddensity * volcell;
-
-                for (k = 0; k < nspecies; k++)
-                    ndata_xnuc[p * nspecies + k] = grid_xnuc[k];
-
-                p++;
-            }
-
-            radius_last += dr;
-            volcell *= boxfactor;
-        }
-
-        for (i = 0; i < p; i++) {
-            ndata_pos[i * 3 + 0] += hboxsize + cx;
-            ndata_pos[i * 3 + 1] += hboxsize + cy;
-            ndata_pos[i * 3 + 2] += hboxsize + cz;
-        }
-
-        nbox = boxres * boxres * boxres;
-
-        while (p + nbox >= npart_allocated) {
-            npart_allocated *= 2;
-
-            ndata_pos = (double *) realloc(ndata_pos, 3 * npart_allocated * sizeof(double));
-            ndata_mass = (double *) realloc(ndata_mass, npart_allocated * sizeof(double));
-            ndata_rho = (double *) realloc(ndata_rho, npart_allocated * sizeof(double));
-            ndata_u = (double *) realloc(ndata_u, npart_allocated * sizeof(double));
-            ndata_vel = (double *) realloc(ndata_vel, 3 * npart_allocated * sizeof(double));
-            ndata_xnuc = (double *) realloc(ndata_xnuc, nspecies * npart_allocated * sizeof(double));
-        }
-
-        char *box = static_cast<char *>(malloc(nbox));
-        memset(box, 0, nbox);
-        for (i = 0; i < p; i++) {
-            ix = floor(ndata_pos[i * 3 + 0] / boxcellsize);
-            iy = floor(ndata_pos[i * 3 + 1] / boxcellsize);
-            iz = floor(ndata_pos[i * 3 + 2] / boxcellsize);
-
-            box[iz * boxres * boxres + iy * boxres + ix] = 1;
-        }
-
-        int boxCount = 0;
-        for (i = 0; i < nbox; i++) {
-            ix = i % boxres;
-            iy = (i / boxres) % boxres;
-            iz = i / (boxres * boxres);
-
-            x = (ix + 0.5) * boxcellsize;
-            y = (iy + 0.5) * boxcellsize;
-            z = (iz + 0.5) * boxcellsize;
-
-            if (!box[i]) {
-                ndata_pos[p * 3 + 0] = x;
-                ndata_pos[p * 3 + 1] = y;
-                ndata_pos[p * 3 + 2] = z;
-
-                ndata_rho[p] = griddensity;
-                ndata_mass[p] = griddensity * volboxcell;
-
-                ndata_u[p] = gridenergy;
-                for (k = 0; k < nspecies; k++)
-                    ndata_xnuc[p * nspecies + k] = grid_xnuc[k];
-
-                p++;
-                boxCount++;
-            }
-        }
-        free(box);
-        printf("Added %d box cells.\n", boxCount);
-
-        free(grid_xnuc);
-    }
-
-    memset(ndata_vel, 0, 3 * p * sizeof(double));
-
-    printf("Created %d particles.\n", p);
-
-    dict = PyDict_New();
-    PyDict_SetStolenItem(dict, "pos", (PyObject *) createPyArray(ndata_pos, p, 3));
-    free(ndata_pos);
-    PyDict_SetStolenItem(dict, "mass", (PyObject *) createPyArray(ndata_mass, p, 1));
-    free(ndata_mass);
-    PyDict_SetStolenItem(dict, "rho", (PyObject *) createPyArray(ndata_rho, p, 1));
-    free(ndata_rho);
-    PyDict_SetStolenItem(dict, "u", (PyObject *) createPyArray(ndata_u, p, 1));
-    free(ndata_u);
-    PyDict_SetStolenItem(dict, "vel", (PyObject *) createPyArray(ndata_vel, p, 3));
-    free(ndata_vel);
-    PyDict_SetStolenItem(dict, "xnuc", (PyObject *) createPyArray(ndata_xnuc, p, nspecies));
+    PyDict_SetStolenItem(dict, "ndata_xnuc", (PyObject *) createPyArray(ndata_xnuc, p, nspecies));
     free(ndata_xnuc);
     PyDict_SetStolenItem(dict, "count", (PyObject *) PyLong_FromLong(p));
 
@@ -789,28 +283,294 @@ PyObject *create_particles_fill_grid(PyObject *self, PyObject *args, PyObject *k
     return res;
 }
 
+PyObject *convert_to_healpix_implementation(PyObject *wdec_dict,
+                                            int nspecies,
+                                            double boxsize,
+                                            PyArrayObject *centers_py,
+                                            int makebox,
+                                            int randomizeshells,
+                                            int randomizeradii,
+                                            double pmass) {
+
+
+    double num_base_pixels  = 12;
+    double grid_energy      = 0;
+    double grid_density     = 1e-4;
+    double grid_temp        = 1500;
+    int boxres              = 32;
+    int npart_max           = 1e8;
+
+    seed();
+
+    auto r = (PyArrayObject *) PyDict_GetItemString(wdec_dict, "r");
+    auto r_data = convert_to_std_vector(r);
+    auto u = (PyArrayObject *) PyDict_GetItemString(wdec_dict, "u");
+    auto u_data = convert_to_std_vector(u);
+    auto rho = (PyArrayObject *) PyDict_GetItemString(wdec_dict, "rho");
+    auto rho_data = convert_to_std_vector(rho);
+    auto temp = (PyArrayObject *) PyDict_GetItemString(wdec_dict, "temp");
+    auto temp_data = convert_to_std_vector(temp);
+    auto mr = (PyArrayObject *) PyDict_GetItemString(wdec_dict, "mr");
+    auto mr_data = convert_to_std_vector(mr);
+    auto xc = (PyArrayObject *) PyDict_GetItemString(wdec_dict, "xc");
+    auto xc_data = convert_to_std_vector(xc);
+    auto xo = (PyArrayObject *) PyDict_GetItemString(wdec_dict, "xo");
+    auto xo_data = convert_to_std_vector(xo);
+
+    auto npoints = PyArray_DIMS(xc)[0];
+    auto centers = (double *) PyArray_DATA(centers_py);
+
+    tk::spline spline_carbon(r_data, xc_data);
+    tk::spline spline_oxygen(r_data, xo_data);
+    tk::spline spline_u(r_data, u_data);
+    tk::spline spline_rho(r_data, rho_data);
+    tk::spline spline_temp(r_data, temp_data);
+
+    auto three_vector_data_size     = 3 * npart_max * sizeof(double);
+    auto scalar_data_size           = npart_max * sizeof(double);
+    auto ndata_pos                  = (double *) malloc(three_vector_data_size);
+    auto ndata_vel                  = (double *) malloc(three_vector_data_size);
+    auto ndata_mass                 = (double *) malloc(scalar_data_size);
+    auto ndata_temp                 = (double *) malloc(scalar_data_size);
+    auto ndata_rho                  = (double *) malloc(scalar_data_size);
+    auto ndata_u                    = (double *) malloc(scalar_data_size);
+    auto ndata_xnuc                 = (double *) malloc(nspecies * npart_max * sizeof(double));
+
+    int max_nside = 15;
+    int min_nside = 1;
+    double inner_radius, outer_radius, shell_radius;
+    double interior_mass;
+    double width = 0;
+    double phis[3], hp_vector[3];
+    int n_pix;
+    long nside;
+    double n2;
+
+    int p = 0;
+
+    for (int i = 0; i < (npoints - 1); i++) {
+
+
+        inner_radius = r_data[i];
+        outer_radius = r_data[i + 1];
+        shell_radius = 0.5 * (inner_radius + outer_radius);
+        interior_mass = mr_data[i];
+
+        // TODO pmass might not be the best way to achieve this
+        n2      = sqrt(interior_mass / pmass / num_base_pixels); /* increases with index */
+        nside   = floor(n2 + 0.5);
+        if (nside >= max_nside) { nside = max_nside;}
+        if (nside < min_nside) {nside = min_nside;}
+        n_pix = static_cast<int>(num_base_pixels * pow(nside, 2));
+
+
+        if (randomizeshells) {
+            for (double &phi : phis) { phi = randMT() * 2. * M_PI; }
+        }
+
+        for (int ipring = 0; ipring < n_pix; ipring++) {
+            // Renders cartesian vector coordinates of the normal pixel center given the pixel number ipring and
+            // a map resolution parameter nside
+            pix2vec_ring(nside, ipring, hp_vector);
+
+            if (randomizeradii)
+                shell_radius += 0.1 * width * (randMT() - 0.5);
+
+            if (randomizeshells) {
+
+                double x = hp_vector[0];
+                double y = cos(phis[0]) * hp_vector[1] - sin(phis[0]) * hp_vector[2];
+                double z = sin(phis[0]) * hp_vector[1] + cos(phis[0]) * hp_vector[2];
+
+                double x2 = cos(phis[1]) * x + sin(phis[1]) * z;
+                double y2 = y;
+                double z2 = -sin(phis[1]) * x + cos(phis[1]) * z;
+
+                ndata_pos[p * 3 + 0] = shell_radius * (cos(phis[2]) * x2 - sin(phis[2]) * y2) + centers[0];
+                ndata_pos[p * 3 + 1] = shell_radius * (sin(phis[2]) * x2 + cos(phis[2]) * y2) + centers[1];
+                ndata_pos[p * 3 + 2] = shell_radius * z2 + centers[2];
+            } else {
+                for (int k = 0; k < 3; k++)
+                    ndata_pos[p * 3 + k] = hp_vector[k] * shell_radius + centers[k];
+            }
+
+
+            // blah
+            ndata_mass[p]   = pmass;
+            ndata_rho[p]    = spline_rho(shell_radius);
+            ndata_u[p]      = spline_u(shell_radius);
+            ndata_temp[p]   = spline_temp(shell_radius);
+            double xCHere   = spline_carbon(shell_radius);
+            double xOHere   = spline_oxygen(shell_radius);
+
+            for (int k = 0; k < nspecies; k++) {
+                ndata_xnuc[p * nspecies + k] = 0;
+            }
+
+            if (xCHere + xOHere >= 1) {xOHere = 1 - xCHere;}
+            ndata_xnuc[p * nspecies + 0] = 1 - xCHere - xOHere; // He
+            ndata_xnuc[p * nspecies + 1] = xCHere; // C
+            ndata_xnuc[p * nspecies + 2] = xOHere; // O
+
+            // Set a density floor
+            if (ndata_rho[p] < grid_density) {
+                ndata_rho[p] = grid_density;
+            }
+
+            // Iterate the particle counter
+            p++;
+        }
+
+    }
+
+    memset(ndata_vel, 0, 3 * p * sizeof(double));
+    auto *particleIDs = static_cast<uint *>(malloc(p * sizeof(uint)));
+    for (int l = 0; l < p; l++) {particleIDs[l] = l+1;}
+
+    printf("Created %d particles.\n", p);
+
+
+    if (makebox) {
+        // Nuclear composition of grid particles
+        auto grid_xnuc = (double *) malloc(nspecies * sizeof(double));
+        for (int k = 0; k < nspecies; k++) {grid_xnuc[k] = 0;}
+        grid_xnuc[0] = 1;
+
+        int nbox            = pow(boxres, 3);
+        double boxcellsize  = boxsize / (double) boxres;
+        double volboxcell   = pow(boxcellsize, 3);
+
+
+        char *box = static_cast<char *>(malloc(nbox));
+        memset(box, 0, nbox);
+        for (int i = 0; i < p; i++) {
+            int ix = floor(ndata_pos[i * 3 + 0] / boxcellsize);
+            int iy = floor(ndata_pos[i * 3 + 1] / boxcellsize);
+            int iz = floor(ndata_pos[i * 3 + 2] / boxcellsize);
+
+            box[iz * boxres * boxres + iy * boxres + ix] = 1;
+        }
+
+        int boxCount = 0;
+        for (int i = 0; i < nbox; i++) {
+            int ix = i % boxres;
+            int iy = (i / boxres) % boxres;
+            int iz = i / (boxres * boxres);
+
+            double x = (ix + 0.5) * boxcellsize;
+            double y = (iy + 0.5) * boxcellsize;
+            double z = (iz + 0.5) * boxcellsize;
+
+            if (!box[i]) {
+                ndata_pos[p * 3 + 0]    = x;
+                ndata_pos[p * 3 + 1]    = y;
+                ndata_pos[p * 3 + 2]    = z;
+                ndata_rho[p]            = grid_density;
+                ndata_mass[p]           = grid_density * volboxcell;
+                ndata_temp[p]           = grid_temp;
+                ndata_u[p]              = grid_energy;
+
+                for (int k = 0; k < nspecies; k++) {
+                    ndata_xnuc[p * nspecies + k] = grid_xnuc[k];
+                }
+
+                p++;
+                boxCount++;
+            }
+        }
+        free(box);
+        free(grid_xnuc);
+        printf("Added %d box cells.\n", boxCount);
+    }
+
+    // Free all unused memory space
+    ndata_xnuc  = (double *) realloc(ndata_xnuc, nspecies * p * sizeof(double));
+    ndata_pos   = (double *) realloc(ndata_pos, 3 * p * sizeof(double));
+    ndata_vel   = (double *) realloc(ndata_vel, 3 * p * sizeof(double));
+    ndata_temp  = (double *) realloc(ndata_temp, p * sizeof(double));
+    ndata_mass  = (double *) realloc(ndata_mass, p * sizeof(double));
+    ndata_rho   = (double *) realloc(ndata_rho, p * sizeof(double));
+    ndata_u     = (double *) realloc(ndata_u, p * sizeof(double));
+
+    auto dict = PyDict_New();
+    PyDict_SetStolenItem(dict, "ndata_pos", (PyObject *) createPyArray(ndata_pos, p, 3));
+    free(ndata_pos);
+    PyDict_SetStolenItem(dict, "ndata_mass", (PyObject *) createPyArray(ndata_mass, p, 1));
+    free(ndata_mass);
+    PyDict_SetStolenItem(dict, "ndata_rho", (PyObject *) createPyArray(ndata_rho, p, 1));
+    free(ndata_rho);
+    PyDict_SetStolenItem(dict, "ndata_u", (PyObject *) createPyArray(ndata_u, p, 1));
+    free(ndata_u);
+    PyDict_SetStolenItem(dict, "ndata_vel", (PyObject *) createPyArray(ndata_vel, p, 3));
+    free(ndata_vel);
+    PyDict_SetStolenItem(dict, "ndata_temp", (PyObject *) createPyArray(ndata_temp, p, 1));
+    free(ndata_temp);
+    PyDict_SetStolenItem(dict, "ndata_xnuc", (PyObject *) createPyArray(ndata_xnuc, p, nspecies));
+    free(ndata_xnuc);
+    PyDict_SetStolenItem(dict, "count", (PyObject *) PyLong_FromLong(p));
+    PyDict_SetStolenItem(dict, "boxsize", PyFloat_FromDouble(boxsize));
+
+    return dict;
+}
+
+PyObject *convert_to_healpix(PyObject *self, PyObject *args, PyObject *kwargs) {
+
+    PyObject *wdec_dict;
+    int nspecies;
+    double boxsize;
+    int makebox         = 1;
+    int randomizeshells = 0;
+    int randomizeradii  = 0;
+    double pmass        = 1e-6 * msol;
+    PyArrayObject *centers = nullptr;
+
+    const char *kwlist[] = {"wdec_dict", "nspecies", "boxsize",
+                            "makebox", "centers", "randomizeshells", "randomizeradii", "pmass", nullptr};
+    auto keywords = (char **) kwlist;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                                     "Oid|O!iiid:convert_to_healpix( "
+                                     "wdec_dict, nspecies, boxsize, "
+                                     "[centers, makebox, randomizeshells, randomizeradii, pmass] )",
+                                     keywords,
+                                     &wdec_dict, &nspecies, &boxsize,
+                                     &PyArray_Type, &centers,
+                                     &makebox, &randomizeshells, &randomizeradii, &pmass)) {
+        return nullptr;
+    }
+
+    if (centers == nullptr) {
+        auto cs = (double *) PyArray_DATA(centers);
+        cs[0] = boxsize / 2;
+        cs[1] = boxsize / 2;
+        cs[2] = boxsize / 2;
+    }
+
+    auto dict = convert_to_healpix_implementation(wdec_dict,
+                                                  nspecies,
+                                                  boxsize,
+                                                  centers,
+                                                  makebox,
+                                                  randomizeshells,
+                                                  randomizeradii,
+                                                  pmass);
+
+    return dict;
+}
 
 // Python Module Definition
 static PyMethodDef create_ics_Methods[] = {
-        {"create_particles_cube",
-                create_particles_cube,
-         METH_VARARGS,
-         ""
+        {"create_particles_cube", create_particles_cube,
+        METH_VARARGS,""
          },
-        {"create_particles_healpix",
-         (PyCFunction) create_particles_healpix,
-         METH_VARARGS | METH_KEYWORDS,
-         ""
+        {"convert_to_healpix", (PyCFunction) convert_to_healpix,
+        METH_VARARGS | METH_KEYWORDS, ""
+        },
+        {"create_particles_fill_grid", (PyCFunction) create_particles_fill_grid,
+         METH_VARARGS | METH_KEYWORDS,""
          },
-        {"create_particles_fill_grid",
-         (PyCFunction) create_particles_fill_grid,
-         METH_VARARGS | METH_KEYWORDS,
-         ""
-         },
-        {nullptr,
-         nullptr,
-         0,
-         nullptr
+        {nullptr, nullptr,
+         0,nullptr
         }
 };
 

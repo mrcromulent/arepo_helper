@@ -1,6 +1,10 @@
 #ifndef HELM_EOS_H
 #define HELM_EOS_H
 
+#define NDEBUG
+#define HELM_EOS_MAXITER 100
+#define HELM_EOS_EPS 1.0e-10
+
 #define IMAX 271
 #define JMAX 101
 

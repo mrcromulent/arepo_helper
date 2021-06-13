@@ -1,12 +1,6 @@
 #include <Python.h>
-#include <hdf5.h>
 #include <arrayobject.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_odeiv.h>
 #include <cmath>
-
-#include <h5cpp/core>
-#include <h5cpp/io>
 
 #include "helm_eos.h"
 #include "sph.h"
@@ -14,11 +8,11 @@
 #include "main.h"
 #include "omp_util.h"
 #include "const.h"
-#include "make_wdec.h"
 #include "utils.h"
 #include "make_pcolor.h"
-
-void test_make_pcolor();
+#include "make_radial.h"
+#include "create_ics.h"
+#include "write_ics.h"
 
 int main() {
 
@@ -28,56 +22,128 @@ int main() {
         import_array()
     }
 
-
-//    test_eos();
-//    test_tree();
-//    test_WD();
-//    test_tree_2();
-//    test_make_wdec();
+    test_eos();
+    test_tree();
+    test_tree_2();
     test_make_pcolor();
+    test_make_radial();
+    test_make_wd();
+    test_make_polytrope();
+    test_make_wdec_newest();
+
 
     return 0;
 }
 
-void test_make_pcolor() {
+void test_make_wdec_newest() {
+    const char *wdec_dir = "/home/pierre/wdec/";
+    auto dict1 = create_wd_wdec_implementation(wdec_dir);
+//    auto rho = (PyArrayObject *) PyDict_GetItemString(dict1, "rho");
+//    auto r = (PyArrayObject *) PyDict_GetItemString(dict1, "r");
+//    print_pyobj(r);
+//    print_pyobj(rho);
 
-    const char *wdec_dir    = "/home/pierre/wdec/";
-    double pmass            = 1e-6 * msol;
-
-    auto wd = make_wdec_new(wdec_dir, 1e10, 5, true, false, false,
-                            pmass);
-    auto value = (PyArrayObject *) PyDict_GetItemString(wd, "rho");
-    auto pos = (PyArrayObject *) PyDict_GetItemString(wd, "pos");
-
-//    auto value_data = (double *) PyArray_DATA(value);
-//    auto value_pos = (double *) PyArray_DATA(pos);
-//    auto n_value = PyArray_DIMS(value)[0];
-//
-//    std::cout << n_value << std::endl;
-//    for (int i = 0; i < n_value; i++) {
-//        if (i % 10000 == 0) {
-//            std::cout << " i = " << i << ". x = " << value_pos[i * 3 + 0] << ". q = " << value_data[i] << std::endl;
-//        }
-//    }
 
     double boxsize = 1e10;
-    int numthreads = 1;
-    double boxsize_x = boxsize, boxsize_y = boxsize, boxsize_z = 0;
-    double center_x = boxsize/2, center_y = boxsize/2, center_z = boxsize/2;
-    int resolution_x = 1024;
-    int resolution_y = 1024;
-    // These dictate what is on the x and y axis
-    int axis0 = 0;
-    int axis1 = 1;
-    int nz = 1;
-    bool include_neighbours_in_output = true;
+    double centers[3] = {boxsize/2, boxsize/2, boxsize/2};
+    auto centers_py = (PyArrayObject *) createPyArray(centers, 3);
 
-    auto dict = make_pcolor_implementation(pos, value,
-                                           resolution_x, resolution_y,
-                                           boxsize_x, boxsize_y, boxsize_z,
-                                           center_x, center_y, center_z,
-                                           axis0, axis1,
-                                           nz,
+    auto dict2 = convert_to_healpix_implementation(dict1, 5, boxsize,
+                                                centers_py, 1, 0, 0, 1e-6 * msol);
+
+//    auto ndata_rho = (PyArrayObject *) PyDict_GetItemString(dict2, "ndata_rho");
+//    auto ndata_u = (PyArrayObject *) PyDict_GetItemString(dict2, "ndata_u");
+//    print_pyobj(ndata_rho);
+//    print_pyobj(ndata_u);
+
+    write_healpix_to_file(dict2, "bin.dat.ic.hdf5");
+
+}
+
+void test_make_polytrope() {
+
+    auto *eos = (t_helm_eos_table *) malloc(sizeof(t_helm_eos_table));
+    const char *datafile          = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat";
+    const char *speciesfile       = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt";
+
+    eos_init(eos, datafile, speciesfile, 0, 1);
+
+    double xnuc[eos->nspecies];
+    xnuc[0] = xnuc[3] = xnuc[4] = 0.0;
+    xnuc[1] = xnuc[2] = 0.5;
+    auto xnuc_py = (PyArrayObject *) createPyArray(xnuc, eos->nspecies);
+
+    auto dict = create_polytrope_implementation(eos, 3, 5e6, xnuc_py, 0.0, 5e5, 1e6);
+    eos_deinit(eos);
+
+    auto rho = (PyArrayObject *) PyDict_GetItemString(dict, "rho");
+    auto r = (PyArrayObject *) PyDict_GetItemString(dict, "r");
+    print_pyobj(r);
+    print_pyobj(rho);
+}
+
+void test_make_wd() {
+    auto *eos = (t_helm_eos_table *) malloc(sizeof(t_helm_eos_table));
+    const char *datafile          = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat";
+    const char *speciesfile       = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt";
+
+    eos_init(eos, datafile, speciesfile, 0, 1);
+
+    double xnuc[eos->nspecies];
+    xnuc[0] = xnuc[3] = xnuc[4] = 0.0;
+    xnuc[1] = xnuc[2] = 0.5;
+    auto xnuc_py = (PyArrayObject *) createPyArray(xnuc, eos->nspecies);
+
+    auto dict = create_wd_implementation(eos, 5e6, 5e5, xnuc_py, 1e-6);
+    eos_deinit(eos);
+
+    auto rho = (PyArrayObject *) PyDict_GetItemString(dict, "rho");
+    auto r = (PyArrayObject *) PyDict_GetItemString(dict, "r");
+    print_pyobj(r);
+    print_pyobj(rho);
+}
+
+void test_make_pcolor() {
+
+    const char *wdec_dir = "/home/pierre/wdec/";
+    auto dict1 = create_wd_wdec_implementation(wdec_dir);
+
+    double boxsize = 1e10;
+    double centers[3] = {boxsize/2, boxsize/2, boxsize/2};
+    auto centers_py = (PyArrayObject *) createPyArray(centers, 3);
+
+
+    auto wd = convert_to_healpix_implementation(dict1, 5, boxsize,
+                                                centers_py, 1, 0, 0, 1e-6 * msol);
+
+    auto value = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_rho");
+    auto pos = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_pos");
+
+    auto value_data = (double *) PyArray_DATA(value);
+    auto value_pos = (double *) PyArray_DATA(pos);
+    auto n_value = PyArray_DIMS(value)[0];
+
+    std::cout << n_value << std::endl;
+    for (int i = 0; i < n_value; i++) {
+        if (i % 10000 == 0) {
+            std::cout << " i = " << i << ". x = " << value_pos[i * 3 + 0] << ". q = " << value_data[i] << std::endl;
+        }
+    }
+
+    double bs[2]        = {boxsize, boxsize};
+    auto boxsizes       = (PyArrayObject *) createPyArray(bs, 2);
+    int rs[2]           = {1024, 1025};
+    auto resolutions    = (PyArrayObject *) createPyArray(rs, 2);
+    int ax[2]           = {0, 1};
+    auto axes           = (PyArrayObject *) createPyArray(ax, 2);
+
+
+
+
+    int include_neighbours_in_output = 1;
+    int numthreads = 1;
+
+    auto dict = make_pcolor_implementation(pos, value, axes, boxsizes, resolutions, centers_py,
                                            include_neighbours_in_output,
                                            numthreads);
 
@@ -93,7 +159,6 @@ void test_make_pcolor() {
     }
     std::cout << std::endl;
 }
-
 
 void test_eos() {
     // LOADING A HELM EOS FILE
@@ -145,15 +210,19 @@ void test_tree() {
 
 void test_tree_2() {
 
-    const char *wdec_dir    = "/home/pierre/wdec/";
-    double pmass            = 1e-6 * msol;
+    const char *wdec_dir = "/home/pierre/wdec/";
+    auto dict1 = create_wd_wdec_implementation(wdec_dir);
 
-    auto wd = make_wdec_new(wdec_dir, 1e10, 5, true, false, false,
-                            pmass);
+    double boxsize = 1e10;
+    double centers[3] = {boxsize/2, boxsize/2, boxsize/2};
+    auto centers_py = (PyArrayObject *) createPyArray(centers, 3);
 
-    auto density_1 = (PyArrayObject *) PyDict_GetItemString(wd, "rho");
-    auto pos_1 = (PyArrayObject *) PyDict_GetItemString(wd, "pos");
-    auto mass_1 = (PyArrayObject *) PyDict_GetItemString(wd, "mass");
+    auto wd = convert_to_healpix_implementation(dict1, 5, boxsize,
+                                                centers_py, 1, 0, 0, 1e-6 * msol);
+
+    auto density_1 = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_rho");
+    auto pos_1 = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_pos");
+    auto mass_1 = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_mass");
     int npart = PyArray_DIMS(density_1)[0];
     auto pos = (double *) PyArray_DATA(pos_1);
     auto density = (double *) PyArray_DATA(density_1);
@@ -195,166 +264,36 @@ void test_tree_2() {
     freeTree(&tree);
 }
 
-void test_make_wdec() {
-    const char *wdec_dir    = "/home/pierre/wdec/";
-    double pmass            = 1e-6 * msol;
+void test_make_radial() {
 
-    auto wd = make_wdec_new(wdec_dir, 1e10, 5, true, false, false,
-                            pmass);
-    auto value = (PyArrayObject *) PyDict_GetItemString(wd, "rho");
-    auto pos = (PyArrayObject *) PyDict_GetItemString(wd, "pos");
+    const char *wdec_dir = "/home/pierre/wdec/";
+    auto dict1 = create_wd_wdec_implementation(wdec_dir);
 
-    auto value_data = (double *) PyArray_DATA(value);
-    auto value_pos = (double *) PyArray_DATA(pos);
-    auto n_value = PyArray_DIMS(value)[0];
+    double boxsize      = 1e10;
+    double centers[3]   = {boxsize/2, boxsize/2, boxsize/2};
+    double b_val[3]     = {boxsize, boxsize/2, boxsize/2};
+    auto centers_py     = (PyArrayObject *) createPyArray(centers, 3);
+    auto b              = (PyArrayObject *) createPyArray(b_val, 3);
+    auto a              = centers_py;
+    double cylinder_rad = 0.01 * boxsize;
 
-    std::cout << n_value << std::endl;
-    for (int i = 0; i < n_value; i++) {
-        if (i % 10000 == 0) {
-            std::cout << " i = " << i << ". x = " << value_pos[i * 3 + 0] << ". q = " << value_data[i] << std::endl;
-        }
+    auto wd = convert_to_healpix_implementation(dict1, 5, boxsize,
+                                                centers_py, 1, 0, 0, 1e-6 * msol);
+
+    auto pos = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_pos");
+    auto value = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_rho");
+    int nshells = 200;
+
+    auto returned_thing = make_radial_implementation(pos, value, a, b, cylinder_rad, nshells);
+
+    auto value_data = (double *) PyArray_DATA(returned_thing);
+    for (int i = 0; i < nshells; i++) {
+        std::cout << value_data[i] << " ";
     }
-}
-
-PyObject* test_WD() {
-    double rho0, temp; /* central density and temperature */
-    double xHe4, xC12, xO16, xNe20, xMg24; /* mass fractions */
-    double tol;
-//    t_helm_eos_table *eos;
-    double *r, *p, *e, *rho, *dm, *csnd;
-    int i, arraylen, count;
-    PyObject* dict;
-    struct eos_result res = {};
-
-    // Set these
-    auto *eos   = (t_helm_eos_table *) malloc(sizeof(t_helm_eos_table));
-    const char *datafile          = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat";
-    const char *speciesfile       = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt";
-
-    eos_init(eos, datafile, speciesfile, 0, 0);
-    tol = 1e-6;
-    rho0 = 1e7;
-    temp = 5e5;
-    xHe4 = 0.0;
-    xC12 = 0.5;
-    xO16 = 0.5;
-    xNe20 = xMg24 = 0.;
-
-    arraylen = 0x10000;
-    r = (double*)malloc( arraylen * sizeof(double) );
-    p = (double*)malloc( arraylen * sizeof(double) );
-    e = (double*)malloc( arraylen * sizeof(double) );
-    rho = (double*)malloc( arraylen * sizeof(double) );
-    dm = (double*)malloc( arraylen * sizeof(double) );
-    csnd = (double*)malloc( arraylen * sizeof(double) );
-
-    double xtot = xHe4 + xC12 + xO16 + xNe20 + xMg24;
-    printf("Abundances: He4=%g, C12=%g O16=%g Ne20=%g, Mg24=%g, sum=%g.\n", xHe4, xC12, xO16, xNe20, xMg24, xtot );
-    if(fabs(xtot-1.0) > 1e-14)
-    {
-        PyErr_SetString( PyExc_ValueError, "Inconsistent Abundances.\n" );
-        return nullptr;
+    std::cout << std::endl;
+    for (int i = 0; i < nshells; i++) {
+        std::cout << value_data[nshells + i] << " ";
     }
+    std::cout << std::endl;
 
-    double xnuc[eos->nspecies];
-    for(i = 0; i < eos->nspecies; i++)
-    {
-        xnuc[i] = 0.;
-        if(eos->nz[i] == 2 && eos->na[i] == 4) xnuc[i] = xHe4;
-        if(eos->nz[i] == 6 && eos->na[i] == 12) xnuc[i] = xC12;
-        if(eos->nz[i] == 8 && eos->na[i] == 16) xnuc[i] = xO16;
-        if(eos->nz[i] == 10 && eos->na[i] == 20) xnuc[i] = xNe20;
-        if(eos->nz[i] == 12 && eos->na[i] == 24) xnuc[i] = xMg24;
-    }
-
-    eos_calc_tgiven( eos, rho0, xnuc, temp, &res );
-    rho[0] = rho0;
-    r[0] = 1e2;
-    p[0] = res.p.v;
-    e[0] = res.e.v;
-    dm[0] = rho0 * 4. / 3. * M_PI * r[0] * r[0] * r[0];
-    csnd[0] = res.sound;
-    count = 1;
-
-    double y[2];
-    y[0] = p[0];
-    y[1] = 0.;
-
-    struct paramsWD params = {};
-    params.temp = temp;
-    params.xnuc = xnuc;
-    params.eos = eos;
-    params.rho = rho0;
-
-    const gsl_odeiv_step_type * T = gsl_odeiv_step_rkf45;
-    gsl_odeiv_step * s = gsl_odeiv_step_alloc (T, 2);
-    gsl_odeiv_control * c = gsl_odeiv_control_y_new (0.0, tol);
-    gsl_odeiv_evolve * ev = gsl_odeiv_evolve_alloc (2);
-    gsl_odeiv_system sys = {createWDIntegrator, nullptr, 2, &params};
-
-    double mass = dm[0];
-    double rad = 1e2;
-    double drad = 1e3;
-    while (rho[count-1] > 1e-5 && rad < 1e10)
-    {
-        int status = gsl_odeiv_evolve_apply(ev, c, s, &sys, &rad, 1e10, &drad, y);
-
-        if (status != GSL_SUCCESS)
-        {
-            PyErr_SetString( PyExc_ValueError, "ODE Solver failed.\n" );
-            return nullptr;
-        }
-
-        /* increase arraylen if necessary */
-        if (count == arraylen) {
-            rho = resize( rho, arraylen, 2*arraylen );
-            r = resize( r, arraylen, 2*arraylen );
-            p = resize( p, arraylen, 2*arraylen );
-            e = resize( e, arraylen, 2*arraylen );
-            dm = resize( dm, arraylen, 2*arraylen );
-            csnd = resize( csnd, arraylen, 2*arraylen );
-            arraylen *= 2;
-        }
-
-        if(y[0] <= 0.)
-            break;
-
-        rho[count] = rho[count-1];
-        if(rho[count] < 1e-5)
-            break;
-
-        eos_calc_ptgiven( eos, y[0], xnuc, temp, &rho[count], &res );
-        r[count] = rad;
-        p[count] = y[0];
-        e[count] = res.e.v;
-        dm[count] = y[1] - mass;
-        csnd[count] = res.sound;
-        mass = y[1];
-        count++;
-    }
-
-    dict = PyDict_New();
-    PyDict_SetStolenItem( dict, "rho", (PyObject*)createPyArray( rho, count ) );
-    PyDict_SetStolenItem( dict, "u", (PyObject*)createPyArray( e, count ) );
-    PyDict_SetStolenItem( dict, "p", (PyObject*)createPyArray( p, count ) );
-    PyDict_SetStolenItem( dict, "r", (PyObject*)createPyArray( r, count ) );
-    PyDict_SetStolenItem( dict, "dm", (PyObject*)createPyArray( dm, count ) );
-    PyDict_SetStolenItem( dict, "csnd", (PyObject*)createPyArray( csnd, count ) );
-    ///
-    PyDict_SetStolenItem( dict, "xnuc", (PyObject*)createPyArray( xnuc,  eos->nspecies) );
-    ///
-    PyDict_SetStolenItem( dict, "ncells", (PyObject*)PyLong_FromLong( count ) );
-
-    free( r );
-    free( p );
-    free( e );
-    free( rho );
-    free( dm );
-    free( csnd );
-
-    gsl_odeiv_evolve_free(ev);
-    gsl_odeiv_control_free(c);
-    gsl_odeiv_step_free(s);
-
-    return dict;
 }

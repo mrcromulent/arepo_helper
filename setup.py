@@ -2,14 +2,13 @@ from numpy.distutils.core import setup, Extension
 import numpy as np
 import os
 
-incl_dirs       = ['/usr/include/python3.8/', '/usr/include/hdf5/serial/',
-                   os.path.join(np.get_include(), 'numpy')]
-libs_dirs       = ['/usr/lib/python3.8/']
-libs            = ['gsl', 'gslcblas', 'm', 'armadillo']
-define_macros   = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
-c_libs_dir      = 'arepo_helper/libs/'
-py_dir          = 'arepo_helper/'
-
+incl_dirs = ['/usr/include/python3.8/', '/usr/include/hdf5/serial/',
+             os.path.join(np.get_include(), 'numpy')]
+libs_dirs = ['/usr/lib/python3.8/']
+libs = ['gsl', 'gslcblas', 'm', 'armadillo']
+define_macros = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
+c_libs_dir = 'arepo_helper/libs/'
+py_dir = 'arepo_helper/'
 
 pyhelm_eos = Extension('pyhelm_eos',
                        include_dirs=incl_dirs,
@@ -37,27 +36,27 @@ create_ics = Extension('create_ics',
                                 c_libs_dir + 'pyhelm_eos.cpp',
                                 c_libs_dir + 'helm_eos.cpp'])
 
-pcolor_pierre = Extension('pcolor_pierre',
-                          include_dirs=incl_dirs,
-                          libraries=libs,
-                          library_dirs=libs_dirs,
-                          define_macros=define_macros,
-                          sources=[c_libs_dir + 'make_pcolor.cpp',
-                                   c_libs_dir + 'sph.cpp',
-                                   c_libs_dir + 'ic.cpp',
-                                   c_libs_dir + 'pyhelm_eos.cpp',
-                                   c_libs_dir + 'helm_eos.cpp'])
+arepo_pcolor = Extension('arepo_pcolor',
+                         include_dirs=incl_dirs,
+                         libraries=libs,
+                         library_dirs=libs_dirs,
+                         define_macros=define_macros,
+                         sources=[c_libs_dir + 'make_pcolor.cpp',
+                                  c_libs_dir + 'sph.cpp',
+                                  c_libs_dir + 'ic.cpp',
+                                  c_libs_dir + 'pyhelm_eos.cpp',
+                                  c_libs_dir + 'helm_eos.cpp'])
 
-radial_pierre = Extension('radial_pierre',
-                          include_dirs=incl_dirs,
-                          libraries=libs,
-                          library_dirs=libs_dirs,
-                          define_macros=define_macros,
-                          sources=[c_libs_dir + 'make_radial.cpp',
-                                   c_libs_dir + 'sph.cpp',
-                                   c_libs_dir + 'ic.cpp',
-                                   c_libs_dir + 'pyhelm_eos.cpp',
-                                   c_libs_dir + 'helm_eos.cpp'])
+arepo_radial = Extension('arepo_radial',
+                         include_dirs=incl_dirs,
+                         libraries=libs,
+                         library_dirs=libs_dirs,
+                         define_macros=define_macros,
+                         sources=[c_libs_dir + 'make_radial.cpp',
+                                  c_libs_dir + 'sph.cpp',
+                                  c_libs_dir + 'ic.cpp',
+                                  c_libs_dir + 'pyhelm_eos.cpp',
+                                  c_libs_dir + 'helm_eos.cpp'])
 
 setup(name='AREPO Helper Library',
       version='1,0',
@@ -89,5 +88,5 @@ setup(name='AREPO Helper Library',
           pyhelm_eos,
           ic,
           create_ics,
-          pcolor_pierre,
-          radial_pierre])
+          arepo_pcolor,
+          arepo_radial])

@@ -1,10 +1,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-//#include <cstring>
 #include <ctime>
-//#include <cfloat>
 #include <algorithm>
+
 #include "sph.h"
 #include "mersenne.h"
 

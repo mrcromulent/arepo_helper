@@ -1,7 +1,7 @@
 from snapshot import ArepoSnapshot
 import matplotlib.pyplot as plt
-import radial_pierre
-import pcolor_pierre
+import arepo_radial
+import arepo_pcolor
 from names import n
 import numpy as np
 import calcGrid
@@ -42,7 +42,7 @@ def test_temperature_variations():
 
 
 def test_temperature_with_density_cutoff():
-    filepath = f"/home/pierre/Desktop/arepo_new/snapshot_003.hdf5"
+    filepath = f"/home/pierre/Desktop/AREPO/AREPO_2020/arepo_new/snapshot_003.hdf5"
     center = [5e9, 5e9, 5e9]
 
     with h5py.File(filepath, 'r') as file:
@@ -69,7 +69,7 @@ def test_temperature_with_density_cutoff():
 
 
 def test_calcRadialProfile_old():
-    s = ArepoSnapshot("/home/pierre/Desktop/arepo_new/snapshot_000.hdf5")
+    s = ArepoSnapshot("/home/pierre/Desktop/AREPO/AREPO_2020/arepo_new/snapshot_000.hdf5")
     c = np.array([5e9, 5e9, 5e9])
 
     u = s.get_from_h5(n.INTERNALENERGY)
@@ -89,32 +89,13 @@ def test_calcRadialProfile_old():
     plt.show()
 
 
-def test_make_radial():
-    res = 500
-    c = np.array([5e9, 5e9, 5e9])
-    ibsx = 1e10
-    ibsy = 1e10
-
-    s = ArepoSnapshot("/home/pierre/Desktop/arepo_new/snapshot_000.hdf5")
-
-    rho = s.get_from_h5(n.DENSITY)
-    u = s.get_from_h5(n.INTERNALENERGY)
-    pres = s.get_from_h5(n.PRESSURE)
-    coords = s.get_from_h5(n.COORDINATES)
-
-    data = radial_pierre.make_radial(coords.astype('float64'), pres.astype('float64'), 200)
-    fig, ax = plt.subplots()
-    ax.plot(data[1, :], data[0, :], 'b')
-    plt.show()
-
-
 def test_calcASlice_old():
     res = 500
     c = np.array([5e9, 5e9, 5e9])
     ibsx = 1e10
     ibsy = 1e10
 
-    s = ArepoSnapshot("/home/pierre/Desktop/arepo_new/snapshot_000.hdf5")
+    s = ArepoSnapshot("/home/pierre/Desktop/AREPO/AREPO_2020/arepo_new/snapshot_000.hdf5")
 
     rho = s.get_from_h5(n.DENSITY)
     u = s.get_from_h5(n.INTERNALENERGY)
@@ -139,31 +120,55 @@ def test_calcASlice_old():
     plt.show()
 
 
-def test_make_pcolor():
-    res = 500
-    c = np.array([5e9, 5e9, 5e9])
-    ibsx = 1e10
-    ibsy = 1e10
+def test_make_radial():
 
-    s = ArepoSnapshot("/home/pierre/Desktop/arepo_new/snapshot_000.hdf5")
+    boxsize = 1e10
+    a       = np.array([boxsize/2, boxsize/2, boxsize/2])
+    b       = np.array([boxsize, boxsize/2, boxsize/2])
+    cyl_rad = 0.01 * boxsize
+    nshells = 200
+
+    s = ArepoSnapshot("/home/pierre/Desktop/AREPO/AREPO_2020/arepo_new/snapshot_000.hdf5")
 
     rho = s.get_from_h5(n.DENSITY)
     u = s.get_from_h5(n.INTERNALENERGY)
     pres = s.get_from_h5(n.PRESSURE)
     coords = s.get_from_h5(n.COORDINATES)
 
-    data = pcolor_pierre.make_pcolor(coords.astype('float64'), u.astype('float64'),
-                                     res, res,
-                                     ibsx, ibsy, 0,
-                                     *c,
-                                     axis0=0, axis1=1,
-                                     nz=1,
-                                     include_neighbours_in_output=1,
-                                     numthreads=1)
+    data = arepo_radial.make_radial(coords.astype('float64'), pres.astype('float64'),
+                                    a, b,
+                                    cyl_rad,
+                                    nshells)
+    fig, ax = plt.subplots()
+    ax.plot(data[1, :], data[0, :], 'b')
+    plt.show()
+
+
+def test_make_pcolor():
+    boxsize     = 1e10
+    resolutions = np.array([1024, 1024])
+    centers     = np.array([boxsize/2, boxsize/2, boxsize/2])
+    boxsizes    = np.array([boxsize, boxsize])
+    axes        = np.array([0, 1])
+
+    s = ArepoSnapshot("/home/pierre/Desktop/AREPO/AREPO_2020/arepo_new/snapshot_000.hdf5")
+
+    rho = s.get_from_h5(n.DENSITY)
+    u = s.get_from_h5(n.INTERNALENERGY)
+    pres = s.get_from_h5(n.PRESSURE)
+    coords = s.get_from_h5(n.COORDINATES)
+
+    data = arepo_pcolor.make_pcolor(coords.astype('float64'), u.astype('float64'),
+                                    axes,
+                                    boxsizes,
+                                    resolutions,
+                                    centers,
+                                    include_neighbours_in_output=1,
+                                    numthreads=1)
 
     fig, ax = plt.subplots()
-    x = np.arange(res + 1, dtype="float64") / res * ibsx - 0.5 * ibsx + c[0]
-    y = np.arange(res + 1, dtype="float64") / res * ibsy - 0.5 * ibsy + c[1]
+    x = np.arange(resolutions[0] + 1, dtype="float64") / resolutions[0] * boxsizes[0] - 0.5 * boxsizes[0] + centers[0]
+    y = np.arange(resolutions[1] + 1, dtype="float64") / resolutions[1] * boxsizes[1] - 0.5 * boxsizes[1] + centers[1]
     im = ax.pcolormesh(x, y, np.transpose(data["grid"]), shading='flat')
     plt.colorbar(im, ax=ax)
     plt.show()
@@ -171,3 +176,4 @@ def test_make_pcolor():
 
 if __name__ == '__main__':
     test_make_radial()
+    test_make_pcolor()

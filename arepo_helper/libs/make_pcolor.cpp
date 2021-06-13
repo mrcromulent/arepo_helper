@@ -2,9 +2,10 @@
 #include <arrayobject.h>
 
 #include "sph.h"
+#include "utils.h"
 #include "omp_util.h"
 #include "make_pcolor.h"
-#include "utils.h"
+
 
 
 void check_for_contours(int *neighbours, int *contours, int resolution_x, int resolution_y) {
@@ -34,41 +35,29 @@ void check_for_contours(int *neighbours, int *contours, int resolution_x, int re
 
 PyObject *make_pcolor(PyObject *self, PyObject *args, PyObject *kwargs) {
 
-    PyArrayObject *pos, *value;
-    int resolution_x, resolution_y;
-    double boxsize_x, boxsize_y, boxsize_z;
-    double center_x, center_y, center_z;
-    int axis0 = 0, axis1 = 1;
-    int nz = 1, numthreads = 1;
-    int include_neighbours_in_output = 1;
+    PyArrayObject *pos, *quant, *axes, *boxsizes, *resolutions, *centers;
+    int numthreads = 1;
+    int include_neighbours_in_output = 1; // Don't try to turn the include variable into a bool. It caused nothing but problems
 
-    char *kwlist[] = {"pos", "value",
-                      "resolution_x", "resolution_y",
-                      "boxsize_x", "boxsize_y", "boxsize_z",
-                      "center_x", "center_y", "center_z",
-                      "axis0", "axis1",
-                      "nz",
-                      "include_neighbours_in_output",
-                      "numthreads", NULL};
+    const char *kwlist[] = {"pos", "quant", "axes", "boxsizes", "resolutions", "centers",
+                            "include_neighbours_in_output", "numthreads", nullptr};
+    auto keywords = (char **) kwlist;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                                     "O!O!iidddddd|iiiii:make_pcolor("
-                                     "pos, value, "
-                                     "resolution_x, resolution_y, "
-                                     "boxsize_x, boxsize_y, boxsize_z, "
-                                     "centerx, centery, centerz, "
-                                     "[axis0, axis1, "
-                                     "nz, "
-                                     "include_neighbours_in_output, "
-                                     "numthreads"
-                                     "] )",
-                                     kwlist,
-                                     &PyArray_Type, &pos, &PyArray_Type, &value,
-                                     &resolution_x, &resolution_y,
-                                     &boxsize_x, &boxsize_y, &boxsize_z,
-                                     &center_x, &center_y, &center_z,
-                                     &axis0, &axis1,
-                                     &nz,
+                                     "O!O!O!O!O!O!|ii:make_pcolor("
+                                     "pos, quant, "
+                                     "axes, "
+                                     "boxsizes, "
+                                     "resolutions, "
+                                     "centers, "
+                                     "[include_neighbours_in_output, "
+                                     "numthreads] )",
+                                     keywords,
+                                     &PyArray_Type, &pos, &PyArray_Type, &quant,
+                                     &PyArray_Type, &axes,
+                                     &PyArray_Type, &boxsizes,
+                                     &PyArray_Type, &resolutions,
+                                     &PyArray_Type, &centers,
                                      &include_neighbours_in_output,
                                      &numthreads)) {
         return nullptr;
@@ -80,45 +69,27 @@ PyObject *make_pcolor(PyObject *self, PyObject *args, PyObject *kwargs) {
         return nullptr;
     }
 
-    if (PyArray_NDIM(value) != 1 || PyArray_TYPE(value) != NPY_DOUBLE) {
-        PyErr_SetString(PyExc_ValueError, "value has to be of dimension [n] and type double");
+    if (PyArray_NDIM(quant) != 1 || PyArray_TYPE(quant) != NPY_DOUBLE) {
+        PyErr_SetString(PyExc_ValueError, "quant has to be of dimension [n] and type double");
         return nullptr;
     }
 
-//    std::cout << "resolution_x = " << resolution_x << std::endl;
 
-
-    PyObject *dict = make_pcolor_implementation(pos, value,
-                                           resolution_x, resolution_y,
-                                           boxsize_x, boxsize_y, boxsize_z,
-                                           center_x, center_y, center_z,
-                                           axis0, axis1,
-                                           nz,
-                                           include_neighbours_in_output,
-                                           numthreads);
-
-//    auto grid = (PyArrayObject *) PyDict_GetItemString(dict, "grid");
-//    auto grid_data = (double *) PyArray_DATA(grid);
-//    auto n = PyArray_DIMS(grid)[0];
-
-//    std::cout << n << std::endl;
-//    for (int i = 0; i < n; i++) {
-//        if (i % 10 == 0) {
-//            std::cout << grid_data[i] << std::endl;
-//        }
-//    }
+    PyObject *dict = make_pcolor_implementation(pos, quant, axes, boxsizes, resolutions, centers,
+                                                include_neighbours_in_output, numthreads);
 
     return dict;
 }
 
-PyObject *make_pcolor_implementation(PyArrayObject *pos, PyArrayObject *value,
-                                     int resolution_x, int resolution_y,
-                                     double boxsize_x, double boxsize_y, double boxsize_z,
-                                     double center_x, double center_y, double center_z,
-                                     int axis0, int axis1,
-                                     int nz,
-                                     bool include_neighbours_in_output,
-                                     int numthreads) {
+PyObject *
+make_pcolor_implementation(PyArrayObject *pos,
+                           PyArrayObject *quant,
+                           PyArrayObject *axes,
+                           PyArrayObject *boxsizes,
+                           PyArrayObject *resolutions,
+                           PyArrayObject *centers,
+                           int include_neighbours_in_output,
+                           int numthreads) {
 
     // Guards against segfaults
     if(PyArray_API == nullptr) {
@@ -131,17 +102,27 @@ PyObject *make_pcolor_implementation(PyArrayObject *pos, PyArrayObject *value,
     PyArrayObject *pyContours = nullptr;
     int *neighbours, *contours;
 
+    int resolution_x    = * (int *) ((char *) PyArray_DATA(resolutions) + 0 * PyArray_STRIDES(resolutions)[0]);
+    int resolution_y    = * (int *) ((char *) PyArray_DATA(resolutions) + 1 * PyArray_STRIDES(resolutions)[0]);
+    double boxsize_x    = * (double *) ((char *) PyArray_DATA(boxsizes) + 0 * PyArray_STRIDES(boxsizes)[0]);
+    double boxsize_y    = * (double *) ((char *) PyArray_DATA(boxsizes) + 1 * PyArray_STRIDES(boxsizes)[0]);
+    double boxsize_z    = 0;
+    int axis0           = * (int *) ((char *) PyArray_DATA(axes) + 0 * PyArray_STRIDES(axes)[0]);
+    int axis1           = * (int *) ((char *) PyArray_DATA(axes) + 1 * PyArray_STRIDES(axes)[0]);
+    int axis2           = 3 - axis0 - axis1;
+    double center_x     = * (double *) ((char *) PyArray_DATA(centers) + axis0 * PyArray_STRIDES(centers)[0]);
+    double center_y     = * (double *) ((char *) PyArray_DATA(centers) + axis1 * PyArray_STRIDES(centers)[0]);
+    double center_z     = * (double *) ((char *) PyArray_DATA(centers) + axis2 * PyArray_STRIDES(centers)[0]);
+
     // Initialise other objects
     npy_intp dims[2] = {resolution_x, resolution_y};
-    int axis2           = 3 - axis0 - axis1;
+
     int npart           = PyArray_DIMS(pos)[0];
     auto pyGrid         = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_DOUBLE);
     auto grid           = (double *) PyArray_DATA(pyGrid);
 
     // Initialise grid to zero
     memset(grid, 0, resolution_x * resolution_y * sizeof(double));
-//    std::cout << "resolution_x = " << resolution_x << std::endl;
-
     double cellsizex    = boxsize_x / resolution_x;
     double cellsizey    = boxsize_y / resolution_y;
     double cellsizez    = 0;
@@ -170,7 +151,7 @@ PyObject *make_pcolor_implementation(PyArrayObject *pos, PyArrayObject *value,
         for (j = 0; j < 3; j++) {
             real_pos[i * 3 + j] = *(double *) ((char *) PyArray_DATA(pos) + i * PyArray_STRIDES(pos)[0] + j * PyArray_STRIDES(pos)[1]);
         }
-        real_quant[i] = *(double *) ((char *) PyArray_DATA(value) + i * PyArray_STRIDES(value)[0]);
+        real_quant[i] = *(double *) ((char *) PyArray_DATA(quant) + i * PyArray_STRIDES(quant)[0]);
     }
 
     // Create a tree using the position info
@@ -197,12 +178,11 @@ PyObject *make_pcolor_implementation(PyArrayObject *pos, PyArrayObject *value,
 
 #pragma omp for schedule(dynamic, 1) nowait
         for (x = 0; x < resolution_x; x++) {
-//            std::cout << "x = " << x << std::endl;
             coord[axis0] = center_x - 0.5 * boxsize_x + cellsizex * (0.5 + x);
             for (y = 0; y < resolution_y; y++) {
                 cell = y + resolution_y * x;
                 coord[axis1] = center_y - 0.5 * boxsize_y + cellsizey * (0.5 + y);
-                for (z = 0; z < nz; z++) {
+                for (z = 0; z < 1; z++) {
                     coord[axis2] = center_z - 0.5 * boxsize_z + cellsizez * (0.5 + z);
 
                     getNearestNeighbour(&tree, real_pos, coord, &neighbour, worklist);
@@ -210,7 +190,6 @@ PyObject *make_pcolor_implementation(PyArrayObject *pos, PyArrayObject *value,
                     //
 #pragma omp atomic
                     grid[cell] += real_quant[neighbour];
-//                    std::cout << real_quant[neighbour] << std::endl;
 
                     if (include_neighbours_in_output) {
                         neighbours[cell] = neighbour;
@@ -237,15 +216,6 @@ PyObject *make_pcolor_implementation(PyArrayObject *pos, PyArrayObject *value,
     double tree_walk_time = get_time() - start_tree;
     printf("Tree walk took %gs\n", tree_walk_time);
 
-    auto max_val = resolution_x * resolution_y;
-//    std::cout << "Just after tree walk" << std::endl;
-//    std::cout << grid[0] << std::endl;
-//    for (int i = 0; i < max_val; i++) {
-//        if (i % 10000 == 0) {
-//            std::cout << "i = " << i << ". q = " << grid[i] << std::endl;
-//        }
-//    }
-
     // Free memory
     freeTree(&tree);
     free(real_pos);
@@ -258,8 +228,7 @@ PyObject *make_pcolor_implementation(PyArrayObject *pos, PyArrayObject *value,
 
     // Write to dict
     PyObject *dict = PyDict_New();
-    auto success = PyDict_SetStolenItem(dict, "grid", (PyObject *) pyGrid);
-//    PyDict_SetItemString(dict, "grid2", (PyObject *) 1);
+    PyDict_SetStolenItem(dict, "grid", (PyObject *) pyGrid);
     if (include_neighbours_in_output) {
         PyDict_SetStolenItem(dict, "neighbours", (PyObject *) pyNeighbours);
         PyDict_SetStolenItem(dict, "contours", (PyObject *) pyContours);
@@ -268,17 +237,6 @@ PyObject *make_pcolor_implementation(PyArrayObject *pos, PyArrayObject *value,
     // Show the elapsed time
     double calculation_time = get_time() - start;
     printf("Calculation took %gs\n", calculation_time);
-
-    auto grid2 = (PyArrayObject *) PyDict_GetItemString(dict, "grid");
-    auto grid_data = (double *) PyArray_DATA(grid2);
-    auto n = PyArray_DIMS(grid2)[0];
-
-//    std::cout << n << std::endl;
-//    for (int i = 0; i < n; i++) {
-//        if (i % 10 == 0) {
-//            std::cout << grid_data[i] << std::endl;
-//        }
-//    }
 
     return dict;
 }
@@ -291,7 +249,7 @@ static PyMethodDef pcolor_methods[] = {
 
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
-        "pcolor_pierre",
+        "arepo_pcolor",
         nullptr,
         -1,
         pcolor_methods,
@@ -301,7 +259,7 @@ static struct PyModuleDef moduledef = {
         nullptr,
 };
 
-PyMODINIT_FUNC PyInit_pcolor_pierre(void) {
+PyMODINIT_FUNC PyInit_arepo_pcolor(void) {
     import_array();
 
     return PyModule_Create(&moduledef);
