@@ -306,7 +306,7 @@ PyObject *create_wd(PyObject *self, PyObject *args, PyObject *kwargs) {
     auto keywords = (char **) kwlist;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                                     "O&d|ddddddd:create_wd("
+                                     "O&d|dO!d:create_wd("
                                      "eos, rho_c, "
                                      "[temp_c, "
                                      "xnuc_py, "
@@ -319,13 +319,13 @@ PyObject *create_wd(PyObject *self, PyObject *args, PyObject *kwargs) {
         return nullptr;
     }
 
-    if (PyArray_DIMS(xnuc_py)[1] != eos->nspecies) {
+    if (PyArray_DIMS(xnuc_py)[0] != eos->nspecies) {
         PyErr_SetString( PyExc_ValueError, "Nspecies mismatch between EOS and xnuc_py. \n" );
         return nullptr;
     }
 
     auto xnuc   = (double *) PyArray_DATA(xnuc_py);
-    for (int i = 0; eos->nspecies; i++) {
+    for (int i = 0; i < eos->nspecies; i++) {
         xtot += xnuc[i];
     }
 
@@ -355,10 +355,10 @@ PyObject *create_polytrope(PyObject *self, PyObject *args, PyObject *kwargs) {
     double dr = 1e5;
     PyArrayObject *xnuc_py;
 
-    const char *kwlist[] = { "eos", "n", "rho_c", "composition", "pres_c", "temp_c", "dr", nullptr };
+    const char *kwlist[] = { "eos", "n", "rho_c", "xnuc_py", "pres_c", "temp_c", "dr", nullptr };
     auto keywords = (char **) kwlist;
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-                                     "O&ddO!|dddi:create_polytrope( eos, n, rho_c, composition, [pres_c, temp_c, dr] )",
+                                     "O&ddO!|ddd:create_polytrope( eos, n, rho_c, xnuc_py, [pres_c, temp_c, dr] )",
                                      keywords,
                                      &pyConvertHelmEos, &eos,
                                      &n, &rho_c,
@@ -367,7 +367,7 @@ PyObject *create_polytrope(PyObject *self, PyObject *args, PyObject *kwargs) {
         return nullptr;
     }
 
-    if (PyArray_DIMS(xnuc_py)[1] != eos->nspecies) {
+    if (PyArray_DIMS(xnuc_py)[0] != eos->nspecies) {
         PyErr_SetString( PyExc_ValueError, "Nspecies mismatch between EOS and xnuc_py. \n" );
         return nullptr;
     }

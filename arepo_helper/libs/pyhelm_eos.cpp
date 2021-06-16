@@ -226,13 +226,13 @@ int pyConvertHelmEos( PyObject* object, t_helm_eos_table** helm_eos_table ) {
 
 /* pyEos module */
 
-PyObject* loadhelmeos(PyObject *self, PyObject *args) {
+PyObject* loadhelm_eos(PyObject *self, PyObject *args) {
     char *datafile, *speciesfile;
     t_helm_eos_table* helm_eos_table;
 
     int useCoulombCorrections = 0;
     int verbose = 0;
-    if (!PyArg_ParseTuple( args, "ss|ii:loadhelmeos( datafile, speciesfile, [useCoulombCorrections,verbose] )", &datafile, &speciesfile, &useCoulombCorrections, &verbose )) {
+    if (!PyArg_ParseTuple( args, "ss|ii:loadhelm_eos( datafile, speciesfile, [useCoulombCorrections,verbose] )", &datafile, &speciesfile, &useCoulombCorrections, &verbose )) {
         return nullptr;
     }
 
@@ -245,7 +245,7 @@ PyObject* loadhelmeos(PyObject *self, PyObject *args) {
 // Python Module declarations
 static PyMethodDef pyhelmeosMethods[] = {
         {"loadhelm_eos",
-                loadhelmeos,
+                loadhelm_eos,
         METH_VARARGS,
         "loadhelm_eos(datafile, speciesfile, [useCoulombCorrections, verbose]).\n Load Helmholz EOS from specified datafile and speciesfile."
         },

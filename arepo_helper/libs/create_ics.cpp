@@ -525,7 +525,7 @@ PyObject *convert_to_healpix(PyObject *self, PyObject *args, PyObject *kwargs) {
     PyArrayObject *centers = nullptr;
 
     const char *kwlist[] = {"wdec_dict", "nspecies", "boxsize",
-                            "makebox", "centers", "randomizeshells", "randomizeradii", "pmass", nullptr};
+                            "centers", "makebox", "randomizeshells", "randomizeradii", "pmass", nullptr};
     auto keywords = (char **) kwlist;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
