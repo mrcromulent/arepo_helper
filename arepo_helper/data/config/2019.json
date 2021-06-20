@@ -1,0 +1,1122 @@
+{
+    "version": 2019,
+    "heading": "",
+    "data": [
+        {
+            "heading": "Basic operation",
+            "items": [
+                {
+                    "name": "NTYPES",
+                    "value": 6,
+                    "docs": "Number of particle types",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "COOLING",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "GAMMA",
+                    "value": false,
+                    "docs": "Heat capacity ratio. Try 1.4 if unsure.",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ISOTHERM_EQS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "MPI/Threading",
+            "items": [
+                {
+                    "name": "NUM_THREADS",
+                    "value": false,
+                    "docs": "When using OpenMP, with the given number of threads per MPI task.",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "IMPOSE_PINNING",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "IMPOSE_PINNING_OVERRIDE_MODE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Mesh Type",
+            "items": [
+                {
+                    "name": "VORONOI",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "SR/GR",
+            "items": [
+                {
+                    "name": "SPECIAL_RELATIVITY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SPECIAL_RELATIVITY_HLLC",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SR_HLLC_ZERO_COMPVEL",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "GENERAL_RELATIVITY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "METRIC_TYPE",
+                    "value": false,
+                    "docs": "Use 1 and 2 for Kerr and Schwarzchild metrics",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ATMOSPHERE_GENERAL_RELATIVITY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ADIABATIC_GENERAL_RELATIVITY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "MHD",
+            "items": [
+                {
+                    "name": "MHD",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_CT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_CT_IC",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_CT_PERTURB_POSITIONS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_DIVBCLEANING",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_POWELL",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_POWELL_LIMIT_TIMESTEP",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_POwELL_SPLIT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_SEEDFIELD",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_SEEDSPEC",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Non-ideal MHD",
+            "items": [
+                {
+                    "name": "NON_IDEAL_MHD",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OHMIC_DIFFUSION",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Riemann solver",
+            "items": [
+                {
+                    "name": "VARIABLE_GAMMA",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RIEMANN_HLL",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RIEMANN_HLLC",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RIEMANN_ROSUNOV",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RIEMANN_HLLD",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RIEMANN_GAMMA",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "AMR_CONNECTIONS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "AMR_GRADIENTS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Mesh motion and regularization",
+            "items": [
+
+                {
+                    "name": "VORONOI_STATIC_MESH",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "REGULARIZE_MESH_CM_DRIFT",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "REGULARIZE_MESH_FACE_ANGLE",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_MESH_FACE_ANGLE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Time integration options",
+            "items": [
+                {
+                    "name": "FORCE_EQUAL_TIMESTEPS",
+                    "value": false,
+                    "docs": "Timestep is global and set by AREPO",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TREE_BASED_TIMESTEPS",
+                    "value": true,
+                    "docs": "Non-local timesteps (taking signal speed into account)",
+                    "requires": [],
+                    "incompatibilities": ["FORCE_EQUAL_TIMESTEPS"]
+                },
+                {
+                    "name": "DECOUPLE_TIMESTEPS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": ["FORCE_EQUAL_TIMESTEPS"]
+                },
+                {
+                    "name": "RUNGE_KUTTA_FULL_UPDATE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Image generation",
+            "items": [
+                {
+                    "name": "VORONOI_MESHOUTPUT",
+                    "value": false,
+                    "docs": "2D and 3D mesh output",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "VORONOI_FREQUENT_IMAGES",
+                    "value": false,
+                    "docs": "creates images with frequency 'TimeBetweenImages' given in parameterfile, independent of snapshots",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Refinement and derefinement",
+            "items": [
+                {
+                    "name": "REFINEMENT_SPLIT_CELLS",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "REFINEMENT_VOLUME_LIMIT",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "REFINEMENT_MERGE_CELLS",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "DEREFINE_GENTLY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Add or relax mesh",
+            "items": [
+                {
+                    "name": "MESHRELAX",
+                    "value": false,
+                    "docs": "This keeps the mass constant and only regularises the mesh",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MESHRELAX_DENSITY_IN_INPUT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ADDBACKGROUNDGRID",
+                    "value": false,
+                    "docs": "Try 16",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Gravity treatment",
+            "items": [
+                {
+                    "name": "SELFGRAVITY",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "HIERARCHICAL_GRAVITY",
+                    "value": false,
+                    "docs": "Use hierarchical splitting of the tiem integration of the gravity",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "CELL_CENTER_GRAVITY",
+                    "value": false,
+                    "docs": "Uses geometric centers to calculate gravity of cells",
+                    "requires": ["HIERARCHICAL_GRAVITY"],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "GRAVITY_NOT_PERIODIC",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ALLOW_DIRECT_SUMMATION",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "DIRECTION_SUMMATION_THRESHOLD",
+                    "value": false,
+                    "docs": "Try 1000",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "EXTERNALGRAVITY",
+                    "value": false,
+                    "docs": "External potential",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "COMPUTE_POTENTIAL_ENERGY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Gravity softening",
+            "items": [
+                {
+                    "name": "NSOFTTYPES",
+                    "value": false,
+                    "docs": "Number of different softening values to which the particle types can be mapped. Try 4?",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ADAPTIVE_HYDRO_SOFTENING",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NSOFTTYPES_HYDRO",
+                    "value": false,
+                    "docs": "Used to override the default value of 64.",
+                    "requires": ["ADAPTIVE_HYDRO_SOFTENING"],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "TreePM options",
+            "items": [
+                {
+                    "name": "PMGRID",
+                    "value": 512,
+                    "docs": "Default value 512",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ONLY_PM",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "PM_ZOOM_OPTIMIZED",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Things that are always recommended",
+            "items": [
+                {
+                    "name": "ENDIAN_SWAP_ENDIAN_READIC",
+                    "value": false,
+                    "docs": "Enable automatic ENDIAN swapping for reading ICs",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "CHUNKING",
+                    "value": false,
+                    "docs": "will calculated the gravity force in interleaved blocks. This can reduce imbalances in case multiple iterations due to insufficient buffer size need to be done",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Precision",
+            "items": [
+                {
+                    "name": "DOUBLEPRECISION",
+                    "value": 1,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "DOUBLEPRECISION_FFTW",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_IN_DOUBLEPRECISION",
+                    "value": false,
+                    "docs": "Snapshots written in double precision",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "INPUT_IN_DOUBLE_PRECISION",
+                    "value": false,
+                    "docs": "ICs in double precision",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NGB_TREE_DOUBLEPRECISION",
+                    "value": false,
+                    "docs": "Double precision used for neighbour node extension",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+
+            ]
+        },
+        {
+            "heading": "Subfind",
+            "items": [
+                {
+                    "name": "SUBFIND",
+                    "value": false,
+                    "docs": "Enables substructure finder",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SAVE_HSML_IN_SNAPSHOT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Passive Tracers",
+            "items": [
+                {
+                    "name": "TRACER_FIELD",
+                    "value": false,
+                    "docs": "Passive scalar field which is advected in proportion to the fluid mass fluxes",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TRACER_MC",
+                    "value": false,
+                    "docs": "Monte carlo tracer. Value specifies particle type",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "GENERATE_TRACER_MC_IN_ICS",
+                    "value": false,
+                    "docs": "Adds a fixed number of Monte Carlo tracers (value specified in param file)",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TRACER_PARTICLE",
+                    "value": false,
+                    "docs": "Velocity field tracer master switch. Value specifies particle type",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "GENERATE_TRACER_PARTICLE_IN_ICS",
+                    "value": false,
+                    "docs": "Add tracer particles at positions of cell vertices in ICs",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Special Behaviour",
+            "items": [
+                {
+                    "name": "TILE_ICS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TOLERATE_WRITE_ERROR",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "VORONOI_DYNAMIC_UPDATE",
+                    "value": true,
+                    "docs": "Keeps track of mesh connectivity, which speeds up mesh construction",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NO_MPI_IN_PLACE",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NO_ISEND_IRECV_IN_DOMAIN",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "FIX_PATHSCALE_MPI_STATUS_IGNORE_BUG",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ALLOWEXTRAPARAMS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "DISABLE_OPTIMIZE_DOMAIN_MAPPING",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "BITS_PER_DIMENSION",
+                    "value": 42,
+                    "docs": "Peano-Hilbert order",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OVERRIDE_PEANOGRID_WARNING",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Input/Output",
+            "items": [
+                {
+                    "name": "UPDATE_GRADIENTS_FOR_OUTPUT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_EVERY_STEP",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "GODUNOV_STATS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_PRESSURE_GRADIENT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_DENSITY_GRADIENT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_VELOCITY_GRADIENT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_BFIELD_GRADIENT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_VERTEX_VELOCITY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_VERTEX_VELOCITY_DIVERGENCE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_VOLUME",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_CENTER_OF_MASS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_SURFACE_AREA",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_PRESSURE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUTPOTENTIAL",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUTACCELERATION",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUTTIMESTEP",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_SOFTENINGS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUTGRAVINTERACTIONS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "HAVE_HDF5",
+                    "value": true,
+                    "docs": "needed when HDF5 I/O support is desired",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_XDMF",
+                    "value": false,
+                    "docs": "writes an .xmf file for each snapshot, which can be read by visit (with the hdf5 snapshot)",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUTCOOLRATE",
+                    "value": false,
+                    "docs": "Outputs the cooling and conduction rate if enabled",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_DIVVEL",
+                    "value": false,
+                    "docs": "Output velocity divergence",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_CURLVEL",
+                    "value": false,
+                    "docs": "Output velocity curl",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_VORTICITY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_MACHNUM",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_ENTROPY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_CSND",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Testing and Debugging options",
+            "items": [
+                {
+                    "name": "DEBUG",
+                    "value": true,
+                    "docs": "Enables core dumps",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "HOST_MEMORY_REPORTING",
+                    "value": false,
+                    "docs": "Reports after start-up the available system memory by analyzing/proc/meminfo",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Degenerate Equation of State",
+            "items": [
+                {
+                    "name": "EOS_DEGENERATE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "EOS_COULOMB_CORRECTIONS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "EOS_COULOMB_CORRECTIONS_SMOOTH",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "EOS_NSPECIES",
+                    "value": false,
+                    "docs": "Number of nuclear species",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RELAXOBJECT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RELAXOBJECT_COOLING",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RELAXOBJECT_COOLING2",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RELAXOBJECT_BINARY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RELAX_RUNTIME",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "INSPIRAL",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "PASSIVE_SCALARS",
+                    "value": false,
+                    "docs": "?",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Nuclear Network",
+            "items": [
+                {
+                    "name": "NUCLEAR_NETWORK",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NETWORK_NSE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NETWORK_PARDISO",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NETWORK_SCREENING",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "REACLIB1",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NUCLEAR_NETWORK_DETONATE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NUCLEAR_NETWORK_DETONATE_CORE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NUCLEAR_NETWORK_DETONATE_POSITION",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NUCLEAR_NETWORK_TIMESTEP_LIMITER",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NUCLEAR_NETWORK_USE_SHOCKFINDER",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NUCLEAR_NETWORK_LIMIT_COMPOSITION_CHANGE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        }
+    ]
+}

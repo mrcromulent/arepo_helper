@@ -1,0 +1,647 @@
+{
+    "version": 2020,
+    "heading": "",
+    "data": [
+        {
+            "heading": "Basic operation",
+            "items": [
+                {
+                    "name": "NTYPES",
+                    "value": 6,
+                    "docs": "Number of particle types",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Hydrodynamics",
+            "items": [
+                {
+                    "name": "GAMMA",
+                    "value": false,
+                    "docs": "Heat capacity ratio. Try 1.4 if unsure.",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ISOTHERM_EQS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "PASSIVE_SCALARS",
+                    "value": false,
+                    "docs": "number of passive scalar fields advected with fluid (default: 0)",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Magnetohydrodynamics",
+            "items": [
+                {
+                    "name": "MHD",
+                    "value": false,
+                    "docs": "Master switch for magnetohydrodynamics",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_POWELL",
+                    "value": false,
+                    "docs": "Powell div(B) cleaning scheme for magnetohydrodynamics",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_POWELL_LIMIT_TIMESTEP",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHD_SEEDFIELD",
+                    "value": false,
+                    "docs": "Uniform magnetic seed field of specified orientation and strength set up after reading in IC",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Riemann solver",
+            "items": [
+                {
+                    "name": "RIEMANN_HLLC",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RIEMANN_HLLD",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Mesh motion and regularization",
+            "items": [
+                {
+                    "name": "VORONOI_STATIC_MESH",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "REGULARIZE_MESH_CM_DRIFT",
+                    "value": true,
+                    "docs": "Move mesh generating point towards center of mass to make cells rounder.",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED",
+                    "value": true,
+                    "docs": "Limit mesh regularization speed by local sound speed",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Refinement and derefinement. Default: no refinement/derefinement; criterion: target mass",
+            "items": [
+                {
+                    "name": "REFINEMENT_SPLIT_CELLS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "REFINEMENT_MERGE_CELLS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "REFINEMENT_VOLUME_LIMIT",
+                    "value": false,
+                    "docs": "Limit the volume of cells and the maximum volume difference between neighboring cels",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "JEANS_REFINEMENT",
+                    "value": false,
+                    "docs": "Refinement criterion to ensure Jeans stability of cells",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "REFINEMENT_HIGH_RES_GAS",
+                    "value": false,
+                    "docs": "Refinement criterion for high-resolution region in zoom simulation",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Non-standard physics",
+            "items": [
+            ]
+        },
+        {
+            "heading": "Gravity treatment. Default: no gravity",
+            "items": [
+                {
+                    "name": "SELFGRAVITY",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "HIERARCHICAL_GRAVITY",
+                    "value": false,
+                    "docs": "Use hierarchical splitting of the tiem integration of the gravity",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "CELL_CENTER_GRAVITY",
+                    "value": false,
+                    "docs": "Uses geometric centers to calculate gravity of cells",
+                    "requires": ["HIERARCHICAL_GRAVITY"],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "GRAVITY_NOT_PERIODIC",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ALLOW_DIRECT_SUMMATION",
+                    "value": false,
+                    "docs": "Performed direct summation instead of tree-based gravity if number of active particles < DIRECT_SUMMATION_THRESHOLD (= 3000 unless specified differently here)",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "DIRECTION_SUMMATION_THRESHOLD",
+                    "value": false,
+                    "docs": "Overrides maximum number of active particles for which direct summation is performed instead of tree based calculation. Default 3000",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "TreePM options. Default: no particle mesh",
+            "items": [
+                {
+                    "name": "PMGRID",
+                    "value": 512,
+                    "docs": "Enables particle mesh; number of cells used for grid in each dimension",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ASMTH",
+                    "value": false,
+                    "docs": "This can be used to override the value assumed for the scale that defines the long-range/short-range force-split in the TreePM algorithm. The default value is 1.25, in mesh-cells.",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RCUT",
+                    "value": false,
+                    "docs": "This can be used to override the maximum radius in which the short-range tree-force is evaluated (in case the TreePM algorithm is used). The default value is 4.5, given in mesh-cells.",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "PM_ZOOM_OPTIMIZED",
+                    "value": false,
+                    "docs": "Particle-mesh calculation that is optimized for cosmological zoom simulations; disable for cosmological volume simulations.",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Gravity softening",
+            "items": [
+                {
+                    "name": "NSOFTTYPES",
+                    "value": false,
+                    "docs": "Number of different softening values to which the particle types can be mapped. Default: 4",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ADAPTIVE_HYDRO_SOFTENING",
+                    "value": false,
+                    "docs": "Adaptive softening of gas cells depending on their size",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NSOFTTYPES_HYDRO",
+                    "value": false,
+                    "docs": "Used to override the default value of 64.",
+                    "requires": ["ADAPTIVE_HYDRO_SOFTENING"],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "External Gravity",
+            "items": [
+                {
+                    "name": "EXTERNALGRAVITY",
+                    "value": false,
+                    "docs": "master switch for external potential",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Static Navarro-Frenk-White (NFW) potential",
+            "items": [
+            ]
+        },
+        {
+            "heading": "Static Isothermal Sphere Potential",
+            "items": [
+            ]
+        },
+        {
+            "heading": "Time integration options",
+            "items": [
+                {
+                    "name": "FORCE_EQUAL_TIMESTEPS",
+                    "value": false,
+                    "docs": "Timestep is global and set by AREPO",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TREE_BASED_TIMESTEPS",
+                    "value": true,
+                    "docs": "Non-local timesteps (taking signal speed into account)",
+                    "requires": [],
+                    "incompatibilities": ["FORCE_EQUAL_TIMESTEPS"]
+                }
+            ]
+        },
+        {
+            "heading": "MPI/Threading",
+            "items": [
+                {
+                    "name": "IMPOSE_PINNING",
+                    "value": true,
+                    "docs": "Enforce pinning of MPI tasks to cores if MPI does not do it",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "IMPOSE_PINNING_OVERRIDE_MODE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Precision",
+            "items": [
+                {
+                    "name": "DOUBLEPRECISION",
+                    "value": 1,
+                    "docs": "Mode of double precision: not defined: single; 1: full double precision 2: mixed, 3: mixed, fewer single precisions; unless short of memory, use 1.",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "DOUBLEPRECISION_FFTW",
+                    "value": true,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_IN_DOUBLEPRECISION",
+                    "value": false,
+                    "docs": "Snapshots written in double precision",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "INPUT_IN_DOUBLE_PRECISION",
+                    "value": false,
+                    "docs": "ICs in double precision",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NGB_TREE_DOUBLEPRECISION",
+                    "value": false,
+                    "docs": "Double precision used for neighbour node extension",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+
+            ]
+        },
+        {
+            "heading": "FOF",
+            "items": [
+                {
+                    "name": "FOF",
+                    "value": false,
+                    "docs": "enable FoF output",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Subfind",
+            "items": [
+                {
+                    "name": "SUBFIND",
+                    "value": false,
+                    "docs": "Enables substructure finder",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SAVE_HSML_IN_SNAPSHOT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Special Behaviour",
+            "items": [
+                {
+                    "name": "ALLOWEXTRAPARAMS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "BITS_PER_DIMENSION",
+                    "value": 42,
+                    "docs": "Peano-Hilbert order",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Input/Output",
+            "items": [
+                {
+                    "name": "OUTPUT_PRESSURE_GRADIENT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_DENSITY_GRADIENT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_VELOCITY_GRADIENT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_BFIELD_GRADIENT",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_VERTEX_VELOCITY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_VERTEX_VELOCITY_DIVERGENCE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_VOLUME",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_CENTER_OF_MASS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_SURFACE_AREA",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_PRESSURE",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUTPOTENTIAL",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUTACCELERATION",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUTTIMESTEP",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_SOFTENINGS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUTGRAVINTERACTIONS",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUTCOOLRATE",
+                    "value": false,
+                    "docs": "Outputs the cooling and conduction rate if enabled",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_DIVVEL",
+                    "value": false,
+                    "docs": "Output velocity divergence",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_CURLVEL",
+                    "value": false,
+                    "docs": "Output velocity curl",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_VORTICITY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_MACHNUM",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_ENTROPY",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_CSND",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Output options",
+            "items": [
+                {
+                    "name": "OUTPUT_EVERY_STEP",
+                    "value": false,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "HAVE_HDF5",
+                    "value": true,
+                    "docs": "needed when HDF5 I/O support is desired",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OUTPUT_XDMF",
+                    "value": false,
+                    "docs": "writes an .xmf file for each snapshot, which can be read by visit (with the hdf5 snapshot)",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Add or relax mesh",
+            "items": [
+                {
+                    "name": "MESHRELAX",
+                    "value": false,
+                    "docs": "This keeps the mass constant and only regularises the mesh",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ADDBACKGROUNDGRID",
+                    "value": false,
+                    "docs": "Re-grid hydrodynamics quantities on a Oct-tree AMR grid. This does not perform a simulation. Try 16",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        },
+        {
+            "heading": "Testing and Debugging options",
+            "items": [
+                {
+                    "name": "DEBUG",
+                    "value": true,
+                    "docs": "Enables core dumps",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "VERBOSE",
+                    "value": false,
+                    "docs": "reports readjustments of buffer sizes",
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+        }
+    ]
+}

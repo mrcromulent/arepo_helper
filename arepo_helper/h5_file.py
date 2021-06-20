@@ -4,7 +4,6 @@ Tried to use hdfdict but it flat out didn't work. Did not dump files correctly n
 
 from names import ArepoHeader, n, path
 import numpy as np
-import calcGrid
 import h5py
 import os
 
@@ -35,14 +34,6 @@ class ArepoH5File(object):
 
         rcm = [(coords[:, i] / mass.sum() * mass).sum() for i in [0, 1, 2]]
         return np.array(rcm)
-
-    def get_raddens(self, quantity_name, center, mode=1, nshells=200, dr=0):
-
-        coords  = self.get_from_h5(n.COORDINATES)
-        quant   = self.get_from_h5(quantity_name)
-
-        return calcGrid.calcRadialProfile(coords.astype('float64'), quant.astype('float64'),
-                                          mode, nshells, dr, *center)
 
     def mean_a(self, species_list):
 

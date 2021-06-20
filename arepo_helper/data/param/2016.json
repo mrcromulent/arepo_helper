@@ -1,0 +1,614 @@
+{
+    "version": 2016,
+    "heading": "",
+    "data": [
+        {
+            "heading": "Everything",
+            "items": [
+                {
+                    "name": "BoxSize",
+                    "value": null,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "InitCondFile",
+                    "value": null,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OutputDir",
+                    "value": null,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "EosTable",
+                    "value": null,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "EosSpecies",
+                    "value": null,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SnapshotFileBase",
+                    "value": "snapshot",
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OutputListFilename",
+                    "value": "output_snia.txt",
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TimeLimitCPU",
+                    "value": 90000,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ResubmitOn",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ResubmitCommand",
+                    "value": "xyz",
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHDSeedDir",
+                    "value": 0,
+                    "docs": "MHD seed field direction",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MHDSeedValue",
+                    "value": 0,
+                    "docs": "comoving magnetic field strength in Gauss",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ICFormat",
+                    "value": 3,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SnapFormat",
+                    "value": 3,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ComovingIntegrationOn",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TypeOfTimestepCriterion",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OutputListOn",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "PeriodicBoundariesOn",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "Time",
+                    "value": 0.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TimeMax",
+                    "value": null,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RelaxBaseFac",
+                    "value": 1,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "RelaxTemperature",
+                    "value": null,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "Omega0",
+                    "value": 0.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OmegaLambda",
+                    "value": 0.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "OmegaBaryon",
+                    "value": 0.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "HubbleParam",
+                    "value": 1.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ReferenceGasPartMass",
+                    "value": null,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TargetGasMassFactor",
+                    "value": 1,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "DerefinementCriterion",
+                    "value": 1,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MaxVolumeDiff",
+                    "value": 10.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MaxVolume",
+                    "value": null,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MinVolume",
+                    "value": 0.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TimeBetSnapshot",
+                    "value": null,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TimeOfFirstSnapshot",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "CpuTimeBetRestartFile",
+                    "value": 40000.0,
+                    "docs": "In seconds",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TimeBetStatistics",
+                    "value": 0.1,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NumFilesPerSnapshot",
+                    "value": 1,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "NumFilesWrittenInParallel",
+                    "value": 1,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ErrTolIntAccuracy",
+                    "value": 0.05,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "CourantFac",
+                    "value": 0.4,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MaxSizeTimestep",
+                    "value": 0.02,
+                    "docs": "half dynamic timestep",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MinSizeTimestep",
+                    "value": 1e-7,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MultipleDomains",
+                    "value": 4,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TopNodeFactor",
+                    "value": 8,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ActivePartFracForNewDomainDecomp",
+                    "value": 0.01,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ErrTolTheta",
+                    "value": 0.5,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "TypeOfOpeningCriterion",
+                    "value": 1,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "ErrTolForceAcc",
+                    "value": 0.001,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "DesNumNgb",
+                    "value": 32,
+                    "docs": "Desired number of neighbours",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MaxNumNgbDeviation",
+                    "value": 1,
+                    "docs": "Deviation in number of neighbours",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "InitGasTemp",
+                    "value": 0,
+                    "docs": "Ignored if set to 0",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MinGasTemp",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MaxMemSize",
+                    "value": 1800.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "UnitLength_in_cm",
+                    "value": 1.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "UnitMass_in_g",
+                    "value": 1.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "UnitVelocity_in_cm_per_s",
+                    "value": 1.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "GravityConstantInternal",
+                    "value": 0.0,
+                    "docs": "if set to zero, the physical value 6.672e-8",
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningComovingType0",
+                    "value": 1e6,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningComovingType1",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningComovingType2",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningComovingType3",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningComovingType4",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningComovingType5",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningMaxPhysType0",
+                    "value": 1e6,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningMaxPhysType1",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningMaxPhysType2",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningMaxPhysType3",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningMaxPhysType4",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningMaxPhysType5",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningTypeOfPartType0",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningTypeOfPartType1",
+                    "value": 1,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningTypeOfPartType2",
+                    "value": 2,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningTypeOfPartType3",
+                    "value": 3,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningTypeOfPartType4",
+                    "value": 4,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "SofteningTypeOfPartType5",
+                    "value": 5,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MinimumComovingHydroSoftening",
+                    "value": 1e6,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "AdaptiveHydroSofteningSpacing",
+                    "value": 1.2,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "CoolingOn",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "StarformationOn",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MinimumDensityOnStartUp",
+                    "value": 1.0e-5,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "LimitUBelowThisDensity",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "LimitUBelowCertainDensityToThisValue",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "GasSoftFactor",
+                    "value": 1.0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "MinEgySpec",
+                    "value": 0,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },
+                {
+                    "name": "CellShapingSpeed",
+                    "value": 0.5,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                },                
+                {
+                    "name": "CellMaxAngleFactor",
+                    "value": 2.25,
+                    "docs": null,
+                    "requires": [],
+                    "incompatibilities": []
+                }
+            ]
+
+        }
+    ]
+}

@@ -1,13 +1,12 @@
 from snapshot import ArepoSnapshot
 from pyhelm_eos import loadhelm_eos
 import matplotlib.pyplot as plt
+from const import msol
 import arepo_radial
 import arepo_pcolor
 from names import n
 import numpy as np
-import calcGrid
 import create_ics
-from const import msol
 import pprint
 import h5py
 import ic
@@ -73,58 +72,6 @@ def test_temperature_with_density_cutoff():
         plt.show()
 
 
-def test_calcRadialProfile_old():
-    s = ArepoSnapshot("/home/pierre/Desktop/AREPO/AREPO_2020/arepo_new/snapshot_000.hdf5")
-    c = np.array([5e9, 5e9, 5e9])
-
-    u = s.get_from_h5(n.INTERNALENERGY)
-    rho = s.get_from_h5(n.DENSITY)
-    pres = s.get_from_h5(n.PRESSURE)
-    coords = s.get_from_h5(n.COORDINATES)
-
-    data = calcGrid.calcRadialProfile(coords.astype('float64'),
-                                      u.astype('float64'),
-                                      2,
-                                      200,
-                                      0,
-                                      *c)
-
-    fig, ax = plt.subplots()
-    ax.plot(data[1, :], data[0, :], 'b')
-    plt.show()
-
-
-def test_calcASlice_old():
-    res = 500
-    c = np.array([5e9, 5e9, 5e9])
-    ibsx = 1e10
-    ibsy = 1e10
-
-    s = ArepoSnapshot("/home/pierre/Desktop/AREPO/AREPO_2020/arepo_new/snapshot_000.hdf5")
-
-    rho = s.get_from_h5(n.DENSITY)
-    u = s.get_from_h5(n.INTERNALENERGY)
-    pres = s.get_from_h5(n.PRESSURE)
-    coords = s.get_from_h5(n.COORDINATES)
-
-    data = calcGrid.calcASlice(coords.astype('float64'), u.astype('float64'),
-                               res, res,
-                               ibsx, ibsy,
-                               *c,
-                               0, 1,
-                               proj=False,
-                               boxz=0,
-                               nz=1,
-                               numthreads=1)
-
-    fig, ax = plt.subplots()
-    x = np.arange(res + 1, dtype="float64") / res * ibsx - 0.5 * ibsx + c[0]
-    y = np.arange(res + 1, dtype="float64") / res * ibsy - 0.5 * ibsy + c[1]
-    im = ax.pcolormesh(x, y, np.transpose(data["grid"]), shading='flat')
-    plt.colorbar(im, ax=ax)
-    plt.show()
-
-
 def test_make_radial():
     boxsize = 1e10
     a = np.array([boxsize / 2, boxsize / 2, boxsize / 2])
@@ -146,6 +93,7 @@ def test_make_radial():
     fig, ax = plt.subplots()
     ax.plot(data[1, :], data[0, :], 'b')
     plt.show()
+    fig.savefig('test.png')
 
 
 def test_make_pcolor():
@@ -253,8 +201,8 @@ def test_helm_eos():
 
 if __name__ == '__main__':
     test_make_radial()
-    test_make_pcolor()
-    test_make_polytrope()
-    test_create_wd()
-    test_create_wd_wdec()
-    test_helm_eos()
+    # test_make_pcolor()
+    # test_make_polytrope()
+    # test_create_wd()
+    # test_create_wd_wdec()
+    # test_helm_eos()
