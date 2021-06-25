@@ -1,5 +1,4 @@
 from utilities import header_default, part_fields
-from createICs import create_particles_fill_grid
 from h5_file import ArepoH5File
 from names import n
 import numpy as np
@@ -16,54 +15,6 @@ class ArepoICs(ArepoH5File):
             particle_dict, header = self.add_grid(particle_dict, header, boxsize, resolution, xnuc)
 
         return particle_dict, header
-
-    def add_grid(self, pd, header, boxsize_to_add, resolution, xnuc):
-        """
-        :param pd:
-        :param header:
-        :param boxsize_to_add:
-        :param resolution:
-        :param xnuc:
-        :return:
-
-        Essentially the function embeds an existing particle dictionary inside a larger one, which is lower resolution.
-        The larger region is populated with particles too but at a much lower density.
-        """
-
-        if n.BOXSIZE not in header:
-            raise ValueError(f"{n.BOXSIZE} must be included in the header")
-
-        p0 = pd[f"{n.PARTTYPE}0"]
-        p0[n.COORDINATES] += 0.5 * boxsize_to_add - 0.5 * header[n.BOXSIZE]
-        f64coords = p0[n.COORDINATES].astype('float64')
-
-        # Update the number of particles
-        p = create_particles_fill_grid(f64coords, boxsize_to_add, resolution)
-        npart_old = header[n.NUMPARTTOTAL].sum()
-        npart_new = npart_old + np.shape(p)[0]
-
-        for q in [n.COORDINATES, n.VELOCITIES, n.MAGNETICFIELD, n.MASSES, n.INTERNALENERGY, n.NUCLEARCOMPOSITION,
-                  n.PASSIVESCALARS, n.PARTICLEIDS]:
-            if q in p0:
-                sh = np.shape(p0[q])
-                if len(sh) > 1:
-                    p0[q] = np.resize(p0[q], (npart_new, sh[1]))
-                    # p0[q].resize((npart_new, sh[1]))
-                else:
-                    p0[q] = np.resize(p0[q], npart_new)
-                    # p0[q].resize(npart_new)
-
-        p0[n.COORDINATES][npart_old:, :] = p
-
-        if n.NUCLEARCOMPOSITION in p0:
-            if xnuc is not None:
-                p0[n.NUCLEARCOMPOSITION][npart_old:, :] = xnuc[None, :]
-
-        header[n.NUMPARTTHISFILE] = np.array([npart_new, 0, 0, 0, 0, 0])
-        header[n.NUMPARTTOTAL] = np.array([npart_new, 0, 0, 0, 0, 0])
-        header[n.NUMPARTTOTALHIGHWORD] = np.array([npart_new, 0, 0, 0, 0, 0])
-
-        return pd, header
 
     def write_ics(self, particle_dict, *args, **kwargs):
         """

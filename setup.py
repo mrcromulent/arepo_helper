@@ -1,10 +1,20 @@
 from numpy.distutils.core import setup, Extension
+from sysconfig import get_paths
 import numpy as np
 import os
 
-incl_dirs = ['/usr/include/python3.8/', '/usr/include/hdf5/serial/',
-             os.path.join(np.get_include(), 'numpy')]
-libs_dirs = ['/usr/lib/python3.8/']
+
+info            = get_paths()
+python_incl     = info["include"]
+python_lib      = info["stdlib"]
+armadillo_incl  = '/home/149/ub0692/include/'
+armadillo_lib   = '/home/149/ub0692/lib64'
+hdf5_incl       = '/apps/hdf5/1.10.5/include'
+# hdf5_incl       = '/usr/include/hdf5/serial/'
+numpy_incl      = os.path.join(np.get_include(), 'numpy')
+
+incl_dirs = [python_incl, numpy_incl, armadillo_incl, hdf5_incl]
+libs_dirs = [python_lib, armadillo_lib]
 libs = ['gsl', 'gslcblas', 'm', 'armadillo']
 define_macros = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
 c_libs_dir = 'arepo_helper/libs/'
@@ -59,7 +69,7 @@ arepo_radial = Extension('arepo_radial',
                                   c_libs_dir + 'helm_eos.cpp'])
 
 setup(name='AREPO Helper Library',
-      version='1,0',
+      version='1.0',
       description='Various functions and class definitions to ',
       author='Uri Pierre Burmester',
       author_email='uri.burmester@anu.edu.au',

@@ -65,7 +65,9 @@ class Param:
 
     comment_char    = "% "
 
-    def __init__(self, explicit_options=None, version=2019):
+    def __init__(self,
+                 explicit_options=None,
+                 version=2019):
 
         self.explicit_options   = explicit_options
         self.version            = version
@@ -87,18 +89,23 @@ class Param:
 
     def comment(self, text_string):
         return self.comment_char + text_string + '\n'
-
-    def write_file(self, filename):
-        delimiter = self.comment_char + 50 * '-' + ' ' + '\n'
+    
+    def indent_and_wrap(self, text):
         length_limit = 200
-        double_newline = '\n\n'
+
+        return textwrap.indent(textwrap.fill(text, width=length_limit), self.comment_char) + '\n'
+
+    def write_file(self, filename, ignored):
+        delimiter       = self.comment_char + 50 * '-' + ' ' + '\n'
+        ev              = self.data["default_value"]
+        double_newline  = "\n\n"
 
         with open(filename, "w") as f:
 
-            heading = textwrap.indent(textwrap.fill(self.data['heading'], width=length_limit), self.comment_char)
+            heading = self.indent_and_wrap(self.data["heading"])
 
             f.write(delimiter)
-            f.write(heading + '\n')
+            f.write(heading)
             f.write(delimiter)
             f.write(double_newline)
 
@@ -110,27 +117,24 @@ class Param:
                 f.write(delimiter)
                 f.write(double_newline)
 
-                for setting in group["items"]:
-                    curr_name = setting["name"]
-                    docs = setting["docs"]
-                    value = setting["value"]
-                    requires = setting["requires"]
-                    incompat = setting["incompatibilities"]
+                for s in group["items"]:
+                    name = s["name"]
+                    docs = s["docs"]
+                    value = s["value"]
 
                     # Write
-                    if value is not None:
-                        f.write(self.comment(curr_name))
+                    if value is not ev:
+                        f.write(self.comment(name))
                         if docs is not None:
-                            docs = textwrap.indent(textwrap.fill(docs, width=length_limit), self.comment_char)
-                            f.write(docs + '\n')
+                            docs = self.indent_and_wrap(docs)
+                            f.write(docs)
 
-                        if len(requires) > 0:
-                            f.write(self.comment("REQUIRES: " + str(requires)))
-
-                        if len(incompat) > 0:
-                            f.write(self.comment("INCOMPATIBILITIES: " + str(incompat)))
-
-                        f.write(curr_name + ' ' + str(value) + double_newline)
+                        if name in ignored:
+                            text = name + ' ' + str(value) \
+                                   + '\t' + self.comment_char + "IGNORED" + double_newline
+                        else:
+                            text = name + ' ' + str(value) + double_newline
+                        f.write(text)
 
     def get(self, key):
         for group in self.data["data"]:
@@ -159,9 +163,11 @@ class Param:
 
 
 class Config:
-    comment_char = "# "
+    comment_char    = "# "
 
-    def __init__(self, explicit_options=None, version=2019):
+    def __init__(self,
+                 explicit_options=None,
+                 version=2019):
 
         self.version            = version
         self.explicit_options   = explicit_options
@@ -186,9 +192,14 @@ class Config:
     def comment(self, text_string):
         return self.comment_char + text_string + '\n'
 
-    def write_file(self, filename):
+    def indent_and_wrap(self, text):
         length_limit = 200
+
+        return textwrap.indent(textwrap.fill(text, width=length_limit), self.comment_char) + '\n'
+
+    def write_file(self, filename, ignored):
         delimiter = self.comment_char + 50 * '-' + ' ' + '\n'
+        ev = self.data["default_value"]
         double_newline = '\n\n'
 
         with open(filename, "w") as f:
@@ -204,39 +215,32 @@ class Config:
                 f.write(delimiter)
                 f.write(double_newline)
 
-                for setting in group["items"]:
-                    curr_name = setting["name"]
-                    docs = setting["docs"]
-                    value = setting["value"]
-                    requires = setting["requires"]
-                    incompat = setting["incompatibilities"]
+                for s in group["items"]:
+                    name = s["name"]
+                    docs = s["docs"]
+                    value = s["value"]
 
                     # Write
-                    if value is False:
-                        pass
-                        # f.write(comment_char + curr_name + double_newline)
-                    else:
+                    if value is not ev:
+                        if docs is None:
+                            docs = ""
 
-                        if docs is not None:
-                            text = curr_name + ': ' + docs
-                            text = textwrap.indent(textwrap.fill(text, width=length_limit), self.comment_char)
-                            f.write(text + '\n')
+                        text = name + ': ' + docs
+                        text = self.indent_and_wrap(text)
+                        f.write(text)
+
+                        value_text = ""
+
+                        if value is not True:
+                            value_text += name + '=' + str(value)
                         else:
-                            text = curr_name + ': '
-                            f.write(self.comment(text))
+                            value_text += name
 
-                        if len(requires) > 0:
-                            f.write(self.comment("REQUIRES: " + str(requires)))
+                        if name in ignored:
+                            value_text += '\t' + self.comment_char + "IGNORED"
 
-                        if len(incompat) > 0:
-                            f.write(self.comment("INCOMPATIBILITIES: " + str(incompat)))
-
-                        if value is True:
-                            f.write(curr_name + double_newline)
-                        else:
-                            f.write(curr_name + '=' + str(value) + double_newline)
-
-                # f.write(delimiter)
+                        value_text += double_newline
+                        f.write(value_text)
 
     def get(self, key):
         for group in self.data["data"]:

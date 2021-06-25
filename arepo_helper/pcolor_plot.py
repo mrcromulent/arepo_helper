@@ -1,13 +1,12 @@
 from utilities import suppress_stdout_stderr
 from abstract_plot import AbstractPlot
 from utilities import Coordinates as C
+import arepo_pcolor
 from names import n
 import numpy as np
-import calcGrid
 
 
 class PColorPlot(AbstractPlot):
-
     pcolor = None
 
     def __init__(self, plot_options, figure=None, ax=None):
@@ -16,47 +15,38 @@ class PColorPlot(AbstractPlot):
         tc, tq = self.compute_plot_content()
         self.populate_plot(tc, tq)
 
-    def calc_a_slice(self, coords, points):
+    def calc_a_slice(self, coords, quant):
+        res = self.po.resolution
+        boxsize_x = self.po.xlim[1] - self.po.xlim[0]
+        boxsize_y = self.po.ylim[1] - self.po.ylim[0]
+        numthreads = self.po.numthreads
 
-        res         = self.po.resolution
-        proj        = self.po.projection
-        proj_fact   = self.po.proj_fact
-        boxz        = self.po.boxz
-        # ibs         = self.po.aa.inner_boxsize
-        ibsx        = self.po.xlim[1] - self.po.xlim[0]
-        ibsy        = self.po.ylim[1] - self.po.ylim[0]
-        nz          = int(2 * proj_fact * res)
-        numthreads  = self.po.numthreads
-        # boxsize     = self.po.ar.run_header[n.BOXSIZE]
-        c           = np.array([
-            np.average(self.po.xlim),
-            np.average(self.po.ylim),
-            np.average(self.po.zlim)])
-        # c           = np.array([boxsize / 2, boxsize / 2, boxsize / 2])
-        xc, yc, zc  = C.coordinates(self.po.orientation)
+        resolutions = np.array([res, res])
+        boxsizes = np.array([boxsize_x, boxsize_y])
+        centers = np.array([np.average(self.po.xlim),
+                            np.average(self.po.ylim),
+                            np.average(self.po.zlim)])
+        xc, yc, _ = C.coordinates(self.po.orientation)
+        axes = np.array([xc, yc])
 
         with suppress_stdout_stderr():
-            data = calcGrid.calcASlice(coords.astype('float64'),
-                                       points.astype('float64'),
-                                       res, res,
-                                       ibsx, ibsy,
-                                       *c,
-                                       xc, yc,
-                                       proj=proj,
-                                       boxz=boxz,
-                                       nz=nz,
-                                       numthreads=numthreads)
+            data = arepo_pcolor.make_pcolor(coords.astype('float64'), quant.astype('float64'),
+                                            axes,
+                                            boxsizes,
+                                            resolutions,
+                                            centers,
+                                            include_neighbours_in_output=1,
+                                            numthreads=numthreads)
 
-        x = np.arange(res + 1, dtype="float64") / res * ibsx - 0.5 * ibsx + c[0]
-        y = np.arange(res + 1, dtype="float64") / res * ibsy - 0.5 * ibsy + c[1]
+        x = np.arange(res + 1, dtype="float64") / res * boxsize_x - 0.5 * boxsize_x + centers[0]
+        y = np.arange(res + 1, dtype="float64") / res * boxsize_y - 0.5 * boxsize_y + centers[1]
 
         return x, y, data
 
     def populate_plot(self, coords, points):
-
         super(PColorPlot, self).populate_plot()
 
-        x, y, data  = self.calc_a_slice(coords, points)
+        x, y, data = self.calc_a_slice(coords, points)
         self.pcolor = self.ax.pcolormesh(x, y, np.transpose(data["grid"]), shading='flat')
         self.set_labels()
         self.set_title()
@@ -66,12 +56,11 @@ class PColorPlot(AbstractPlot):
         return self.pcolor
 
     def compute_plot_content(self):
-
         super(PColorPlot, self).compute_plot_content()
 
-        snap    = self.po.ar.snapshots[self.po.t]
-        coords  = snap.get_from_h5(n.COORDINATES)
-        quant   = snap.get_from_h5(self.po.quantity)
+        snap = self.po.ar.snapshots[self.po.t]
+        coords = snap.get_from_h5(n.COORDINATES)
+        quant = snap.get_from_h5(self.po.quantity)
 
         tc, tq = self.apply_location_cutoffs(coords, quant)
         tc, tq = self.apply_quantity_cutoffs(tc, tq)
@@ -84,20 +73,18 @@ class PColorPlot(AbstractPlot):
         return tc, tq
 
     def update_plot(self, coords, quant):
-
         super(PColorPlot, self).update_plot()
 
-        x, y, data  = self.calc_a_slice(coords, quant)
-        z           = np.transpose(data["grid"])
+        x, y, data = self.calc_a_slice(coords, quant)
+        z = np.transpose(data["grid"])
 
         self.pcolor.set_array(z.ravel())
         self.set_title()
         self.set_scmp_lims()
 
     def update_plot_from_plot_options(self, plot_options):
-
         super(PColorPlot, self).update_plot_from_plot_options()
 
-        self.po         = plot_options
-        tc, tq  = self.compute_plot_content()
+        self.po = plot_options
+        tc, tq = self.compute_plot_content()
         self.update_plot(tc, tq)
