@@ -43,10 +43,3 @@ class ArepoSpeciesList(object):
 
         self.species_dict   = data
         self.num_species    = len(data.keys())
-
-
-if __name__ == "__main__":
-
-    a = ArepoSpeciesList("./snapshots/species05.txt")
-    print(f"{a.num_species} found: {a.species_dict.keys()}")
-    print(f"{a.species_dict['He4'].atomic_number}")

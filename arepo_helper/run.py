@@ -140,9 +140,3 @@ class ArepoRun(object):
     @staticmethod
     def find_target_dir(snapshot):
         return os.path.dirname(snapshot.filename)
-
-
-if __name__ == "__main__":
-
-    ar = ArepoRun.from_directory("./snapshots/")
-    print(ar.snapshots[0].data)

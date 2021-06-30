@@ -55,13 +55,3 @@ class ArepoHelper(object):
             raise ValueError("Unknown plot options type")
 
         plot.save(filename)
-
-    # def export_group_frames(self, ts, qs, os, plot_type, filename=None):
-    #
-    #     poa = self.apm.compute_plot_options_array(ts, qs, os, plot_type)
-    #     frames = GroupFrame(poa)
-    #     frames.save(filename)
-
-
-if __name__ == "__main__":
-    pass

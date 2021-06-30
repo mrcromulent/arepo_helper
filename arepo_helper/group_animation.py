@@ -6,7 +6,6 @@ from scatter_2d import Scatter2D
 import matplotlib.animation as ani
 from utilities import dummy
 import matplotlib.pyplot as plt
-from names import n
 from tqdm import tqdm
 import numpy as np
 
@@ -96,21 +95,3 @@ class GroupAnimation(object):
         metadata = {"Comment": f"Animation with : \n {str(self.apm)}"}
         # metadata = dict()
         self.animation.save(filename, fps=5, metadata=metadata)
-
-
-if __name__ == "__main__":
-    from run import ArepoRun
-    from analysis import ArepoAnalyser
-    from plot_manager import PlotManager
-
-    ar = ArepoRun.from_directory("/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/singular_WD")
-    aa = ArepoAnalyser(analysis_options={"inner_boxsize": 5e9})
-    apm = PlotManager(ar, analyser=aa)
-
-    poa = np.transpose(np.array((
-        [apm.compute_plot_options(0, n.TEMPERATURE, ["x", "y"], "Scatter", explicit_options={"log_cmap": True, })]
-    )))
-
-    test = GroupAnimation([0, 24], poa, apm)
-    test.animate()
-    test.save()

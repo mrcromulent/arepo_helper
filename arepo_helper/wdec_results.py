@@ -249,6 +249,10 @@ class WDECResults(object):
         return 1.0 - 10 ** (-q)
 
     @staticmethod
+    def mr_diff(q1, q2):
+        return 1.989 * (10 ** (-q1 + 33) - 10 ** (-q2 + 33))
+
+    @staticmethod
     def fortran_float(strnum):
         return float(strnum.replace("d-", "e-").replace("d", "e+"))
 
@@ -306,6 +310,3 @@ class WDECResults(object):
             f"15 - w3: {w3}"
 
         return s
-
-    def create_particles_cube(self):
-        pass

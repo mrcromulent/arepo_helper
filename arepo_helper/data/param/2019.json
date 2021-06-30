@@ -555,7 +555,7 @@
                 },
                 {
                     "name": "MaxVolumeDiff",
-                    "value": 10.0,
+                    "value": null,
                     "docs": "Maximum tolerated difference in the volume of two neighboring cells. This avoids large cell-size gradients in the mesh which might cause numerical inaccuracies. In case where the volume of a cell exceeds MaxVolumeDiff times the volume of the smallest neighboring cell, the cell is refined, irrespective of other refinement criteria.",
                     "required": false,
 					"ignored_if": [],
@@ -569,7 +569,7 @@
                 },
                 {
                     "name": "MinVolume",
-                    "value": 0.0,
+                    "value": null,
                     "docs": "Global minimum volume a cell is allowed to have, irrespective of other refinement and derefinement criteria.",
                     "required": false,
 					"ignored_if": [],
@@ -611,9 +611,9 @@
                 },
                 {
                     "name": "CellMaxAngleFactor",
-                    "value": 2.25,
+                    "value": null,
                     "docs": "Cell “roundness” criterion. The face angle of an interface of a cell is defined as the square root of its area divided by pi, and divided by the distance to the face. The maximum face angle is the maximum of this values for all faces in a given cell. This value is a measure for the “roundness” of a cell. If this value exceeds 1.5 times CellMaxAngleFactor, the cell is not allowed to be refined, i.e. highly elongated cells are not allowed to be refined. In addition to this, if the cell exceeds 0.75 times CellMaxAngleFactor, the movement of the mesh-generating point will deviate from the pure Lagrangian motion to make the cell rounder.",
-                    "required": true, 
+                    "required": false,
 					"ignored_if": [],
 					"requirements": [
                         {
@@ -637,7 +637,7 @@
 					"requirements": [
                         {
                             "name": "REGULARIZE_MESH_FACE_ANGLE",
-                            "operator": "EQ",
+                            "operator": "NEQ",
                             "value": true
                         },
                         {
@@ -676,7 +676,7 @@
                 },
                 {
                     "name": "TargetGasMassFactor",
-                    "value": 1,
+                    "value": null,
                     "docs": "The target gas cell mass, where (de-)refinement is triggered if a given cell deviates by more than a factor of 2.0 above or below this value. Multiplicative factor with respect to the mean cell mass.",
                     "required": false,
 					"ignored_if": [],
@@ -684,7 +684,7 @@
                 },
                 {
                     "name": "RefinementCriterion",
-                    "value": 1,
+                    "value": null,
                     "docs": "Selects the criterion for refinement; “0” no refinement, “1” target mass refinement, “2” Jeans stability refinement criterion. Adding additional criteria is easily possible, but requires code modifications.",
                     "required": false,
 					"ignored_if": [],
@@ -692,7 +692,7 @@
                 },
                 {
                     "name": "DerefinementCriterion",
-                    "value": 1,
+                    "value": null,
                     "docs": "Selects the criterion for derefinement; “0” no derefinement, “1” target mass derefinement, “2” Jeans stability derefinement criterion.",
                     "required": false,
 					"ignored_if": [],

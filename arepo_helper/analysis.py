@@ -16,7 +16,3 @@ class ArepoAnalyser(object):
         if analysis_options is not None:
             for key in analysis_options.keys():
                 setattr(self, key, analysis_options[key])
-
-
-if __name__ == "__main__":
-    pass

@@ -122,7 +122,3 @@ class ArepoH5File(object):
             if save_to_mem:
                 self.data[field] = val
             return val
-
-
-if __name__ == "__main__":
-    pass

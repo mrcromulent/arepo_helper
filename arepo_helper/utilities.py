@@ -161,7 +161,3 @@ def convert_from_ruediger_dict(d):
             print(f"Unconverted key: {key}")
 
     return new_d
-
-
-if __name__ == "__main__":
-    pass

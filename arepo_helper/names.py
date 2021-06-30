@@ -330,8 +330,3 @@ def path(field, ptype=0):
                     return f"/{root}{ptype}/", False
 
         raise ValueError(f"{field} not found in any known root groups.")
-
-
-if __name__ == "__main__":
-    print(n.names())
-    print(ArepoGasFields.values())

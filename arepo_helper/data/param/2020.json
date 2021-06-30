@@ -40,7 +40,7 @@
                 },
                 {
                     "name": "MHDSeedDir",
-                    "value": 0,
+                    "value": null,
                     "docs": "Direction of the uniform B field that is set before starting the simulation. The direction is encoded by sum(2^k), where k is the index of direction (0, 1, 2 for x, y, z, respectively). E.g. 3 is a diagonal field in the xy plane, parallel to the z axis. This allows only orientations along coordinate axes, perpendicular to them, or in diagonal orientations. Note that the equations of ideal MHD do not change if the field direction is reversed.",
                     "required": false,
 					"ignored_if": [],
@@ -54,7 +54,7 @@
                 },
                 {
                     "name": "MHDSeedValue",
-                    "value": 0,
+                    "value": null,
                     "docs": "Value of the uniform initial magnetic field in comoving Gauss.",
                     "required": false,
 					"ignored_if": [],
@@ -98,7 +98,7 @@
                 },
                 {
                     "name": "OutputListOn",
-                    "value": 0,
+                    "value": null,
                     "docs": "If set to “1”, the code tries to read a list of desired output times from the file given in OutputListFilename. Otherwise, output times are generated equally spaced from the values assigned from TimeOfFirstSnapshot onwards with spacing TimeBetSnapshot.",
                     "required": true, 
 					"ignored_if": [],
@@ -152,7 +152,7 @@
                 },
                 {
                     "name": "TimeBetStatistics",
-                    "value": 0.1,
+                    "value": null,
                     "docs": "The code can be asked to measure the total kinetic, thermal, and potential energy in regular intervals, and to write the results to the file given in energy.txt. The time interval between two such measurements is given by this parameter, in an analogous way as with TimeBetSnapshot. Note that the compile time option EVALPOTENTIAL needs to be activated to obtain a measurement of the gravitational potential energy.",
                     "required": true, 
 					"ignored_if": [],
@@ -160,7 +160,7 @@
                 },
                 {
                     "name": "TimeOfFirstSnapshot",
-                    "value": 0,
+                    "value": null,
                     "docs": "The time of the first desired snapshot file in code units in case a file with output times is not specified. For cosmological simulations, the value given here is the scale factor of the first desired output.",
                     "required": true, 
 					"ignored_if": [],
@@ -234,7 +234,7 @@
                 },
                 {
                     "name": "TimeBegin",
-                    "value": 0.0,
+                    "value": null,
                     "docs": "This sets the starting time of a simulation when the code is started from initial conditions in internal code units. For cosmological integrations, the value specified here is taken as the initial scale factor.",
                     "required": true, 
 					"ignored_if": [],
@@ -255,7 +255,7 @@
             "items": [
                 {
                     "name": "ComovingIntegrationOn",
-                    "value": 0,
+                    "value": null,
                     "docs": "If set to “0”, the code assumes plain Newtonian physics, with time, positions, velocities, and masses measured in the internal system of units. If set to “1”, the code assumes that a cosmological integration in comoving coordinates should be carried out, assuming an expanding universe described by the ‘Cosmological parameters’ below. In a cosmological integration, the time variable is the scale factor.",
                     "required": true, 
 					"ignored_if": [],
@@ -482,7 +482,7 @@
                 },
                 {
                     "name": "MaxVolumeDiff",
-                    "value": 10.0,
+                    "value": null,
                     "docs": "Maximum tolerated difference in the volume of two neighboring cells. This avoids large cell-size gradients in the mesh which might cause numerical inaccuracies. In case where the volume of a cell exceeds MaxVolumeDiff times the volume of the smallest neighboring cell, the cell is refined, irrespective of other refinement criteria.",
                     "required": true, 
 					"ignored_if": [],
@@ -496,7 +496,7 @@
                 },
                 {
                     "name": "MinVolume",
-                    "value": 0.0,
+                    "value": null,
                     "docs": "Global minimum volume a cell is allowed to have, irrespective of other refinement and derefinement criteria.",
                     "required": true, 
 					"ignored_if": [],
@@ -603,7 +603,7 @@
                 },
                 {
                     "name": "TargetGasMassFactor",
-                    "value": 1,
+                    "value": null,
                     "docs": "The target gas cell mass, where (de-)refinement is triggered if a given cell deviates by more than a factor of 2.0 above or below this value. Multiplicative factor with respect to the mean cell mass.",
                     "required": true, 
 					"ignored_if": [],
@@ -611,7 +611,7 @@
                 },
                 {
                     "name": "RefinementCriterion",
-                    "value": 1,
+                    "value": null,
                     "docs": "Selects the criterion for refinement; “0” no refinement, “1” target mass refinement, “2” Jeans stability refinement criterion. Adding additional criteria is easily possible, but requires code modifications.",
                     "required": true, 
 					"ignored_if": [],
@@ -619,7 +619,7 @@
                 },
                 {
                     "name": "DerefinementCriterion",
-                    "value": 1,
+                    "value": null,
                     "docs": "Selects the criterion for derefinement; “0” no derefinement, “1” target mass derefinement, “2” Jeans stability derefinement criterion.",
                     "required": true, 
 					"ignored_if": [],
@@ -917,7 +917,7 @@
                 },
                 {
                     "name": "AdaptiveHydroSofteningSpacing",
-                    "value": 1.2,
+                    "value": null,
                     "docs": "The logarithmic spacing for the adaptive gas softenings table, as described above. This is the multiplicative factor by which the next discrete softening length larger than the previous one is calculated. Consequently, this must be larger than unity.",
                     "required": true, 
 					"ignored_if": [],

@@ -50,7 +50,7 @@
             "items": [
                 {
                     "name": "MHD",
-                    "value": true,
+                    "value": false,
                     "docs": "Master switch for magnetohydrodynamics",
                     "required": false, 
 					"ignored_if": [],
@@ -80,11 +80,22 @@
                 },
                 {
                     "name": "MHD_SEEDFIELD",
-                    "value": true,
+                    "value": false,
                     "docs": "Uniform magnetic seed field of specified orientation and strength set up after reading in IC",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "MHDSeedDir",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "MHDSeedValue",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
                 }
             ]
         },
@@ -134,7 +145,7 @@
                 },
                 {
                     "name": "REGULARIZE_MESH_CM_DRIFT",
-                    "value": true,
+                    "value": false,
                     "docs": "Move mesh generating point towards center of mass to make cells rounder.",
                     "required": false, 
 					"ignored_if": [],
@@ -142,7 +153,7 @@
                 },
                 {
                     "name": "REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED",
-                    "value": true,
+                    "value": false,
                     "docs": "Limit mesh regularization speed by local sound speed",
                     "required": false, 
 					"ignored_if": [],
@@ -155,7 +166,7 @@
             "items": [
                 {
                     "name": "REFINEMENT_SPLIT_CELLS",
-                    "value": true,
+                    "value": false,
                     "docs": null,
                     "required": false, 
 					"ignored_if": [],
@@ -163,7 +174,7 @@
                 },
                 {
                     "name": "REFINEMENT_MERGE_CELLS",
-                    "value": true,
+                    "value": false,
                     "docs": null,
                     "required": false, 
 					"ignored_if": [],
@@ -171,7 +182,7 @@
                 },
                 {
                     "name": "REFINEMENT_VOLUME_LIMIT",
-                    "value": true,
+                    "value": false,
                     "docs": "Limit the volume of cells and the maximum volume difference between neighboring cels",
                     "required": false, 
 					"ignored_if": [],
@@ -235,7 +246,7 @@
                 },
                 {
                     "name": "GRAVITY_NOT_PERIODIC",
-                    "value": true,
+                    "value": false,
                     "docs": null,
                     "required": false, 
 					"ignored_if": [],
@@ -329,7 +340,7 @@
                 },
                 {
                     "name": "ADAPTIVE_HYDRO_SOFTENING",
-                    "value": true,
+                    "value": false,
                     "docs": "Adaptive softening of gas cells depending on their size",
                     "required": false, 
 					"ignored_if": [],
@@ -387,7 +398,7 @@
                 },
                 {
                     "name": "TREE_BASED_TIMESTEPS",
-                    "value": true,
+                    "value": false,
                     "docs": "Non-local timesteps (taking signal speed into account)",
                     "required": false, 
 					"ignored_if": [],
@@ -465,7 +476,6 @@
 					"ignored_if": [],
 					"requirements": []
                 }
-
             ]
         },
         {
@@ -771,7 +781,7 @@
             "items": [
                 {
                     "name": "DEBUG",
-                    "value": true,
+                    "value": false,
                     "docs": "Enables core dumps",
                     "required": false, 
 					"ignored_if": [],

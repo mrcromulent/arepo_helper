@@ -25,7 +25,7 @@
                 {
                     "name": "COOLING",
                     "value": false,
-                    "docs": null,
+                    "docs": "If COOLING is set, then CoolingOn must equal 1, and vice versa. This is to provide rough assurance that you are running a given parameter file with the correct executable.",
                     "required": false,
 					"ignored_if": [],
 					"requirements": [
@@ -74,7 +74,7 @@
                 {
                     "name": "IMPOSE_PINNING",
                     "value": false,
-                    "docs": null,
+                    "docs": "Enforce pinning of MPI tasks to cores if MPI does not do it",
                     "required": false,
 					"ignored_if": [],
 					"requirements": []
@@ -452,22 +452,6 @@
                             "value": true
                         }
                     ]
-                },
-                {
-                    "name": "AMR_CONNECTIONS",
-                    "value": false,
-                    "docs": null,
-                    "required": false,
-					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "AMR_GRADIENTS",
-                    "value": false,
-                    "docs": null,
-                    "required": false,
-					"ignored_if": [],
-					"requirements": []
                 }
             ]
         },
@@ -485,7 +469,7 @@
                 },
                 {
                     "name": "REGULARIZE_MESH_CM_DRIFT",
-                    "value": true,
+                    "value": false,
                     "docs": null,
                     "required": false,
 					"ignored_if": [],
@@ -493,7 +477,7 @@
                 },
                 {
                     "name": "REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED",
-                    "value": true,
+                    "value": false,
                     "docs": null,
                     "required": false,
 					"ignored_if": [],
@@ -501,7 +485,7 @@
                 },
                 {
                     "name": "REGULARIZE_MESH_FACE_ANGLE",
-                    "value": true,
+                    "value": false,
                     "docs": null,
                     "required": false,
 					"ignored_if": [],
@@ -530,7 +514,7 @@
                 },
                 {
                     "name": "TREE_BASED_TIMESTEPS",
-                    "value": true,
+                    "value": false,
                     "docs": "Non-local timesteps (taking signal speed into account)",
                     "required": false,
 					"ignored_if": [],
@@ -592,7 +576,7 @@
             "items": [
                 {
                     "name": "REFINEMENT_SPLIT_CELLS",
-                    "value": true,
+                    "value": false,
                     "docs": null,
                     "required": false,
 					"ignored_if": [],
@@ -600,7 +584,7 @@
                 },
                 {
                     "name": "REFINEMENT_VOLUME_LIMIT",
-                    "value": true,
+                    "value": false,
                     "docs": null,
                     "required": false,
 					"ignored_if": [],
@@ -614,7 +598,7 @@
                 },
                 {
                     "name": "REFINEMENT_MERGE_CELLS",
-                    "value": true,
+                    "value": false,
                     "docs": null,
                     "required": false,
 					"ignored_if": [],
@@ -694,7 +678,7 @@
                 },
                 {
                     "name": "GRAVITY_NOT_PERIODIC",
-                    "value": null,
+                    "value": false,
                     "docs": null,
                     "required": false,
 					"ignored_if": [],

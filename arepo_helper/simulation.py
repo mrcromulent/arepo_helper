@@ -89,13 +89,26 @@ class ArepoSimulation(object):
         self.check_for_incompatibilities(self.param)
         self.check_for_incompatibilities(self.config)
 
-        refinement = self.config.get("REFINEMENT_SPLIT_CELLS") or self.config.get("REFINEMENT_MERGE_CELLS")
+        # This option causes errors
+        assert not self.config.get("MESHRELAX_DENSITY_IN_INPUT")["value"]
+
+        refinement = self.config.get("REFINEMENT_SPLIT_CELLS")["value"] or \
+                     self.config.get("REFINEMENT_MERGE_CELLS")["value"]
+        ev = self.param.data["default_value"]
 
         if refinement:
-            ev = self.param.data["default_value"]
             assert self.param.get("ReferenceGasPartMass")["value"] is not ev
             assert self.param.get("TargetGasMassFactor")["value"] is not ev
+            assert self.param.get("RefinementCriterion")["value"] is not ev
             assert self.param.get("DerefinementCriterion")["value"] is not ev
+        else:
+            assert self.param.get("ReferenceGasPartMass")["value"] is ev
+            assert self.param.get("TargetGasMassFactor")["value"] is ev
+            assert self.param.get("RefinementCriterion")["value"] is ev
+            assert self.param.get("DerefinementCriterion")["value"] is ev
+
+        if not self.config.get("REGULARIZE_MESH_FACE_ANGLE")["value"]:
+            assert self.param.get("CellShapingFactor")["value"] is not ev
 
     def copy_files_to_input(self, file_list):
         if file_list is not None:
@@ -140,8 +153,8 @@ class ArepoSimulation(object):
             f"#PBS -l {J.N_CPUS}={js[J.N_CPUS]}",
             f"#PBS -l {js[J.DIRECTORY]}",
             f"#PBS -lstorage=scratch/{js[J.PROJECT_CODE]}+gdata/{js[J.PROJECT_CODE]}",
-            f"#PBS -o ./{self.paths.PBS}/{js[J.NAME]}.o$PBS_JOBID",
-            f"#PBS -e ./{self.paths.PBS}/{js[J.NAME]}.e$PBS_JOBID",
+            f"#PBS -o ./{self.paths.PBS}",
+            f"#PBS -e ./{self.paths.PBS}",
             f"#PBS -m abe -M {js[J.EMAIL]}",
             "\n",
             "module load openmpi",
@@ -169,95 +182,3 @@ class ArepoSimulation(object):
 
         with open(self.paths.makefile, "w") as f:
             f.write(data)
-
-
-if __name__ == '__main__':
-    project_name = "dissipative"
-    boxsize = 1e10
-
-    js_explicit_options = {
-        J.NAME: project_name,
-        J.PROJECT_CODE: "y08",
-        J.QUEUE_TYPE: "express",
-        J.WALLTIME: "23:59:00",
-        J.EMAIL: "uri.burmester@anu.edu.au",
-        J.MEMORY: "512gb",
-        J.N_CPUS: "240",
-        J.DIRECTORY: "wd",
-    }
-    config_explicit_options = {
-
-        # MHD
-        "MHD": True,
-        "MHD_SEEDFIELD": True,
-
-        # EOS
-        "EOS_NSPECIES": 5,
-
-        # Relaxing
-        # "MESHRELAX_DENSITY_IN_INPUT": True,
-        "RELAXOBJECT": True,
-        "RELAXOBJECT_COOLING": True,
-
-        #
-        "GRAVITY_NOT_PERIODIC": True,
-
-        # I/O
-        "OUTPUT_PRESSURE": True,
-        "INPUT_IN_DOUBLEPRECISION": True,
-        "OUTPUT_IN_DOUBLEPRECISION": True
-    }
-    param_explicit_options = {
-        # Initial conditions
-        "InitCondFile": f"{Paths.INPUT}/bin.dat.ic",
-        "MHDSeedDir": 0,
-        "MHDSeedValue": 0,
-
-        # Output file names and formats
-        "OutputDir": f"{Paths.OUTPUT}",
-        "EosTable": f"{Paths.INPUT}/helm_table.dat",
-        "EosSpecies": f"{Paths.INPUT}/species05.txt",
-        "OutputListOn": 0,
-
-        # Output frequency
-        "TimeBetSnapshot": 0.1,
-        "TimeBetStatistics": 0.1,
-        "TimeOfFirstSnapshot": 0.0,
-
-        # Simulated time span and spatial extent
-        "BoxSize": boxsize,
-        "PeriodicBoundariesOn": 0,
-        "TimeBegin": 0.0,
-        "TimeMax": 1.0,
-        "RelaxBaseFac": 0.01,
-        "RelaxTemperature": 5e5,
-
-        # Cosmological parameters
-        "ComovingIntegrationOn": 0,
-
-        # Moving mesh
-        "MaxVolume": boxsize ** 3,
-
-        # Refinement and derefinement
-        "ReferenceGasPartMass": 2e27,
-        "TargetGasMassFactor": 1,
-        "RefinementCriterion": 1,
-        "DerefinementCriterion": 0,
-
-        # Cooling and star formation
-        "CoolingOn": 0,
-    }
-
-    simulation = ArepoSimulation(
-        project_name,
-        "/home/pierre/",
-        js_explicit_options,
-        config_explicit_options,
-        param_explicit_options,
-        version=2019)
-
-    simulation.copy_files_to_input([
-        "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt",
-        "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat",
-        "/home/pierre/CLionProjects/arepo_helper_libs/cmake-build-debug/bin.dat.ic.hdf5"
-    ])

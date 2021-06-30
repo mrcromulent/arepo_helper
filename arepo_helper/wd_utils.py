@@ -58,11 +58,3 @@ class WDUtils(object):
         rho_c = opt.bisect(cls.__get_mass_from_rho_c, a, b, args=(eos, params, mass))
 
         return rho_c
-
-
-if __name__ == "__main__":
-    from pyhelm_eos import loadhelm_eos
-    
-    equation_of_state = loadhelm_eos("./eostable/helm_table.dat", "./eostable/species05.txt", True)
-    central_density = WDUtils.get_rho_c_from_mass(0.55, equation_of_state)
-    print(f"Central Density = {'{:.5E}'.format(central_density)}")
