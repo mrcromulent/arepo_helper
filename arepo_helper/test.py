@@ -149,7 +149,6 @@ def test_create_wd():
 
 
 def test_create_wd_wdec():
-
     # Generate 1d profile
     wdec_dir = "/home/pierre/wdec/"  # TODO: trailing foward slash is required!
     wd = ic.create_wd_wdec(wdec_dir)
@@ -171,17 +170,16 @@ def test_create_wd_wdec():
 
 
 def test_helm_eos():
-
     pp = pprint.PrettyPrinter(indent=4)
 
-    helm_file       = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
-    species_file    = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
-    eos             = loadhelm_eos(helm_file, species_file, True)
-    xnuc            = np.array([0.0, 0.5, 0.5, 0.0, 0.0])
-    rho_c           = 2e6
-    pres_c          = 1e23
-    u_c             = 8.5e16
-    t_c             = 6e8
+    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
+    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    eos = loadhelm_eos(helm_file, species_file, True)
+    xnuc = np.array([0.0, 0.5, 0.5, 0.0, 0.0])
+    rho_c = 2e6
+    pres_c = 1e23
+    u_c = 8.5e16
+    t_c = 6e8
 
     temp_calculated, u_calculated = eos.pgiven(rho_c, xnuc, pres_c)
     print(f"{temp_calculated=} {u_calculated=}")
@@ -200,7 +198,6 @@ def test_helm_eos():
 
 
 def test_check_mass():
-
     # s = ArepoSnapshot("/home/pierre/CLionProjects/arepo_helper_libs/cmake-build-debug/bin.dat.ic.hdf5")
     # s = ArepoSnapshot(
     # "/run/user/1000/gvfs/sftp:host=gadi.nci.org.au/g/data/y08/ub0692/simulations/singular_WDs/second_WD/output/snapshot_000.hdf5")
@@ -386,15 +383,104 @@ def test_species():
 
 if __name__ == '__main__':
     # test_make_radial()
-    test_make_pcolor()
+    # test_make_pcolor()
     # test_make_polytrope()
     # test_create_wd()
     # test_create_wd_wdec()
     # test_helm_eos()
     # test_check_mass()
 
-    # s = ArepoSnapshot("/home/pierre/Desktop/test/snapshot_002.hdf5")
+    from run import ArepoRun
+    from analysis import ArepoAnalyser
+    from plot_manager import PlotManager
+    from pcolor_plot import PColorPlot
+    # from matplotlib.cm import ScalarMappable
+    # from matplotlib.colors import SymLogNorm
+    from utilities import suppress_stdout_stderr
+    from utilities import Coordinates as C
+    from names import n
+
+    direc = "/home/pierre/Desktop/output/"
+    inner_boxsize = 2e9
+    tmax = 20
+
+    ar = ArepoRun.from_directory(direc)
+    aa = ArepoAnalyser(analysis_options={"inner_boxsize": inner_boxsize})
+    apm = PlotManager(ar, analyser=aa)
+
+    # for t in range(0, tmax):
     #
-    # rho = s.get_from_h5(n.DENSITY)
-    # print(f"{min(rho)=}")
-    # print(f"{max(rho)=}")
+    #     po = apm.compute_plot_options(t, n.DENSITY, ["x", "y"], "PColor", explicit_options={"log_cmap": True})
+    #     pl = PColorPlot(po)
+    #     pl.save()
+
+    # for t in range(0, tmax):
+    #
+    #     po = apm.compute_plot_options(t, n.DENSITY, ["x", "y"], "PColor", explicit_options={"log_cmap": True})
+    #
+    #     s = ArepoSnapshot(f"{direc}snapshot_{t:03}.hdf5")
+    #     coords = s.get_from_h5(n.COORDINATES)
+    #     quant = s.get_from_h5(n.DENSITY)
+    #     res = 1204
+    #     boxsize_x = po.xlim[1] - po.xlim[0]
+    #     boxsize_y = po.ylim[1] - po.ylim[0]
+    #     resolutions = np.array([res, res])
+    #     boxsizes = np.array([boxsize_x, boxsize_y])
+    #     centers = np.array([np.average(po.xlim),
+    #                         np.average(po.ylim),
+    #                         np.average(po.zlim)])
+    #     xc, yc, _ = C.coordinates(po.orientation)
+    #     axes = np.array([xc, yc])
+    #
+    #     with suppress_stdout_stderr():
+    #         data = arepo_pcolor.make_pcolor(coords.astype('float64'), quant.astype('float64'),
+    #                                         axes,
+    #                                         boxsizes,
+    #                                         resolutions,
+    #                                         centers,
+    #                                         include_neighbours_in_output=1,
+    #                                         numthreads=1)
+    #
+    #     x = np.arange(res + 1, dtype="float64") / res * boxsize_x - 0.5 * boxsize_x + centers[0]
+    #     y = np.arange(res + 1, dtype="float64") / res * boxsize_y - 0.5 * boxsize_y + centers[1]
+    #
+    #     fig, ax = plt.subplots()
+    #     pcolor = ax.pcolormesh(x, y, np.transpose(data["grid"]), shading='flat')
+    #     fig.colorbar(pcolor)
+    #     filename = f"./{po.t}_{po.quantity}_{po.orientation}.png"
+    #     fig.savefig(filename, dpi=300)
+
+    radials = []
+    labels = []
+    for t in range(19,20):
+        s = ArepoSnapshot(f"{direc}snapshot_{t:03}.hdf5")
+        coords = s.get_from_h5(n.COORDINATES)
+        quant = s.get_from_h5(n.NUCLEARCOMPOSITION)[:, 0]
+
+        boxsize = 1e10
+        a = np.array([boxsize / 2, boxsize / 2, boxsize / 2])
+        b = np.array([boxsize, boxsize / 2, boxsize / 2])
+        cyl_rad = 0.1 * boxsize
+        nshells = 200
+        radial = arepo_radial.make_radial(coords.astype('float64'),
+                                          quant.astype('float64'),
+                                          a, b,
+                                          cyl_rad,
+                                          nshells)
+
+        radials.append(radial)
+        labels.append(f"t = {round(s.get_from_h5(n.TIME))} s")
+
+    fig, ax = plt.subplots()
+    lines = []
+
+    for i, radial in enumerate(radials):
+        line = ax.plot(radial[1, :], radial[0, :], label=f"{labels[i]}")
+        # ax.set_yscale('log')
+        lines.append(line)
+
+    plt.xlabel("Radial distance [cm]")
+    plt.ylabel("xHe")
+    plt.legend()
+    plt.show()
+    fig.savefig(f'radial_he_19.png')

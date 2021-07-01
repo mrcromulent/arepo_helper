@@ -51,7 +51,7 @@
                 {
                     "name": "MHD",
                     "value": false,
-                    "docs": "Master switch for magnetohydrodynamics",
+                    "docs": "Master switch for ideal MHD.",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -67,15 +67,27 @@
                     "value": false,
                     "docs": "Powell div(B) cleaning scheme for magnetohydrodynamics",
                     "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "MHD",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": []
                 },
                 {
                     "name": "MHD_POWELL_LIMIT_TIMESTEP",
                     "value": false,
-                    "docs": null,
+                    "docs": "Sets a floor on the timestep based on the Powell technique",
                     "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "MHD_POWELL",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": []
                 },
                 {
@@ -83,7 +95,13 @@
                     "value": false,
                     "docs": "Uniform magnetic seed field of specified orientation and strength set up after reading in IC",
                     "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "MHD",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": [
                         {
                             "name": "MHDSeedDir",
@@ -105,7 +123,7 @@
                 {
                     "name": "RIEMANN_HLLC",
                     "value": false,
-                    "docs": null,
+                    "docs": "Harten–Lax–van Leer Contact Riemann solver",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -119,7 +137,7 @@
                 {
                     "name": "RIEMANN_HLLD",
                     "value": true,
-                    "docs": null,
+                    "docs": "Harten–Lax–van Leer Discontinuity Riemann solver",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -138,7 +156,7 @@
                 {
                     "name": "VORONOI_STATIC_MESH",
                     "value": false,
-                    "docs": null,
+                    "docs": "Assumes the mesh to be static, i.e. to not change with time. The vertex velocities of all mesh-generating points is set to zero and domain decomposition is disabled.",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -149,7 +167,13 @@
                     "docs": "Move mesh generating point towards center of mass to make cells rounder.",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "VORONOI_STATIC_MESH",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ]
                 },
                 {
                     "name": "REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED",
@@ -157,7 +181,13 @@
                     "docs": "Limit mesh regularization speed by local sound speed",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "VORONOI_STATIC_MESH",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ]
                 }
             ]
         },
@@ -167,7 +197,7 @@
                 {
                     "name": "REFINEMENT_SPLIT_CELLS",
                     "value": false,
-                    "docs": null,
+                    "docs": "Cells can be split (increasing resolution) during refinement",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -175,7 +205,7 @@
                 {
                     "name": "REFINEMENT_MERGE_CELLS",
                     "value": false,
-                    "docs": null,
+                    "docs": "Cells can be merged (decreasing resolution) during refinement",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -217,7 +247,7 @@
                 {
                     "name": "SELFGRAVITY",
                     "value": true,
-                    "docs": null,
+                    "docs": "Particles are mutually attracted by their own mass",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -225,9 +255,15 @@
                 {
                     "name": "HIERARCHICAL_GRAVITY",
                     "value": true,
-                    "docs": "Use hierarchical splitting of the tiem integration of the gravity",
+                    "docs": "Use hierarchical splitting of the time integration of the gravity",
                     "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "SELFGRAVITY",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": []
                 },
                 {
@@ -247,7 +283,7 @@
                 {
                     "name": "GRAVITY_NOT_PERIODIC",
                     "value": false,
-                    "docs": null,
+                    "docs": "Controls whether gravity is periodic or not independently from PERIODIC.",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -290,7 +326,7 @@
                 {
                     "name": "PMGRID",
                     "value": false,
-                    "docs": "Enables particle mesh; number of cells used for grid in each dimension",
+                    "docs": "Enables particle mesh; number of cells used for grid in each dimension.   This enables the TreePM method, i.e. the long-range force is computed with a PM-algorithm, and the short range force with the tree. The parameter has to be set to the size of the mesh that should be used, e.g. 64, 128, 256, etc. The mesh dimensions need not necessarily be a power of two, but the FFT is fastest for such a choice.  Note: If the simulation is not in a periodic box, then a FFT method for vacuum boundaries is employed, using a mesh with dimension twice that specified by PMGRID. Recommended value for periodic boxes, twice the cube root of the number of dark matter particles, i.e. 512 for a 256^3 simulation.",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -301,7 +337,13 @@
                     "docs": "This can be used to override the value assumed for the scale that defines the long-range/short-range force-split in the TreePM algorithm. The default value is 1.25, in mesh-cells.",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "PMGRID",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
                 },
                 {
                     "name": "RCUT",
@@ -309,15 +351,13 @@
                     "docs": "This can be used to override the maximum radius in which the short-range tree-force is evaluated (in case the TreePM algorithm is used). The default value is 4.5, given in mesh-cells.",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "PM_ZOOM_OPTIMIZED",
-                    "value": false,
-                    "docs": "Particle-mesh calculation that is optimized for cosmological zoom simulations; disable for cosmological volume simulations.",
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "PMGRID",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
                 }
             ]
         },
@@ -426,9 +466,15 @@
                 {
                     "name": "IMPOSE_PINNING_OVERRIDE_MODE",
                     "value": false,
-                    "docs": null,
+                    "docs": "If pinning is specified, overrides any native pinning set by the native MPI implementation",
                     "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "IMPOSE_PINNING",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ],
 					"requirements": []
                 }
             ]
@@ -447,7 +493,7 @@
                 {
                     "name": "DOUBLEPRECISION_FFTW",
                     "value": false,
-                    "docs": null,
+                    "docs": "This enables the use of double precision variables for storing the fields that are processed with the Fourier transforms. If this is set, the code will also then use the double-precision version of FTTW for the PM gravity calculations.",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -505,7 +551,7 @@
                 {
                     "name": "SAVE_HSML_IN_SNAPSHOT",
                     "value": false,
-                    "docs": null,
+                    "docs": "Saves smoothing length in snapshots",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -518,7 +564,7 @@
                 {
                     "name": "ALLOWEXTRAPARAMS",
                     "value": false,
-                    "docs": null,
+                    "docs": "Allows unused parameters in parameter file",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -545,7 +591,7 @@
                 {
                     "name": "OUTPUT_PRESSURE_GRADIENT",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -553,7 +599,7 @@
                 {
                     "name": "OUTPUT_DENSITY_GRADIENT",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -561,7 +607,7 @@
                 {
                     "name": "OUTPUT_VELOCITY_GRADIENT",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -569,7 +615,7 @@
                 {
                     "name": "OUTPUT_BFIELD_GRADIENT",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -577,7 +623,7 @@
                 {
                     "name": "OUTPUT_VERTEX_VELOCITY",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -585,7 +631,7 @@
                 {
                     "name": "OUTPUT_VERTEX_VELOCITY_DIVERGENCE",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -593,7 +639,7 @@
                 {
                     "name": "OUTPUT_VOLUME",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -601,7 +647,7 @@
                 {
                     "name": "OUTPUT_CENTER_OF_MASS",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -609,7 +655,7 @@
                 {
                     "name": "OUTPUT_SURFACE_AREA",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -617,7 +663,7 @@
                 {
                     "name": "OUTPUT_PRESSURE",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -625,7 +671,7 @@
                 {
                     "name": "OUTPUTPOTENTIAL",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -639,7 +685,7 @@
                 {
                     "name": "OUTPUTACCELERATION",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -647,7 +693,7 @@
                 {
                     "name": "OUTPUTTIMESTEP",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -655,7 +701,7 @@
                 {
                     "name": "OUTPUT_SOFTENINGS",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -663,7 +709,7 @@
                 {
                     "name": "OUTPUTGRAVINTERACTIONS",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -695,7 +741,7 @@
                 {
                     "name": "OUTPUT_VORTICITY",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -703,7 +749,7 @@
                 {
                     "name": "OUTPUT_MACHNUM",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -711,7 +757,7 @@
                 {
                     "name": "OUTPUT_ENTROPY",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -719,7 +765,7 @@
                 {
                     "name": "OUTPUT_CSND",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -729,14 +775,6 @@
         {
             "heading": "Output options",
             "items": [
-                {
-                    "name": "OUTPUT_EVERY_STEP",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                },
                 {
                     "name": "HAVE_HDF5",
                     "value": true,
@@ -762,14 +800,6 @@
                     "name": "MESHRELAX",
                     "value": false,
                     "docs": "This keeps the mass constant and only regularises the mesh",
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "ADDBACKGROUNDGRID",
-                    "value": false,
-                    "docs": "Re-grid hydrodynamics quantities on a Oct-tree AMR grid. This does not perform a simulation. Try 16",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []

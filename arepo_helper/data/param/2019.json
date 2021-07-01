@@ -614,7 +614,13 @@
                     "value": null,
                     "docs": "Cell “roundness” criterion. The face angle of an interface of a cell is defined as the square root of its area divided by pi, and divided by the distance to the face. The maximum face angle is the maximum of this values for all faces in a given cell. This value is a measure for the “roundness” of a cell. If this value exceeds 1.5 times CellMaxAngleFactor, the cell is not allowed to be refined, i.e. highly elongated cells are not allowed to be refined. In addition to this, if the cell exceeds 0.75 times CellMaxAngleFactor, the movement of the mesh-generating point will deviate from the pure Lagrangian motion to make the cell rounder.",
                     "required": false,
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "VORONOI",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": [
                         {
                             "name": "REGULARIZE_MESH_FACE_ANGLE",
@@ -633,7 +639,13 @@
                     "value": null,
                     "docs": "Alternative “roundness” criterion. This criterion uses the distance between center of mass and mesh-generating point as a measure for roundness. If this distance exceeds twice the cell radius times CellShapingFactor, the cell will not be refined. If this distance exceeds 0.75 times the cell radius times CellShapingFactor the movement of the mesh-generating point will deviate from pure Lagrangian motion to make the cell rounder.",
                     "required": false,
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "VORONOI",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": [
                         {
                             "name": "REGULARIZE_MESH_FACE_ANGLE",
@@ -652,7 +664,13 @@
                     "value": 0.5,
                     "docs": "Determines the speed of the regularization of the mesh. CellShapingSpeed (times a characteristic speed) is the speed by which the mesh is regularized (i.e. speed by which the motion of a mesh-generating point can deviate from Lagrangian motion). Higher values will lead to round cells in fewer timesteps, but will also introduce more numerical noise.",
                     "required": true, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "VORONOI",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": [
                         {
                             "name": "VORONOI_STATIC_MESH",

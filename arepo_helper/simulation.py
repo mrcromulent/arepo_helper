@@ -89,7 +89,7 @@ class ArepoSimulation(object):
         self.check_for_incompatibilities(self.param)
         self.check_for_incompatibilities(self.config)
 
-        # This option causes errors
+        # This option causes numerical errors when running with AREPO
         assert not self.config.get("MESHRELAX_DENSITY_IN_INPUT")["value"]
 
         refinement = self.config.get("REFINEMENT_SPLIT_CELLS")["value"] or \

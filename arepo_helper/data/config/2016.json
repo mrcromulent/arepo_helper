@@ -82,9 +82,15 @@
                 {
                     "name": "IMPOSE_PINNING_OVERRIDE_MODE",
                     "value": false,
-                    "docs": null,
+                    "docs": "If pinning is specified, overrides any native pinning set by the native MPI implementation",
                     "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "IMPOSE_PINNING",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ],
 					"requirements": []
                 }
             ]
@@ -95,7 +101,7 @@
                 {
                     "name": "VORONOI",
                     "value": true,
-                    "docs": null,
+                    "docs": "Voronoi unstructured moving mesh to be used",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -108,7 +114,7 @@
                 {
                     "name": "SPECIAL_RELATIVITY",
                     "value": false,
-                    "docs": null,
+                    "docs": "Special relativistic hydro solver",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -122,15 +128,7 @@
                 {
                     "name": "SPECIAL_RELATIVITY_HLLC",
                     "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "SR_HLLC_ZERO_COMPVEL",
-                    "value": false,
-                    "docs": null,
+                    "docs": "Forces use of Riemann HLLC solver when using GR or SR",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -138,7 +136,7 @@
                 {
                     "name": "GENERAL_RELATIVITY",
                     "value": false,
-                    "docs": null,
+                    "docs": "General relativistic hydro solver",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -152,25 +150,29 @@
                 {
                     "name": "METRIC_TYPE",
                     "value": false,
-                    "docs": "Use 1 and 2 for Kerr and Schwarzchild metrics",
+                    "docs": "GR Metric. 1 = Schwarzschild. 2 = Kerr BH, etc.",
                     "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "GENERAL_RELATIVITY",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ],
 					"requirements": []
                 },
                 {
                     "name": "ATMOSPHERE_GENERAL_RELATIVITY",
                     "value": false,
-                    "docs": null,
+                    "docs": "Applies a simple treatment of atmosphere in GR.",
                     "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "ADIABATIC_GENERAL_RELATIVITY",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "GENERAL_RELATIVITY",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ],
 					"requirements": []
                 }
             ]
@@ -181,73 +183,57 @@
                 {
                     "name": "MHD",
                     "value": false,
-                    "docs": null,
+                    "docs": "Master switch for ideal MHD.",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "MHD_CT",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "MHD_CT_IC",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "MHD_CT_PERTURB_POSITIONS",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "MHD_DIVBCLEANING",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "RIEMANN_HLLD",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
                 },
                 {
                     "name": "MHD_POWELL",
                     "value": false,
-                    "docs": null,
+                    "docs": "Powell div(B) cleaning scheme for magnetohydrodynamics",
                     "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "MHD",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": []
                 },
                 {
                     "name": "MHD_POWELL_LIMIT_TIMESTEP",
                     "value": false,
-                    "docs": null,
+                    "docs": "Sets a floor on the timestep based on the Powell technique",
                     "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "MHD_POWELL_SPLIT",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "MHD_POWELL",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": []
                 },
                 {
                     "name": "MHD_SEEDFIELD",
                     "value": false,
-                    "docs": null,
+                    "docs": "Uniform magnetic seed field of specified orientation and strength set up after reading in IC",
                     "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "MHD",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": [
                         {
                             "name": "MHDSeedDir",
@@ -260,35 +246,6 @@
                             "value": null
                         }
                     ]
-                },
-                {
-                    "name": "MHD_SEEDSPEC",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                }
-            ]
-        },
-        {
-            "heading": "Non-ideal MHD",
-            "items": [
-                {
-                    "name": "NON_IDEAL_MHD",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "OHMIC_DIFFUSION",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
                 }
             ]
         },
@@ -298,15 +255,22 @@
                 {
                     "name": "VARIABLE_GAMMA",
                     "value": true,
-                    "docs": null,
+                    "docs": "Heat capacity ratio allowed to vary",
                     "required": false, 
-					"ignored_if": [],
-					"requirements": []
+					"ignored_if": [
+                    ],
+					"requirements": [
+                        {
+                            "name": "GAMMA",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ]
                 },
                 {
                     "name": "RIEMANN_HLL",
                     "value": false,
-                    "docs": null,
+                    "docs": "Harten–Lax–van Leer Riemann solver",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -335,7 +299,7 @@
                 {
                     "name": "RIEMANN_HLLC",
                     "value": false,
-                    "docs": null,
+                    "docs": "Harten–Lax–van Leer Contact Riemann solver",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -364,7 +328,7 @@
                 {
                     "name": "RIEMANN_ROSUNOV",
                     "value": false,
-                    "docs": null,
+                    "docs": "TODO: ???",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -393,7 +357,7 @@
                 {
                     "name": "RIEMANN_HLLD",
                     "value": true,
-                    "docs": null,
+                    "docs": "Harten–Lax–van Leer Discontinuity Riemann solver",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -422,7 +386,7 @@
                 {
                     "name": "RIEMANN_GAMMA",
                     "value": false,
-                    "docs": null,
+                    "docs": "Riemann Gamma Solver",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -445,6 +409,11 @@
                             "name": "RIEMANN_HLLD",
                             "operator": "NEQ",
                             "value": true
+                        },
+                        {
+                            "name": "ISOTHERM_EQS",
+                            "operator": "NEQ",
+                            "value": true
                         }
                     ]
                 }
@@ -456,39 +425,73 @@
                 {
                     "name": "VORONOI_STATIC_MESH",
                     "value": false,
-                    "docs": null,
+                    "docs": "Assumes the mesh to be static, i.e. to not change with time. The vertex velocities of all mesh-generating points is set to zero and domain decomposition is disabled.",
                     "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "VORONOI",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": []
                 },
                 {
                     "name": "REGULARIZE_MESH_CM_DRIFT",
                     "value": false,
-                    "docs": null,
+                    "docs": "Move mesh generating point towards center of mass to make cells rounder.",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "VORONOI_STATIC_MESH",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ]
                 },
                 {
                     "name": "REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED",
                     "value": false,
-                    "docs": null,
+                    "docs": "Limit mesh regularization speed by local sound speed",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "VORONOI_STATIC_MESH",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ]
                 },
                 {
                     "name": "REGULARIZE_MESH_FACE_ANGLE",
                     "value": false,
-                    "docs": null,
+                    "docs": "Regularises mesh face angles",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "VORONOI_STATIC_MESH",
+                            "operator": "EQ",
+                            "value": false
+                        },
+                        {
+                            "name": "CellMaxAngleFactor",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "CellShapingFactor",
+                            "operator": "EQ",
+                            "value": null
+                        }
+                    ]
                 },
                 {
                     "name": "OUTPUT_MESH_FACE_ANGLE",
                     "value": false,
-                    "docs": null,
+                    "docs": "Outputs the mesh face angles",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -523,7 +526,7 @@
                 {
                     "name": "DECOUPLE_TIMESTEPS",
                     "value": false,
-                    "docs": null,
+                    "docs": "Allows different timebins for gravity and hydro. use only WITHOUT FORCE_EQUAL_TIMESTEPS",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -537,7 +540,7 @@
                 {
                     "name": "RUNGE_KUTTA_FULL_UPDATE",
                     "value": false,
-                    "docs": null,
+                    "docs": "Refines using an exact Runge Kutta method",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -571,7 +574,7 @@
                 {
                     "name": "REFINEMENT_SPLIT_CELLS",
                     "value": false,
-                    "docs": null,
+                    "docs": "Cells can be split (increasing resolution) during refinement",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -579,7 +582,7 @@
                 {
                     "name": "REFINEMENT_MERGE_CELLS",
                     "value": false,
-                    "docs": null,
+                    "docs": "Cells can be merged (decreasing resolution) during refinement",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -587,7 +590,7 @@
                 {
                     "name": "REFINEMENT_VOLUME_LIMIT",
                     "value": false,
-                    "docs": null,
+                    "docs": "Limit the volume of cells and the maximum volume difference between neighboring cels",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -595,7 +598,7 @@
                 {
                     "name": "DEREFINE_GENTLY",
                     "value": false,
-                    "docs": null,
+                    "docs": "Prevent derefinement in regions of strong local changes of pressure or density. Cells will only be refined if they temperature of surrounding cells is sufficiently similar (within a factor GENTLE_DEREFINE_FACTOR, which has currently a default value of 1.2).",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -616,15 +619,7 @@
                 {
                     "name": "MESHRELAX_DENSITY_IN_INPUT",
                     "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "ADDBACKGROUNDGRID",
-                    "value": false,
-                    "docs": "Try 16",
+                    "docs": "Attempts to relax, but I have had lots of numerical problems with this option",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -637,7 +632,7 @@
                 {
                     "name": "SELFGRAVITY",
                     "value": true,
-                    "docs": null,
+                    "docs": "Particles are mutually attracted by their own mass",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -645,9 +640,15 @@
                 {
                     "name": "HIERARCHICAL_GRAVITY",
                     "value": true,
-                    "docs": "Use hierarchical splitting of the tiem integration of the gravity",
+                    "docs": "Use hierarchical splitting of the time integration of the gravity",
                     "required": false, 
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "SELFGRAVITY",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
 					"requirements": []
                 },
                 {
@@ -667,7 +668,7 @@
                 {
                     "name": "GRAVITY_NOT_PERIODIC",
                     "value": false,
-                    "docs": null,
+                    "docs": "Controls whether gravity is periodic or not independently from PERIODIC.",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -681,7 +682,7 @@
                 {
                     "name": "ALLOW_DIRECT_SUMMATION",
                     "value": true,
-                    "docs": null,
+                    "docs": "Performed direct summation instead of tree-based gravity if number of active particles < DIRECT_SUMMATION_THRESHOLD (= 3000 unless specified differently here)",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -697,7 +698,7 @@
                 {
                     "name": "EXTERNALGRAVITY",
                     "value": false,
-                    "docs": "External potential",
+                    "docs": "master switch for external potential",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -705,7 +706,7 @@
                 {
                     "name": "COMPUTE_POTENTIAL_ENERGY",
                     "value": false,
-                    "docs": null,
+                    "docs": "Seems to just be identical to EVALPOTENTIAL but for backwards compatibility",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -738,7 +739,7 @@
                 {
                     "name": "ADAPTIVE_HYDRO_SOFTENING",
                     "value": false,
-                    "docs": null,
+                    "docs": "Adaptive softening of gas cells depending on their size",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -781,27 +782,52 @@
                 {
                     "name": "PMGRID",
                     "value": false,
-                    "docs": "Default value 512",
+                    "docs": "Enables particle mesh; number of cells used for grid in each dimension.   This enables the TreePM method, i.e. the long-range force is computed with a PM-algorithm, and the short range force with the tree. The parameter has to be set to the size of the mesh that should be used, e.g. 64, 128, 256, etc. The mesh dimensions need not necessarily be a power of two, but the FFT is fastest for such a choice.  Note: If the simulation is not in a periodic box, then a FFT method for vacuum boundaries is employed, using a mesh with dimension twice that specified by PMGRID. Recommended value for periodic boxes, twice the cube root of the number of dark matter particles, i.e. 512 for a 256^3 simulation.",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
+                },
+                {
+                    "name": "ASMTH",
+                    "value": false,
+                    "docs": "This can be used to override the value assumed for the scale that defines the long-range/short-range force-split in the TreePM algorithm. The default value is 1.25, in mesh-cells.",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "PMGRID",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "RCUT",
+                    "value": false,
+                    "docs": "This can be used to override the maximum radius in which the short-range tree-force is evaluated (in case the TreePM algorithm is used). The default value is 4.5, given in mesh-cells.",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "PMGRID",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
                 },
                 {
                     "name": "ONLY_PM",
                     "value": false,
-                    "docs": null,
+                    "docs": "This option disables the short-range gravitational force calculation by the tree, i.e. the gravitational force only consists of the PM-force. Not recommended.",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
-                    
-                },
-                {
-                    "name": "PM_ZOOM_OPTIMIZED",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "PMGRID",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
                 }
             ]
         },
@@ -834,7 +860,7 @@
                 {
                     "name": "DOUBLEPRECISION",
                     "value": 1,
-                    "docs": null,
+                    "docs": "Mode of double precision: not defined: single; 1: full double precision 2: mixed, 3: mixed, fewer single precisions; unless short of memory, use 1.",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -843,7 +869,7 @@
                 {
                     "name": "DOUBLEPRECISION_FFTW",
                     "value": false,
-                    "docs": null,
+                    "docs": "This enables the use of double precision variables for storing the fields that are processed with the Fourier transforms. If this is set, the code will also then use the double-precision version of FTTW for the PM gravity calculations.",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -894,7 +920,7 @@
                 {
                     "name": "SAVE_HSML_IN_SNAPSHOT",
                     "value": false,
-                    "docs": null,
+                    "docs": "Saves smoothing length in snapshots",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -956,24 +982,6 @@
             "heading": "Special Behaviour",
             "items": [
                 {
-                    "name": "TILE_ICS",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                    
-                },
-                {
-                    "name": "TOLERATE_WRITE_ERROR",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                    
-                },
-                {
                     "name": "VORONOI_DYNAMIC_UPDATE",
                     "value": true,
                     "docs": "Keeps track of mesh connectivity, which speeds up mesh construction",
@@ -985,7 +993,7 @@
                 {
                     "name": "NO_MPI_IN_PLACE",
                     "value": false,
-                    "docs": null,
+                    "docs": "TODO: ???",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -994,7 +1002,7 @@
                 {
                     "name": "NO_ISEND_IRECV_IN_DOMAIN",
                     "value": true,
-                    "docs": null,
+                    "docs": "TODO: ???",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1003,7 +1011,7 @@
                 {
                     "name": "FIX_PATHSCALE_MPI_STATUS_IGNORE_BUG",
                     "value": true,
-                    "docs": null,
+                    "docs": "TODO: ???",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1012,39 +1020,16 @@
                 {
                     "name": "ALLOWEXTRAPARAMS",
                     "value": false,
-                    "docs": null,
+                    "docs": "Allows unused parameters in parameter file",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
                     
-                },
-                {
-                    "name": "DISABLE_OPTIMIZE_DOMAIN_MAPPING",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                    
-                },
-                {
-                    "name": "BITS_PER_DIMENSION",
-                    "value": false,
-                    "docs": "Peano-Hilbert order",
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": [
-                        {
-                            "name": "BITS_PER_DIMENSION",
-                            "operator": "MAX",
-                            "value": 42
-                        }
-                    ]
                 },
                 {
                     "name": "OVERRIDE_PEANOGRID_WARNING",
                     "value": false,
-                    "docs": null,
+                    "docs": "Overrides warning which suggests increasing BITS_PER_DIMENSION",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1058,16 +1043,7 @@
                 {
                     "name": "UPDATE_GRADIENTS_FOR_OUTPUT",
                     "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                    
-                },
-                {
-                    "name": "OUTPUT_EVERY_STEP",
-                    "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1076,7 +1052,7 @@
                 {
                     "name": "GODUNOV_STATS",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1085,7 +1061,7 @@
                 {
                     "name": "OUTPUT_PRESSURE_GRADIENT",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1094,7 +1070,7 @@
                 {
                     "name": "OUTPUT_DENSITY_GRADIENT",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1103,7 +1079,7 @@
                 {
                     "name": "OUTPUT_VELOCITY_GRADIENT",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1112,7 +1088,7 @@
                 {
                     "name": "OUTPUT_BFIELD_GRADIENT",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1121,7 +1097,7 @@
                 {
                     "name": "OUTPUT_VERTEX_VELOCITY",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1130,7 +1106,7 @@
                 {
                     "name": "OUTPUT_VERTEX_VELOCITY_DIVERGENCE",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1139,7 +1115,7 @@
                 {
                     "name": "OUTPUT_VOLUME",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1148,7 +1124,7 @@
                 {
                     "name": "OUTPUT_CENTER_OF_MASS",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1157,7 +1133,7 @@
                 {
                     "name": "OUTPUT_SURFACE_AREA",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1166,7 +1142,7 @@
                 {
                     "name": "OUTPUT_PRESSURE",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1175,7 +1151,7 @@
                 {
                     "name": "OUTPUTPOTENTIAL",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1184,7 +1160,7 @@
                 {
                     "name": "OUTPUTACCELERATION",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1193,7 +1169,7 @@
                 {
                     "name": "OUTPUTTIMESTEP",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1202,7 +1178,7 @@
                 {
                     "name": "OUTPUT_SOFTENINGS",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1211,7 +1187,7 @@
                 {
                     "name": "OUTPUTGRAVINTERACTIONS",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1265,7 +1241,7 @@
                 {
                     "name": "OUTPUT_VORTICITY",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1274,7 +1250,7 @@
                 {
                     "name": "OUTPUT_MACHNUM",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1283,7 +1259,7 @@
                 {
                     "name": "OUTPUT_ENTROPY",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1292,7 +1268,7 @@
                 {
                     "name": "OUTPUT_CSND",
                     "value": false,
-                    "docs": null,
+                    "docs": "",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1329,7 +1305,7 @@
                 {
                     "name": "EOS_DEGENERATE",
                     "value": true,
-                    "docs": null,
+                    "docs": "Master switch for degenerate matter, with primitive quantities found using Helmholtz EOS.",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -1353,7 +1329,7 @@
                 {
                     "name": "EOS_COULOMB_CORRECTIONS",
                     "value": true,
-                    "docs": null,
+                    "docs": "Applies Coulomb corrections to Helmholtz EOS",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1362,7 +1338,7 @@
                 {
                     "name": "EOS_COULOMB_CORRECTIONS_SMOOTH",
                     "value": false,
-                    "docs": null,
+                    "docs": "Applies a Butterworth LPF to smooth corrections",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1371,7 +1347,7 @@
                 {
                     "name": "EOS_NSPECIES",
                     "value": false,
-                    "docs": "Number of nuclear species",
+                    "docs": "Number of degenerate matter species",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -1395,7 +1371,7 @@
                 {
                     "name": "RELAXOBJECT",
                     "value": false,
-                    "docs": null,
+                    "docs": "Calls the relaxation routine in relaxobject.c",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -1409,7 +1385,7 @@
                 {
                     "name": "RELAXOBJECT_COOLING",
                     "value": false,
-                    "docs": null,
+                    "docs": "Removes energy from the system until the desired temperature is reached",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -1423,7 +1399,7 @@
                 {
                     "name": "RELAXOBJECT_COOLING2",
                     "value": false,
-                    "docs": null,
+                    "docs": "used for WD+HeShell relaxation",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1432,7 +1408,7 @@
                 {
                     "name": "RELAXOBJECT_BINARY",
                     "value": false,
-                    "docs": null,
+                    "docs": "Attempts to relax a binary system",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1441,7 +1417,7 @@
                 {
                     "name": "RELAX_RUNTIME",
                     "value": false,
-                    "docs": null,
+                    "docs": "the runtime is assumed to be 10 times the dynamical or acoustic time",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1450,16 +1426,22 @@
                 {
                     "name": "INSPIRAL",
                     "value": false,
-                    "docs": null,
+                    "docs": "Attempts to perform matter inspiral",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "InspiralVelocity",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
                     
                 },
                 {
                     "name": "PASSIVE_SCALARS",
                     "value": false,
-                    "docs": "?",
+                    "docs": "number of passive scalar fields advected with fluid (default: 0)",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1473,7 +1455,7 @@
                 {
                     "name": "NUCLEAR_NETWORK",
                     "value": false,
-                    "docs": null,
+                    "docs": "Turns on nuclear reactions",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -1488,7 +1470,7 @@
                 {
                     "name": "NETWORK_NSE",
                     "value": false,
-                    "docs": null,
+                    "docs": "Nuclear reactions are evaluated w.r.t NSE",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1497,7 +1479,7 @@
                 {
                     "name": "NETWORK_PARDISO",
                     "value": false,
-                    "docs": null,
+                    "docs": "Nuclear reactions are evaluated w.r.t Pardiso",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1506,7 +1488,7 @@
                 {
                     "name": "NETWORK_SCREENING",
                     "value": false,
-                    "docs": null,
+                    "docs": "Applies screening to the network",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1515,7 +1497,7 @@
                 {
                     "name": "REACLIB1",
                     "value": false,
-                    "docs": null,
+                    "docs": "Uses network rates specified at https://reaclib.jinaweb.org/",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1524,7 +1506,7 @@
                 {
                     "name": "NUCLEAR_NETWORK_DETONATE",
                     "value": false,
-                    "docs": null,
+                    "docs": "Hmm I don't know about this one...",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1533,7 +1515,7 @@
                 {
                     "name": "NUCLEAR_NETWORK_DETONATE_CORE",
                     "value": false,
-                    "docs": null,
+                    "docs": "Triggers detonation of core during run",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1542,7 +1524,7 @@
                 {
                     "name": "NUCLEAR_NETWORK_DETONATE_POSITION",
                     "value": false,
-                    "docs": null,
+                    "docs": "Sets location of detonation at a certain radius specified by the user in a file",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
@@ -1551,7 +1533,7 @@
                 {
                     "name": "NUCLEAR_NETWORK_TIMESTEP_LIMITER",
                     "value": false,
-                    "docs": null,
+                    "docs": "Limits timestep using a maximum energy difference",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": [
@@ -1564,18 +1546,9 @@
                     
                 },
                 {
-                    "name": "NUCLEAR_NETWORK_USE_SHOCKFINDER",
-                    "value": false,
-                    "docs": null,
-                    "required": false, 
-					"ignored_if": [],
-					"requirements": []
-                    
-                },
-                {
                     "name": "NUCLEAR_NETWORK_LIMIT_COMPOSITION_CHANGE",
                     "value": false,
-                    "docs": null,
+                    "docs": "Limits changes in composition below a certain value",
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
