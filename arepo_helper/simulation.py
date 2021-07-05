@@ -1,16 +1,20 @@
 from sim_config import Param, Config, J, Paths
+from utilities import arepo_git_versions
 import os
 
 
 class ArepoSimulation(object):
-    SYSTYPE = "Raijin"
 
-    def __init__(self, proj_name, proj_dir, js, config_eo, param_eo, version=2019):
+    def __init__(self, proj_name, proj_dir, js, config_eo, param_eo, version="dissipative"):
 
         self.project_name = proj_name
         self.js = js
-        self.version = version
         self.ignored = []
+
+        if version not in arepo_git_versions:
+            raise ValueError(f"Unknown version requested: {version}")
+        else:
+            self.version = version
 
         #
         self.param = Param(explicit_options=param_eo, version=self.version)
@@ -18,10 +22,10 @@ class ArepoSimulation(object):
         self.sense_checks()
 
         # Create a project and set paths
-        self.paths = Paths(proj_dir, proj_name)
+        self.paths = Paths(proj_dir, proj_name, version=version)
 
         # Create the Makefiles
-        self.make_systype_file(self.SYSTYPE)
+        self.make_systype_file()
         self.write_arepo_compiler()
         self.modify_makefile()
 
@@ -90,7 +94,8 @@ class ArepoSimulation(object):
         self.check_for_incompatibilities(self.config)
 
         # This option causes numerical errors when running with AREPO
-        assert not self.config.get("MESHRELAX_DENSITY_IN_INPUT")["value"]
+        if self.version in ["ivo_2016", "dissipative"]:
+            assert not self.config.get("MESHRELAX_DENSITY_IN_INPUT")["value"]
 
         refinement = self.config.get("REFINEMENT_SPLIT_CELLS")["value"] or \
                      self.config.get("REFINEMENT_MERGE_CELLS")["value"]
@@ -169,16 +174,26 @@ class ArepoSimulation(object):
         with open(f"{self.paths.jobscript}", 'w') as f:
             f.write('\n'.join(lines))
 
-    def make_systype_file(self, systype):
+    def make_systype_file(self):
+
+        systype = ""
+        if self.version in ["ivo_2016", "dissipative"]:
+            systype = "Raijin"
+
+        elif self.version in ["public_2021"]:
+            systype = "Ubuntu"
+
         with open(self.paths.makefile_systype, "w") as f:
             f.write(f"SYSTYPE=\"{systype}\"")
 
     def modify_makefile(self):
-        with open(self.paths.makefile, "r") as f:
-            data = f.read()
-            incorrect_string = "OPTIMIZE =  -std=c11 -g -O3 -ipo -m64 -Wall -xCORE-AVX2"
-            correct_string = "OPTIMIZE =  -std=c11 -g -O3 -m64 -Wall"
-            data = data.replace(incorrect_string, correct_string)
 
-        with open(self.paths.makefile, "w") as f:
-            f.write(data)
+        if self.version in ["ivo_2016", "dissipative"]:
+            with open(self.paths.makefile, "r") as f:
+                data = f.read()
+                incorrect_string = "OPTIMIZE =  -std=c11 -g -O3 -ipo -m64 -Wall -xCORE-AVX2"
+                correct_string = "OPTIMIZE =  -std=c11 -g -O3 -m64 -Wall"
+                data = data.replace(incorrect_string, correct_string)
+
+            with open(self.paths.makefile, "w") as f:
+                f.write(data)

@@ -274,6 +274,6 @@ lib64
 /bin/
 /include/
 /lib/
-/arepo_helper/data/snapshots/
+/arepo_helper/data/source/**
 /arepo_helper/misc/
 /.idea/

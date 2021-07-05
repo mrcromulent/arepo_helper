@@ -1,5 +1,5 @@
 {
-    "version": 2016,
+    "date": "Fri Jul 15 23:02:22 2016 +0200",
     "heading": "The parameter-file, often named param.txt, is a file containing run-time options for Arepo. These include things like the input and output directory, maximum runtimes, memory limits and all kinds of freely choosable simulation and model parameters. In general, the code will output an error message if there are either missing parameters for the given configuration Arepo was compiled with, or if there are extraneous parameters. The latter can be deactivated by setting the compile-time flag ALLOWEXTRAPARAMS. Unlike changing Config.sh, changing the parameters does not require a re-compilation of the code.",
     "default_value": null,
     "data": [
@@ -664,6 +664,14 @@
                     "name": "TargetGasMassFactor",
                     "value": null,
                     "docs": "The target gas cell mass, where (de-)refinement is triggered if a given cell deviates by more than a factor of 2.0 above or below this value. Multiplicative factor with respect to the mean cell mass.",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "RefinementCriterion",
+                    "value": null,
+                    "docs": "Selects the criterion for refinement; “0” no refinement, “1” target mass refinement, “2” Jeans stability refinement criterion. Adding additional criteria is easily possible, but requires code modifications.",
                     "required": false,
 					"ignored_if": [],
 					"requirements": []

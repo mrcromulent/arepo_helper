@@ -1,5 +1,5 @@
 {
-    "version": 2020,
+    "date": "Thu Feb 18 11:45:00 2021 +0100",
     "heading": "Code compile time options",
     "default_value": false,
     "data": [
@@ -34,6 +34,20 @@
                     "required": false, 
 					"ignored_if": [],
 					"requirements": []
+                },
+                {
+                    "name": "COOLING",
+                    "value": false,
+                    "docs": "If COOLING is set, then CoolingOn must equal 1, and vice versa. This is to provide rough assurance that you are running a given parameter file with the correct executable.",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "CoolingOn",
+                            "operator": "EQ",
+                            "value": 1
+                        }
+                    ]
                 },
                 {
                     "name": "PASSIVE_SCALARS",
@@ -186,6 +200,30 @@
                             "name": "VORONOI_STATIC_MESH",
                             "operator": "EQ",
                             "value": false
+                        }
+                    ]
+                },
+                {
+                    "name": "REGULARIZE_MESH_FACE_ANGLE",
+                    "value": false,
+                    "docs": "Regularises mesh face angles",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "VORONOI_STATIC_MESH",
+                            "operator": "EQ",
+                            "value": false
+                        },
+                        {
+                            "name": "CellMaxAngleFactor",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "CellShapingFactor",
+                            "operator": "EQ",
+                            "value": null
                         }
                     ]
                 }

@@ -5,6 +5,28 @@ import numpy as np
 import os
 
 
+arepo_git_versions = {
+    "ivo_2016":
+        {
+            "commit_id": "3d675e62e42340566d7626178284652f3e482305",
+            "default_folder_name": None,
+            "url": None
+        },
+    "dissipative":
+        {
+            "commit_id": "97863140b478c1319cec0fd2f29258d6d36b5927",
+            "default_folder_name": "dissipative",
+            "url": "https://github.com/boywert/dissipative.git"
+        },
+    "public_2021":
+        {
+            "commit_id": "2763ddc00994fd524504c3b43d836ec97d7f60c7",
+            "default_folder_name": "arepo",
+            "url": "https://gitlab.mpcdf.mpg.de/g-fmarinac/arepo.git"
+        },
+}
+
+
 class Coordinates:
     x = 0
     y = 1

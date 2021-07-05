@@ -1,5 +1,7 @@
+from utilities import arepo_git_versions
 from definitions import ROOT_DIR
 import textwrap
+import shutil
 import pprint
 import json
 import git
@@ -18,8 +20,6 @@ class J:
 
 
 class Paths:
-    arepo_web_address = "https://github.com/boywert/dissipative/"
-    default_folder_name = "dissipative"
 
     CODE = "code"
     CONFIG = "Config.sh"
@@ -31,8 +31,9 @@ class Paths:
     MAKEFILE = "Makefile"
     MAKEFILE_SYSTYPE = "Makefile.systype"
 
-    def __init__(self, parent_dir, proj_name):
+    def __init__(self, parent_dir, proj_name, version="dissipative"):
 
+        self.version = version
         self.project_dir = os.path.join(parent_dir, proj_name)
         self.input_dir = os.path.join(self.project_dir, Paths.INPUT)
         self.output_dir = os.path.join(self.project_dir, Paths.OUTPUT)
@@ -57,8 +58,26 @@ class Paths:
         os.mkdir(self.output_dir)
         os.mkdir(self.pbs_dir)
 
-        git.Git(self.project_dir).clone(self.arepo_web_address)
-        os.rename(os.path.join(self.project_dir, self.default_folder_name), self.code_dir)
+        self.get_code()
+
+    def get_code(self):
+
+        if self.version not in arepo_git_versions:
+            raise ValueError(f"Unknown version requested: {self.version}")
+
+        else:
+            wa  = arepo_git_versions[self.version]["url"]
+            dfn = arepo_git_versions[self.version]["default_folder_name"]
+            c_id = arepo_git_versions[self.version]["commit_id"]
+
+            if wa is not None:
+                # Get source code from web
+                repo = git.Repo.clone_from(wa, self.code_dir, no_checkout=True)
+                repo.git.checkout(c_id)
+            else:
+                # Get source code from local source
+                local_source = os.path.join(f"{ROOT_DIR}/arepo_helper/data/source", c_id)
+                shutil.copytree(local_source, self.code_dir)
 
 
 class Param:
@@ -67,7 +86,7 @@ class Param:
 
     def __init__(self,
                  explicit_options=None,
-                 version=2019):
+                 version="dissipative"):
 
         self.explicit_options   = explicit_options
         self.version            = version
@@ -76,7 +95,8 @@ class Param:
         self.load()
 
     def load(self):
-        json_file = os.path.join(ROOT_DIR, f"arepo_helper/data/param/{self.version}.json")
+        c_id = arepo_git_versions[self.version]["commit_id"]
+        json_file = os.path.join(ROOT_DIR, f"arepo_helper/data/param/{c_id}.json")
 
         with open(json_file, 'r') as f:
             self.data = json.load(f)
@@ -167,7 +187,7 @@ class Config:
 
     def __init__(self,
                  explicit_options=None,
-                 version=2019):
+                 version="dissipative"):
 
         self.version            = version
         self.explicit_options   = explicit_options
@@ -177,7 +197,8 @@ class Config:
     def load(self):
 
         # Load the default Config from file
-        json_file = os.path.join(ROOT_DIR, f"arepo_helper/data/config/{self.version}.json")
+        c_id = arepo_git_versions[self.version]["commit_id"]
+        json_file = os.path.join(ROOT_DIR, f"arepo_helper/data/config/{c_id}.json")
         with open(json_file, 'r') as f:
             self.data = json.load(f)
 

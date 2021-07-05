@@ -1,5 +1,5 @@
 {
-    "version": 2019,
+    "date": "Thu Feb 18 11:45:00 2021 +0100",
     "heading": "The parameter-file, often named param.txt, is a file containing run-time options for Arepo. These include things like the input and output directory, maximum runtimes, memory limits and all kinds of freely choosable simulation and model parameters. In general, the code will output an error message if there are either missing parameters for the given configuration Arepo was compiled with, or if there are extraneous parameters. The latter can be deactivated by setting the compile-time flag ALLOWEXTRAPARAMS. Unlike changing Config.sh, changing the parameters does not require a re-compilation of the code.",
     "default_value": null,
     "data": [
@@ -81,34 +81,6 @@
 					"requirements": []
                 },
                 {
-                    "name": "EosTable",
-                    "value": null,
-                    "docs": "Filename of table of EOS values for degenerate matter",
-                    "required": false,
-					"ignored_if": [],
-					"requirements": [
-                        {
-                            "name": "EOS_DEGENERATE",
-                            "operator": "EQ",
-                            "value": true
-                        }
-                    ]
-                },
-                {
-                    "name": "EosSpecies",
-                    "value": null,
-                    "docs": "Filename of enumeration of EOS species",
-                    "required": false,
-					"ignored_if": [],
-					"requirements": [
-                        {
-                            "name": "EOS_DEGENERATE",
-                            "operator": "EQ",
-                            "value": true
-                        }
-                    ]
-                },
-                {
                     "name": "SnapshotFileBase",
                     "value": "snapshot",
                     "docs": "Basename of snapshot files produced by the code. e.g. snap for output files snap_000.hdf5 etc.",
@@ -137,13 +109,7 @@
                     "value": "output_list.txt",
                     "docs": "File with a list of the desired output times. Can be specified with a relative or absolute path.",
                     "required": true, 
-					"ignored_if": [
-                        {
-                            "name": "OutputListOn",
-                            "operator": "EQ",
-                            "value": 0
-                        }
-                    ],
+					"ignored_if": [],
 					"requirements": []
                 },
                 {
@@ -227,13 +193,7 @@
                     "value": "xyz",
                     "docs": "The name of a script file or program that is executed for automatic resubmission of the job to the queuing system. Note that the file given here needs to be executable. Note that a resubmission can also be triggered by a job-script itself, which is often the more convenient alternative.",
                     "required": true, 
-					"ignored_if": [
-                        {
-                            "name": "ResubmitOn",
-                            "operator": "EQ",
-                            "value": 0
-                        }
-                    ],
+					"ignored_if": [],
 					"requirements": []
                 }
             ]
@@ -287,34 +247,6 @@
                     "required": true,
 					"ignored_if": [],
 					"requirements": []
-                },
-                {
-                    "name": "RelaxBaseFac",
-                    "value": null,
-                    "docs": "???",
-                    "required": false,
-					"ignored_if": [],
-					"requirements": [
-                        {
-                            "name": "RELAXOBJECT",
-                            "operator": "EQ",
-                            "value": true
-                        }
-                    ]
-                },
-                {
-                    "name": "RelaxTemperature",
-                    "value": null,
-                    "docs": "???",
-                    "required": false,
-					"ignored_if": [],
-					"requirements": [
-                        {
-                            "name": "RELAXOBJECT_COOLING",
-                            "operator": "EQ",
-                            "value": true
-                        }
-                    ]
                 }
             ]
         },
@@ -349,11 +281,11 @@
                     "docs": "Gives the vacuum energy density (cosmological constant) at z=0 for cosmological simulations. Relevant for comoving integration and halo/subhalo finder",
                     "required": true, 
 					"ignored_if": [
-                      {
+                        {
                             "name": "ComovingIntegrationOn",
                             "operator": "EQ",
                             "value": 0
-                      }
+                        }
                     ],
 					"requirements": []
                 },
@@ -423,6 +355,7 @@
 					"requirements": []
                 }
             ]
+
         },
         {
             "heading": "Gravitational force accuracy",
@@ -448,13 +381,7 @@
                     "value": 0.001,
                     "docs": "The accuracy parameter for the relative opening criterion for the tree walk. Only used if TypeOfOpeningCriterion equal to 1.",
                     "required": true, 
-					"ignored_if": [
-                        {
-                            "name": "TypeOfOpeningCriterion",
-                            "operator": "NEQ",
-                            "value": 1
-                        }
-                    ],
+					"ignored_if": [],
 					"requirements": []
                 }
             ]
@@ -557,7 +484,7 @@
                     "name": "MaxVolumeDiff",
                     "value": null,
                     "docs": "Maximum tolerated difference in the volume of two neighboring cells. This avoids large cell-size gradients in the mesh which might cause numerical inaccuracies. In case where the volume of a cell exceeds MaxVolumeDiff times the volume of the smallest neighboring cell, the cell is refined, irrespective of other refinement criteria.",
-                    "required": false,
+                    "required": true, 
 					"ignored_if": [],
 					"requirements": [
                         {
@@ -571,7 +498,7 @@
                     "name": "MinVolume",
                     "value": null,
                     "docs": "Global minimum volume a cell is allowed to have, irrespective of other refinement and derefinement criteria.",
-                    "required": false,
+                    "required": true, 
 					"ignored_if": [],
 					"requirements": [
                         {
@@ -585,7 +512,7 @@
                     "name": "MaxVolume",
                     "value": null,
                     "docs": "Global maximum volume a cell is allowed to have, irrespective of other refinement and derefinement criteria.",
-                    "required": false,
+                    "required": true, 
 					"ignored_if": [],
 					"requirements": [
                         {
@@ -603,7 +530,7 @@
 					"ignored_if": [],
 					"requirements": [
                         {
-                            "name": "NODEREFINE_BACKGROUND_GRID",
+                            "name": "NODEREFINE_BACKGROUNDGRID",
                             "operator": "EQ",
                             "value": true
                         }
@@ -611,16 +538,10 @@
                 },
                 {
                     "name": "CellMaxAngleFactor",
-                    "value": null,
+                    "value": 2.25,
                     "docs": "Cell “roundness” criterion. The face angle of an interface of a cell is defined as the square root of its area divided by pi, and divided by the distance to the face. The maximum face angle is the maximum of this values for all faces in a given cell. This value is a measure for the “roundness” of a cell. If this value exceeds 1.5 times CellMaxAngleFactor, the cell is not allowed to be refined, i.e. highly elongated cells are not allowed to be refined. In addition to this, if the cell exceeds 0.75 times CellMaxAngleFactor, the movement of the mesh-generating point will deviate from the pure Lagrangian motion to make the cell rounder.",
-                    "required": false,
-					"ignored_if": [
-                        {
-                            "name": "VORONOI",
-                            "operator": "NEQ",
-                            "value": true
-                        }
-                    ],
+                    "required": true, 
+					"ignored_if": [],
 					"requirements": [
                         {
                             "name": "REGULARIZE_MESH_FACE_ANGLE",
@@ -639,17 +560,11 @@
                     "value": null,
                     "docs": "Alternative “roundness” criterion. This criterion uses the distance between center of mass and mesh-generating point as a measure for roundness. If this distance exceeds twice the cell radius times CellShapingFactor, the cell will not be refined. If this distance exceeds 0.75 times the cell radius times CellShapingFactor the movement of the mesh-generating point will deviate from pure Lagrangian motion to make the cell rounder.",
                     "required": false,
-					"ignored_if": [
-                        {
-                            "name": "VORONOI",
-                            "operator": "NEQ",
-                            "value": true
-                        }
-                    ],
+					"ignored_if": [],
 					"requirements": [
                         {
                             "name": "REGULARIZE_MESH_FACE_ANGLE",
-                            "operator": "NEQ",
+                            "operator": "EQ",
                             "value": true
                         },
                         {
@@ -664,13 +579,7 @@
                     "value": 0.5,
                     "docs": "Determines the speed of the regularization of the mesh. CellShapingSpeed (times a characteristic speed) is the speed by which the mesh is regularized (i.e. speed by which the motion of a mesh-generating point can deviate from Lagrangian motion). Higher values will lead to round cells in fewer timesteps, but will also introduce more numerical noise.",
                     "required": true, 
-					"ignored_if": [
-                        {
-                            "name": "VORONOI",
-                            "operator": "NEQ",
-                            "value": true
-                        }
-                    ],
+					"ignored_if": [],
 					"requirements": [
                         {
                             "name": "VORONOI_STATIC_MESH",
@@ -678,7 +587,7 @@
                             "value": true
                         }
                     ]
-                }
+                }   
             ]
         },
         {
@@ -688,7 +597,7 @@
                     "name": "ReferenceGasPartMass",
                     "value": null,
                     "docs": "For comoving runs, this can either be given a non-zero value, in which case this value times MassFactor is used as the target mass, or it can be given the value 0, in which case the code calculates the mean cell mass automatically. For non-comoving runs, it must be given a non-zero value, otherwise the run will exit. If REFINEMENT_HIGH_RES_GAS is enabled, then: if ReferenceGasPartMass==0 in the parameter file, then all gas present in the ICs will be allowed to be (de-)refined (and the code calculates the reference mass as the mean mass of those cells for which (de-)refinement is allowed), and if that is not desired, then ReferenceGasPartMass should be set to the correct value, in which case only gas with initial mass<1.2*ReferenceGasPartMass will be allowed to be (de-)refined. In case of GENERATE_GAS_IN_ICS, only the gas cells split off from particle type 1 (usually the high-res dark matter particles) are flagged for (de-)refinement, i.e. only these gas cells will be considered for the ReferenceGasPartMass calculation (only in case ReferenceGasPartMass=0 in parameter file).",
-                    "required": false,
+                    "required": true,
 					"ignored_if": [],
 					"requirements": []
                 },
@@ -696,7 +605,7 @@
                     "name": "TargetGasMassFactor",
                     "value": null,
                     "docs": "The target gas cell mass, where (de-)refinement is triggered if a given cell deviates by more than a factor of 2.0 above or below this value. Multiplicative factor with respect to the mean cell mass.",
-                    "required": false,
+                    "required": true, 
 					"ignored_if": [],
 					"requirements": []
                 },
@@ -704,7 +613,7 @@
                     "name": "RefinementCriterion",
                     "value": null,
                     "docs": "Selects the criterion for refinement; “0” no refinement, “1” target mass refinement, “2” Jeans stability refinement criterion. Adding additional criteria is easily possible, but requires code modifications.",
-                    "required": false,
+                    "required": true, 
 					"ignored_if": [],
 					"requirements": []
                 },
@@ -712,11 +621,12 @@
                     "name": "DerefinementCriterion",
                     "value": null,
                     "docs": "Selects the criterion for derefinement; “0” no derefinement, “1” target mass derefinement, “2” Jeans stability derefinement criterion.",
-                    "required": false,
+                    "required": true, 
 					"ignored_if": [],
 					"requirements": []
                 }
             ]
+
         },
         {
             "heading": "Hydrodynamics",
@@ -752,8 +662,23 @@
                     "required": true, 
 					"ignored_if": [],
 					"requirements": []
+                },
+                {
+                    "name": "IsoSoundSpeed",
+                    "value": null,
+                    "docs": "Sound speed of gas in runs with isothermal hydrodynamics.",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "ISOTHERM_EQS",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
                 }
             ]
+
         },
         {
             "heading": "Gravitational softening",
@@ -847,7 +772,7 @@
                 {
                     "name": "SofteningMaxPhysType0",
                     "value": 1e6,
-                    "docs": "When comoving integration is used, this parameter gives the maximum physical gravitational softening length corresponding to SofteningComovingTypeX (referenced by one or more specific particle types depending on the entries of SofteningTypeOfPartTypeN). Depending on the relative settings of the Comoving and MaxPhys softenings, the code will hence switch from a softening constant in comoving units to one constant in physical units. For example, if the MaxPhys value is exactly half the Comoving value, then particles using this softening type will have comoving softening until z=1 and fixed physical softenings after that point in time. Given in code length units.",
+                    "docs": null,
                     "required": true,
 					"ignored_if": [
                         {
@@ -861,7 +786,7 @@
                 {
                     "name": "SofteningMaxPhysType1",
                     "value": 0,
-                    "docs": null,
+                    "docs": "When comoving integration is used, this parameter gives the maximum physical gravitational softening length corresponding to SofteningComovingTypeX (referenced by one or more specific particle types depending on the entries of SofteningTypeOfPartTypeN). Depending on the relative settings of the Comoving and MaxPhys softenings, the code will hence switch from a softening constant in comoving units to one constant in physical units. For example, if the MaxPhys value is exactly half the Comoving value, then particles using this softening type will have comoving softening until z=1 and fixed physical softenings after that point in time. Given in code length units.",
                     "required": true,
 					"ignored_if": [
                         {
@@ -1046,18 +971,14 @@
                     "name": "CoolingOn",
                     "value": null,
                     "docs": "If set to “1”, gas looses energy through a (optically-thin) radiative cooling model at each timestep. Can only be set to zero if COOLING is not set.",
-                    "required": true,
-					"ignored_if": [],
-					"requirements": []
-                },
-                {
-                    "name": "StarformationOn",
-                    "value": 0,
-                    "docs": "If set to “1”, gas can be (stochastically) converted into collisionless star particles based on a star formation model. Can only be set to zero if USE_SFR is not set.",
-                    "required": true,
+                    "required": true, 
 					"ignored_if": [],
 					"requirements": [
-
+                        {
+                            "name": "COOLING",
+                            "operator": "NEQ",
+                            "value": true
+                        }
                     ]
                 },
                 {
