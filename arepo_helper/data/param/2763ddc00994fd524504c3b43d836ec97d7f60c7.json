@@ -982,6 +982,14 @@
                     ]
                 },
                 {
+                    "name": "StarformationOn",
+                    "value": 0,
+                    "docs": "If set to “1”, gas can be (stochastically) converted into collisionless star particles based on a star formation model. Can only be set to zero if USE_SFR is not set.",
+                    "required": true,
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
                     "name": "TreecoolFile",
                     "value": null,
                     "docs": "File path to cooling file. Possible files are available under ./data/.",

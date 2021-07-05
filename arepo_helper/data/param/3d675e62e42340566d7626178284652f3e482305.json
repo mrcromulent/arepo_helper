@@ -262,7 +262,7 @@
 					"requirements": []
                 },
                 {
-                    "name": "Time",
+                    "name": "TimeBegin",
                     "value": null,
                     "docs": "This sets the starting time of a simulation when the code is started from initial conditions in internal code units. For cosmological integrations, the value specified here is taken as the initial scale factor.",
                     "required": true,
@@ -987,6 +987,14 @@
                     "name": "CoolingOn",
                     "value": null,
                     "docs": "If set to “1”, gas looses energy through a (optically-thin) radiative cooling model at each timestep. Can only be set to zero if COOLING is not set.",
+                    "required": true,
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "StarformationOn",
+                    "value": 0,
+                    "docs": "If set to “1”, gas can be (stochastically) converted into collisionless star particles based on a star formation model. Can only be set to zero if USE_SFR is not set.",
                     "required": true,
 					"ignored_if": [],
 					"requirements": []

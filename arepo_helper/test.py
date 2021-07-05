@@ -283,7 +283,7 @@ def test_create_simulation():
     }
     config_explicit_options = {
 
-        "ADAPTIVE_HYDRO_SOFTENING": True,
+        # "ADAPTIVE_HYDRO_SOFTENING": True,
         "TREE_BASED_TIMESTEPS": True,
 
         # MHD

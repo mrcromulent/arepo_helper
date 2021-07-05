@@ -422,11 +422,27 @@
                     "docs": "Adaptive softening of gas cells depending on their size",
                     "required": false, 
 					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "NSOFTTYPES_HYDRO",
+                            "operator": "NEQ",
+                            "value": false
+                        },
+                        {
+                            "name": "MinimumComovingHydroSoftening",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "AdaptiveHydroSofteningSpacing",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
                 },
                 {
                     "name": "NSOFTTYPES_HYDRO",
-                    "value": 64,
+                    "value": false,
                     "docs": "Used to override the default value of 64.",
                     "required": false, 
 					"ignored_if": [],
