@@ -96,6 +96,9 @@ class ArepoH5File(object):
     def rho(self, ptype=0):
         return self.get_from_h5(n.DENSITY, ptype)
 
+    def pressure(self, ptype=0):
+        return self.get_from_h5(n.PRESSURE, ptype)
+
     def get_from_h5(self, field, ptype=0, from_file=False, save_to_mem=False):
 
         # Try to get from memory rather than disk first

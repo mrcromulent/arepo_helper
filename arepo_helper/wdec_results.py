@@ -250,6 +250,18 @@ class WDECResults(object):
 
     @staticmethod
     def mr_diff(q1, q2):
+        """
+        :param q1: Inner q value
+        :param q2: Outer q value
+        :return: The equivalent Delta Mr for the corresponding qs
+
+        Delta Mr
+        = Mr2 - Mr1
+        = msol * (1 - 10 ** -q2 - (1 - 10 ** -q2))
+        = msol *(10 ** -q1 - 10 ** -q2)
+        But msol = 1.989 * 10 ** 33 in grams
+        = 1.989 * (10 ** (-q1 + 33) - 10 ** (-q2 + 33))
+        """
         return 1.989 * (10 ** (-q1 + 33) - 10 ** (-q2 + 33))
 
     @staticmethod

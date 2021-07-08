@@ -267,14 +267,14 @@ def test_create_simulation():
     from simulation import ArepoSimulation
     from sim_config import J, Paths
 
-    project_name = "public_2021"
-    version = "public_2021"
-    boxsize = 1e10
+    project_name = "0_35He_0_75COHe"
+    version = "dissipative"
+    boxsize = 1e12
 
     js_explicit_options = {
         J.NAME: project_name,
         J.PROJECT_CODE: "y08",
-        J.QUEUE_TYPE: "express",
+        J.QUEUE_TYPE: "normal",
         J.WALLTIME: "23:59:00",
         J.EMAIL: "uri.burmester@anu.edu.au",
         J.MEMORY: "512gb",
@@ -283,7 +283,9 @@ def test_create_simulation():
     }
     config_explicit_options = {
 
-        # "ADAPTIVE_HYDRO_SOFTENING": True,
+        "PASSIVE_SCALARS": 4,
+        "ADAPTIVE_HYDRO_SOFTENING": True,
+        "NSOFTTYPES_HYDRO": 64,
         "TREE_BASED_TIMESTEPS": True,
 
         # MHD
@@ -306,6 +308,7 @@ def test_create_simulation():
 
         # Relaxing
         "RELAXOBJECT": True,
+        "RELAXOBJECT_BINARY": True,
         # "RELAXOBJECT_COOLING": True,
 
         #
@@ -318,7 +321,7 @@ def test_create_simulation():
     }
     param_explicit_options = {
         # Initial conditions
-        "InitCondFile": f"{Paths.INPUT}/bin.dat.ic",
+        "InitCondFile": f"{Paths.INPUT}/0_35He_0_75COHe",
         "MHDSeedDir": 0,
         "MHDSeedValue": 0,
 
@@ -329,7 +332,7 @@ def test_create_simulation():
         "OutputListOn": 0,
 
         # Output frequency
-        "TimeBetSnapshot": 0.1,
+        "TimeBetSnapshot": 1.0,
         "TimeBetStatistics": 0.1,
         "TimeOfFirstSnapshot": 0.0,
 
@@ -337,15 +340,15 @@ def test_create_simulation():
         "BoxSize": boxsize,
         "PeriodicBoundariesOn": 0,
         "TimeBegin": 0.0,
-        "TimeMax": 1.0,
-        "RelaxBaseFac": 0.01,
+        "TimeMax": 80.0,
+        "RelaxBaseFac": 1.0,
         # "RelaxTemperature": 5e5,
 
         # Cosmological parameters
         "ComovingIntegrationOn": 0,
 
         # Moving mesh
-        "MaxVolume": boxsize ** 3,
+        "MaxVolume": 1e10 ** 3,
         "MaxVolumeDiff": 10.0,
         "MinVolume": 0.0,
         "CellMaxAngleFactor": 2.25,
@@ -356,6 +359,10 @@ def test_create_simulation():
         "TargetGasMassFactor": 1,
         "RefinementCriterion": 1,
         "DerefinementCriterion": 1,
+
+        "MinimumComovingHydroSoftening": 1e+06,
+        "AdaptiveHydroSofteningSpacing": 1.2,
+
 
         # Cooling and star formation
         "CoolingOn": 0,
@@ -371,8 +378,7 @@ def test_create_simulation():
 
     simulation.copy_files_to_input([
         "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt",
-        "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat",
-        # "/home/pierre/CLionProjects/arepo_helper_libs/cmake-build-debug/bin.dat.ic.hdf5"
+        "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
     ])
 
 
@@ -383,6 +389,14 @@ def test_species():
     print(f"{a.species_dict['He4'].atomic_number}")
 
 
+def ughhhh():
+    from wdec_results import WDECResults
+    wdec_dir = "/home/pierre/Desktop/wdec_035He"
+    wd_results = WDECResults(wdec_dir)
+
+    wd_results.plot_abundances()
+
+
 if __name__ == '__main__':
     # test_make_radial()
     # test_make_pcolor()
@@ -391,5 +405,6 @@ if __name__ == '__main__':
     # test_create_wd_wdec()
     # test_helm_eos()
     # test_check_mass()
-
+    # ughhhh()
     test_create_simulation()
+

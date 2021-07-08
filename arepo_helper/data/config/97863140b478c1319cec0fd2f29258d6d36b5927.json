@@ -1384,7 +1384,13 @@
                     "docs": "Attempts to relax a binary system",
                     "required": false,
 					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "PASSIVE_SCALARS",
+                            "operator": "NEQ",
+                            "value": false
+                        }
+                    ]
                 },
                 {
                     "name": "RELAX_RUNTIME",
