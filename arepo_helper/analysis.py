@@ -9,7 +9,6 @@ class ArepoAnalyser(object):
     cutoff_table        = dict()
     highlights          = dict()
     slice_width         = 0.005
-    line_radius         = 0.005
 
     def __init__(self, analysis_options=None):
 

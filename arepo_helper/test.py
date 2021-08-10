@@ -1,122 +1,59 @@
+from arepo_vis import make_pcolor, make_radial
 from snapshot import ArepoSnapshot
 from pyhelm_eos import loadhelm_eos
 import matplotlib.pyplot as plt
 from const import msol
-import arepo_radial
-import arepo_pcolor
 from names import n
 import numpy as np
 import create_ics
 import pprint
-import h5py
 import ic
-
-
-def test_temperature_variations():
-    t = ["000", "001", "002", "003", "004", "005"]
-    center = [5e9, 5e9, 5e9]
-
-    for tval in t:
-        filepath = f"/home/pierre/Desktop/3_healpix/output/snapshot_{tval}.hdf5"
-        with h5py.File(filepath, 'r') as file:
-            coordi = np.array(file["/PartType0/Coordinates"])
-            tempi = np.array(file["/PartType0/Temperature"])
-            densi = np.array(file["/PartType0/Density"])
-            xnuci = np.array(file["/PartType0/NuclearComposition"])
-
-            print("{:e}".format(np.average(coordi[:, 0])))
-            print("{:e}".format(np.average(coordi[:, 1])))
-            print("{:e}".format(np.average(coordi[:, 2])))
-
-            i = (xnuci[::, 1] > 0) & (tempi > 1e3)
-            selected_coords = coordi[i]
-            selected_temps = tempi[i]
-            r = np.sqrt(
-                (selected_coords[:, 0] - center[0]) ** 2 +
-                (selected_coords[:, 1] - center[1]) ** 2 +
-                (selected_coords[:, 2] - center[2]) ** 2)
-            inds = r.argsort()
-            radius = r[inds]
-            radial_temp = selected_temps[inds]
-
-            fig, ax = plt.subplots()
-            plt.plot(radius, radial_temp)
-            ax.set_yscale('log')
-            plt.show()
-
-
-def test_temperature_with_density_cutoff():
-    filepath = f"/home/pierre/Desktop/AREPO/AREPO_2020/arepo_new/snapshot_003.hdf5"
-    center = [5e9, 5e9, 5e9]
-
-    with h5py.File(filepath, 'r') as file:
-        coordi = np.array(file["/PartType0/Coordinates"])
-        densi = np.array(file["/PartType0/Density"])
-        ui = np.array(file["/PartType0/InternalEnergy"])
-
-        i = (densi > 1e-6)
-        selected_coords = coordi[i]
-        selected_temps = ui[i] * 1.3807e-16
-        r = np.sqrt(
-            (selected_coords[:, 0] - center[0]) ** 2 +
-            (selected_coords[:, 1] - center[1]) ** 2 +
-            (selected_coords[:, 2] - center[2]) ** 2)
-        inds = r.argsort()
-        radius = r[inds]
-        radial_temp = selected_temps[inds]
-
-        # print("{:e}".format(tempsum))
-        fig, ax = plt.subplots()
-        plt.plot(radius, radial_temp)
-        ax.set_yscale('log')
-        plt.show()
 
 
 def test_make_radial():
     boxsize = 1e10
-    a = np.array([boxsize / 2, boxsize / 2, boxsize / 2])
-    b = np.array([boxsize, boxsize / 2, boxsize / 2])
+    a = [boxsize / 2, boxsize / 2, boxsize / 2]
+    b = [boxsize / 1, boxsize / 2, boxsize / 2]
     cyl_rad = 0.01 * boxsize
     nshells = 200
 
-    s = ArepoSnapshot("/home/pierre/Desktop/AREPO/AREPO_2020/arepo_new/snapshot_000.hdf5")
+    s = ArepoSnapshot("/home/pierre/Desktop/output/snapshot_001.hdf5")
 
-    rho = s.get_from_h5(n.DENSITY)
-    u = s.get_from_h5(n.INTERNALENERGY)
+    # rho = s.get_from_h5(n.DENSITY)
+    # u = s.get_from_h5(n.INTERNALENERGY)
     pres = s.get_from_h5(n.PRESSURE)
     coords = s.get_from_h5(n.COORDINATES)
 
-    data = arepo_radial.make_radial(coords.astype('float64'), pres.astype('float64'),
-                                    a, b,
-                                    cyl_rad,
-                                    nshells)
+    data = make_radial(coords.astype('float64'), pres.astype('float64'),
+                       a, b,
+                       cyl_rad,
+                       nshells)
     fig, ax = plt.subplots()
     ax.plot(data[1, :], data[0, :], 'b')
     plt.show()
-    fig.savefig('test.png')
 
 
 def test_make_pcolor():
     boxsize = 1e10
-    resolutions = np.array([1024, 1024])
-    centers = np.array([boxsize / 2, boxsize / 2, boxsize / 2])
-    boxsizes = np.array([1e9, 1e9])
-    axes = np.array([0, 1])
+    resolutions = [1024, 1024]
+    centers = [boxsize / 2, boxsize / 2, boxsize / 2]
+    boxsizes = [1e10, 1e10]
+    axes = [0, 1]
 
-    s = ArepoSnapshot("/home/pierre/Desktop/test/snapshot_010.hdf5")
+    s = ArepoSnapshot("/home/pierre/Desktop/output/snapshot_001.hdf5")
 
-    rho = s.get_from_h5(n.DENSITY)
+    # rho = s.get_from_h5(n.DENSITY)
     u = s.get_from_h5(n.INTERNALENERGY)
-    pres = s.get_from_h5(n.PRESSURE)
+    # pres = s.get_from_h5(n.PRESSURE)
     coords = s.get_from_h5(n.COORDINATES)
 
-    data = arepo_pcolor.make_pcolor(coords.astype('float64'), u.astype('float64'),
-                                    axes,
-                                    boxsizes,
-                                    resolutions,
-                                    centers,
-                                    include_neighbours_in_output=1,
-                                    numthreads=1)
+    data = make_pcolor(coords.astype('float64'), u.astype('float64'),
+                       axes,
+                       boxsizes,
+                       resolutions,
+                       centers,
+                       include_neighbours_in_output=1,
+                       numthreads=1)
 
     fig, ax = plt.subplots()
     x = np.arange(resolutions[0] + 1, dtype="float64") / resolutions[0] * boxsizes[0] - 0.5 * boxsizes[0] + centers[0]
@@ -130,7 +67,7 @@ def test_make_polytrope():
     helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
     species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
     eos = loadhelm_eos(helm_file, species_file, True)
-    xnuc = np.array([0.0, 0.5, 0.5, 0.0, 0.0])
+    xnuc = [0.0, 0.5, 0.5, 0.0, 0.0]
 
     polytrope = ic.create_polytrope(eos, 3.0, 5e6, xnuc, pres_c=0.0, temp_c=5e5, dr=1e6)
 
@@ -142,7 +79,7 @@ def test_create_wd():
     species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
     eos = loadhelm_eos(helm_file, species_file, True)
     rho_c = 5e6
-    xnuc = np.array([0.0, 0.5, 0.5, 0.0, 0.0])
+    xnuc = [0.0, 0.5, 0.5, 0.0, 0.0]
     wd = ic.create_wd(eos, rho_c, temp_c=5e5, xnuc_py=xnuc, tolerance=1e-6)
 
     print(wd)
@@ -151,22 +88,20 @@ def test_create_wd():
 def test_create_wd_wdec():
     # Generate 1d profile
     wdec_dir = "/home/pierre/wdec/"  # TODO: trailing foward slash is required!
-    wd = ic.create_wd_wdec(wdec_dir)
+    wd = ic.create_wd_wdec(wdec_dir, 5)
 
     # Convert to healpix-distributed 3D particles
-    nspecies = 5
     boxsize = 1e10
-    centers = np.array([boxsize / 2, boxsize / 2, boxsize / 2])
-    makebox = True
+    centers = [boxsize / 2, boxsize / 2, boxsize / 2]
     randomizeshells = False
     randomizeradii = False
     pmass = 1e-6 * msol
-    healpix_return = create_ics.convert_to_healpix(wd, nspecies, boxsize,
+    healpix_return = create_ics.convert_to_healpix(wd, boxsize,
                                                    centers=centers,
-                                                   makebox=makebox,
                                                    randomizeshells=randomizeshells,
                                                    randomizeradii=randomizeradii,
                                                    pmass=pmass)
+    print(healpix_return)
 
 
 def test_helm_eos():
@@ -187,40 +122,14 @@ def test_helm_eos():
     temp_calculated, p_calculated = eos.egiven(rho_c, xnuc, u_c)
     print(f"{temp_calculated=} {p_calculated=}")
 
-    e_calculated, dedT, p_calculated, csnd = eos.tgiven(rho_c, xnuc, t_c)
-    print(f"{e_calculated=} {dedT=} {p_calculated=} {csnd=}")
+    e_calculated, dedt, p_calculated, csnd = eos.tgiven(rho_c, xnuc, t_c)
+    print(f"{e_calculated=} {dedt=} {p_calculated=} {csnd=}")
 
     data_dict = eos.tgivenfull(rho_c, xnuc, t_c)
     pp.pprint(data_dict)
 
     data_dict = eos.ptgivenfull(pres_c, xnuc, t_c, rho_c)
     pp.pprint(data_dict)
-
-
-def test_check_mass():
-    # s = ArepoSnapshot("/home/pierre/CLionProjects/arepo_helper_libs/cmake-build-debug/bin.dat.ic.hdf5")
-    # s = ArepoSnapshot(
-    # "/run/user/1000/gvfs/sftp:host=gadi.nci.org.au/g/data/y08/ub0692/simulations/singular_WDs/second_WD/output/snapshot_000.hdf5")
-    for t in range(0, 10):
-        fname = f"/home/pierre/Desktop/test/snapshot_00{t}.hdf5"
-        s = ArepoSnapshot(fname)
-        masses = s.get_from_h5(n.MASSES)
-        density = s.get_from_h5(n.DENSITY)
-
-        print(s)
-        # print(f"{min(masses)=}")
-        # print(f"{max(masses)=}")
-        # print(f"{min(density)=}")
-        # print(f"{max(density)=}")
-
-
-def test_create_wd_python():
-    from pyhelm_eos import loadhelm_eos
-    from wd_utils import WDUtils
-
-    equation_of_state = loadhelm_eos("./eostable/helm_table.dat", "./eostable/species05.txt", True)
-    central_density = WDUtils.get_rho_c_from_mass(0.55, equation_of_state)
-    print(f"Central Density = {'{:.5E}'.format(central_density)}")
 
 
 def test_create_animation():
@@ -263,148 +172,134 @@ def test_create_pcolor():
     pcolor_plot.save()
 
 
-def test_create_simulation():
-    from simulation import ArepoSimulation
-    from sim_config import J, Paths
+def test_convert_to_healpix():
+    # Generate 1d profile
+    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
+    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    eos = loadhelm_eos(helm_file, species_file, True)
+    rho_c = 5e6
+    xnuc = [0.0, 0.5, 0.5, 0.0, 0.0]
+    wd = ic.create_wd(eos, rho_c, temp_c=5e5, xnuc_py=xnuc, tolerance=1e-6)
 
-    project_name = "0_35He_0_75COHe"
-    version = "dissipative"
-    boxsize = 1e12
-
-    js_explicit_options = {
-        J.NAME: project_name,
-        J.PROJECT_CODE: "y08",
-        J.QUEUE_TYPE: "normal",
-        J.WALLTIME: "23:59:00",
-        J.EMAIL: "uri.burmester@anu.edu.au",
-        J.MEMORY: "512gb",
-        J.N_CPUS: "240",
-        J.DIRECTORY: "wd",
-    }
-    config_explicit_options = {
-
-        "PASSIVE_SCALARS": 4,
-        "ADAPTIVE_HYDRO_SOFTENING": True,
-        "NSOFTTYPES_HYDRO": 64,
-        "TREE_BASED_TIMESTEPS": True,
-
-        # MHD
-        "MHD": True,
-        "MHD_SEEDFIELD": True,
-        "RIEMANN_HLLD": True,
-
-        # EOS
-        "EOS_NSPECIES": 5,
-
-        #
-        "REFINEMENT_SPLIT_CELLS": True,
-        "REFINEMENT_MERGE_CELLS": True,
-        "REFINEMENT_VOLUME_LIMIT": True,
-
-        #
-        "REGULARIZE_MESH_CM_DRIFT": True,
-        "REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED": True,
-        "REGULARIZE_MESH_FACE_ANGLE": True,
-
-        # Relaxing
-        "RELAXOBJECT": True,
-        "RELAXOBJECT_BINARY": True,
-        # "RELAXOBJECT_COOLING": True,
-
-        #
-        "GRAVITY_NOT_PERIODIC": True,
-
-        # I/O
-        "OUTPUT_PRESSURE": True,
-        "INPUT_IN_DOUBLEPRECISION": True,
-        "OUTPUT_IN_DOUBLEPRECISION": True
-    }
-    param_explicit_options = {
-        # Initial conditions
-        "InitCondFile": f"{Paths.INPUT}/0_35He_0_75COHe",
-        "MHDSeedDir": 0,
-        "MHDSeedValue": 0,
-
-        # Output file names and formats
-        "OutputDir": f"{Paths.OUTPUT}",
-        "EosTable": f"{Paths.INPUT}/helm_table.dat",
-        "EosSpecies": f"{Paths.INPUT}/species05.txt",
-        "OutputListOn": 0,
-
-        # Output frequency
-        "TimeBetSnapshot": 1.0,
-        "TimeBetStatistics": 0.1,
-        "TimeOfFirstSnapshot": 0.0,
-
-        # Simulated time span and spatial extent
-        "BoxSize": boxsize,
-        "PeriodicBoundariesOn": 0,
-        "TimeBegin": 0.0,
-        "TimeMax": 80.0,
-        "RelaxBaseFac": 1.0,
-        # "RelaxTemperature": 5e5,
-
-        # Cosmological parameters
-        "ComovingIntegrationOn": 0,
-
-        # Moving mesh
-        "MaxVolume": 1e10 ** 3,
-        "MaxVolumeDiff": 10.0,
-        "MinVolume": 0.0,
-        "CellMaxAngleFactor": 2.25,
-        # "CellShapingFactor": 1.0,
-
-        # Refinement and derefinement
-        "ReferenceGasPartMass": 2e27,
-        "TargetGasMassFactor": 1,
-        "RefinementCriterion": 1,
-        "DerefinementCriterion": 1,
-
-        "MinimumComovingHydroSoftening": 1e+06,
-        "AdaptiveHydroSofteningSpacing": 1.2,
+    # Convert to healpix-distributed 3D particles
+    boxsize = 1e10
+    centers = [boxsize / 2, boxsize / 2, boxsize / 2]
+    randomizeshells = False
+    randomizeradii = False
+    pmass = 1e-6 * msol
+    healpix_return = create_ics.convert_to_healpix(wd, boxsize,
+                                                   centers=centers,
+                                                   randomizeshells=randomizeshells,
+                                                   randomizeradii=randomizeradii,
+                                                   pmass=pmass)
+    print(healpix_return)
 
 
-        # Cooling and star formation
-        "CoolingOn": 0,
-    }
+def test_add_grid_particles():
+    # Generate 1d profile
+    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
+    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    eos = loadhelm_eos(helm_file, species_file, True)
+    rho_c = 5e6
+    xnuc = [1.0, 0.0, 0.0, 0.0, 0.0]
+    wd = ic.create_wd(eos, rho_c, temp_c=5e5, xnuc_py=xnuc, tolerance=1e-6)
 
-    simulation = ArepoSimulation(
-        project_name,
-        "/home/pierre/",
-        js_explicit_options,
-        config_explicit_options,
-        param_explicit_options,
-        version=version)
+    # Convert to healpix-distributed 3D particles
+    boxsize = 1e10
+    centers = [boxsize / 2, boxsize / 2, boxsize / 2]
+    randomizeshells = False
+    randomizeradii = False
+    pmass = 1e-6 * msol
+    wd = create_ics.convert_to_healpix(wd, boxsize,
+                                       centers=centers,
+                                       randomizeshells=randomizeshells,
+                                       randomizeradii=randomizeradii,
+                                       pmass=pmass)
 
-    simulation.copy_files_to_input([
-        "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt",
-        "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
-    ])
+    complete_dict = create_ics.add_grid_particles(wd, boxsize,
+                                                  boxres=32, grid_pres=2e6, grid_density=1e-4, grid_xnuc=xnuc)
 
-
-def test_species():
-    from species import ArepoSpeciesList
-    a = ArepoSpeciesList("./snapshots/species05.txt")
-    print(f"{a.num_species} found: {a.species_dict.keys()}")
-    print(f"{a.species_dict['He4'].atomic_number}")
+    # print('complete_dict')
 
 
-def ughhhh():
-    from wdec_results import WDECResults
-    wdec_dir = "/home/pierre/Desktop/wdec_035He"
-    wd_results = WDECResults(wdec_dir)
+def test_rho_c_from_mtot():
+    mtot = 0.35  # msol
+    temp_c = 5e5
+    xnuc = [1.0, 0.0, 0.0, 0.0, 0.0]
 
-    wd_results.plot_abundances()
+    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
+    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    eos = loadhelm_eos(helm_file, species_file, True)
+
+    rho_c = ic.rho_c_from_mtot(mtot, temp_c, eos, xnuc)
+    print(f"{rho_c=}")
+
+
+def test_mtot_from_rho_c():
+    rho_c = 1e4
+    temp_c = 5e5
+    xnuc = [1.0, 0.0, 0.0, 0.0, 0.0]
+
+    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
+    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    eos = loadhelm_eos(helm_file, species_file, True)
+
+    mtot = ic.mtot_from_rho_c(rho_c, temp_c, eos, xnuc)
+    print(f"{mtot}")
+
+
+def test_create_particles_fill_grid():
+    # Generate 1d profile
+    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
+    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    eos = loadhelm_eos(helm_file, species_file, True)
+    rho_c = 5e6
+    xnuc = [0.0, 0.5, 0.5, 0.0, 0.0]
+    wd = ic.create_wd(eos, rho_c, temp_c=5e5, xnuc_py=xnuc, tolerance=1e-6)
+
+    # Convert to healpix-distributed 3D particles
+    boxsize = 1e10
+    centers = [boxsize / 2, boxsize / 2, boxsize / 2]
+    randomizeshells = False
+    randomizeradii = False
+    pmass = 1e-6 * msol
+    healpix_return = create_ics.convert_to_healpix(wd, boxsize,
+                                                   centers=centers,
+                                                   randomizeshells=randomizeshells,
+                                                   randomizeradii=randomizeradii,
+                                                   pmass=pmass)
+
+    pos = healpix_return[n.COORDINATES]
+
+    ugh = create_ics.create_particles_fill_grid(pos.astype('float64'), boxsize, 32)
+    print(ugh)
+
+
+def test_all_libs_functions():
+    # PYHELM_EOS
+    test_helm_eos()
+
+    # IC
+    test_create_wd_wdec()
+    test_make_polytrope()
+    test_create_wd()
+    test_rho_c_from_mtot()
+    test_mtot_from_rho_c()
+
+    # CREATE_ICS
+    test_convert_to_healpix()
+    test_create_particles_fill_grid()
+    test_add_grid_particles()
+
+    # VISUALISE
+    test_make_radial()
+    test_make_pcolor()
+
+
+def main():
+    # test_all_libs_functions()
+    test_add_grid_particles()
 
 
 if __name__ == '__main__':
-    # test_make_radial()
-    # test_make_pcolor()
-    # test_make_polytrope()
-    # test_create_wd()
-    # test_create_wd_wdec()
-    # test_helm_eos()
-    # test_check_mass()
-    # ughhhh()
-    test_create_simulation()
-
+    main()

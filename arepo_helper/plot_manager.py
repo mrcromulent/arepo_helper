@@ -74,8 +74,9 @@ class PlotManager(object):
     def get_title(self, t, quantity):
 
         units = utilities.part_fields[quantity]["Units"]
-        time = round(self.ar.snapshots[t].get_from_h5(ArepoHeader.TIME), 2)
-        return f"{quantity} time evolution, t = {time} sec. [${units}$]"
+        # time = round(self.ar.snapshots[t].get_from_h5(ArepoHeader.TIME), 2)
+        return f"{quantity} time evolution, t = {t} sec. [${units}$]"
+        # return f"{quantity} time evolution, t = {time} sec. [${units}$]"
 
     def compute_labels(self, orientation):
         return f"{orientation[0]} [$cm$]", f"{orientation[1]} [$cm$]"

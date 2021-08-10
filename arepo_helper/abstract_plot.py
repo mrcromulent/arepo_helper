@@ -1,5 +1,5 @@
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from utilities import Coordinates as C
+from utilities import Coordinates as Coords
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -56,7 +56,7 @@ class AbstractPlot(object):
 
     def apply_location_cutoffs(self, coords, quant):
         po = self.po
-        xc, yc, zc = C.coordinates(self.po.orientation)
+        xc, yc, zc = Coords.coordinates(self.po.orientation)
 
         mask = np.multiply(coords[:, zc] > po.zlim[0], coords[:, zc] < po.zlim[1])
         trimmed_coords = coords[mask, :]

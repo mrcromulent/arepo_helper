@@ -219,7 +219,6 @@ class WDECResults(object):
         ax.axvline(x=self.gp['m_hyd'], label="M_h", linestyle='--', color='g', alpha=0.3)
         ax.legend()
         fig.show()
-        # fig.savefig("test_abundances.png", dpi=300)
 
     @staticmethod
     def convert_species_name(species):
@@ -290,6 +289,18 @@ class WDECResults(object):
             print(f"CHECK: w1 + w2 + w3 < 0.95: {w1 + w2 + w3 <= 0.95}")
             if not w1 + w2 + w3 <= 0.95:
                 raise ValueError
+
+    def write_temp_profile(self):
+        out_filename = "TemperatureProfil.txt"
+
+        with open(out_filename, 'w') as f:
+
+            n_part = len(self.data["r"])
+            f.write(str(n_part - 3) + "\n")
+            for i in range(n_part):
+                r = self.data["r"][i]
+                t = self.data["T"][i]
+                f.write(f"{r} {t} \n")
 
     def __str__(self):
 

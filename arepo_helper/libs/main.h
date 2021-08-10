@@ -12,5 +12,7 @@ void test_make_radial();
 void test_make_wd();
 void test_make_polytrope();
 void test_make_wdec_newest();
+void test_make_he_wd();
+void test_add_grid_particles();
 
 #endif //AREPO_HELPER_LIBS_MAIN_H

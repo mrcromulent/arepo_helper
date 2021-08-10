@@ -1,16 +1,16 @@
 #include <Python.h>
 #include <arrayobject.h>
+#include <string>
 #include <cmath>
+#include <random>
 
 #include "helm_eos.h"
 #include "sph.h"
 #include "ic.h"
 #include "main.h"
-#include "omp_util.h"
 #include "const.h"
 #include "utils.h"
-#include "make_pcolor.h"
-#include "make_radial.h"
+#include "visualise.h"
 #include "create_ics.h"
 #include "write_ics.h"
 
@@ -30,33 +30,86 @@ int main() {
     test_make_wd();
     test_make_polytrope();
     test_make_wdec_newest();
-
+    test_make_he_wd();
+    test_add_grid_particles();
 
     return 0;
 }
 
-void test_make_wdec_newest() {
+void test_add_grid_particles() {
     const char *wdec_dir = "/home/pierre/wdec/";
-    auto dict1 = create_wd_wdec_implementation(wdec_dir);
-//    auto rho = (PyArrayObject *) PyDict_GetItemString(dict1, "rho");
-//    auto r = (PyArrayObject *) PyDict_GetItemString(dict1, "r");
-//    print_pyobj(r);
-//    print_pyobj(rho);
-
-
+    int nspecies = 5;
     double boxsize = 1e10;
-    double centers[3] = {boxsize/2, boxsize/2, boxsize/2};
-    auto centers_py = (PyArrayObject *) createPyArray(centers, 3);
+    double pmass = 1e-6 * msol;
+    PyObject *centers = Py_BuildValue("[ddd]", boxsize/2, boxsize/2, boxsize/2);
 
-    auto dict2 = convert_to_healpix_implementation(dict1, 5, boxsize,
-                                                centers_py, 1, 0, 0, 1e-6 * msol);
 
-//    auto ndata_rho = (PyArrayObject *) PyDict_GetItemString(dict2, "ndata_rho");
-//    auto ndata_u = (PyArrayObject *) PyDict_GetItemString(dict2, "ndata_u");
-//    print_pyobj(ndata_rho);
-//    print_pyobj(ndata_u);
+    auto dict1 = create_wd_wdec_implementation(wdec_dir, nspecies, 1.4);
 
-    write_healpix_to_file(dict2, "bin.dat.ic.hdf5");
+    auto wd = convert_to_healpix_implementation(dict1, boxsize, centers, 0, 0, pmass);
+
+    PyObject *xnuc = Py_BuildValue("[ddddd]", 1.0, 0.0, 0.0, 0.0, 0.0);
+    auto ret_dict = add_grid_particles_implementation(wd, boxsize, 32, 2e6, 1e-4, xnuc);
+    print((PyObject *) ret_dict);
+
+}
+
+void test_make_he_wd() {
+    auto *eos = (t_helm_eos_table *) malloc(sizeof(t_helm_eos_table));
+    const char *datafile          = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat";
+    const char *speciesfile       = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt";
+    double pmass                  = 1e-6 * msol;
+    double mtot                   = 0.35; // msol
+    double boxsize                = 1e10;
+    const char* out_name          = "0_35He.hdf5";
+
+    eos_init(eos, datafile, speciesfile, 0, 1);
+
+    PyObject *centers = Py_BuildValue("[ddd]", boxsize/2, boxsize/2, boxsize/2);
+    PyObject *xnuc = Py_BuildValue("[ddddd]", 1.0, 0.0, 0.0, 0.0, 0.0);
+
+
+    double temp_c = 5e5;
+    double rho_c = rho_c_from_mtot_implementation(mtot, temp_c, eos, xnuc);
+
+    auto dict = create_wd_implementation(eos, rho_c, temp_c, xnuc, 1e-6);
+    eos_deinit(eos);
+
+    auto dict2 = convert_to_healpix_implementation(dict, boxsize, centers, 0, 0, pmass);
+    auto dict3 = add_grid_particles_implementation(dict2, boxsize, 32, 2e6, 1e-4, xnuc);
+
+    print(PyDict_GetItemString(dict3, f[N::DENSITY]));
+    print(PyDict_GetItemString(dict3, f[N::INTERNALENERGY]));
+
+    write_dict_to_hdf5(dict3, out_name, boxsize);
+}
+
+void test_make_wdec_newest() {
+    const char *wdec_dir = "/home/pierre/Desktop/WDEC/wdec0_75COHe/"; // TODO: Trailing slash is required!
+    const char *out_name = "wdec0_75COHe.hdf5";
+    double boxsize = 1e10;
+    double pmass = 1e-6 * msol;
+    int nspecies = 5;
+    PyObject *centers = Py_BuildValue("[ddd]", boxsize/2, boxsize/2, boxsize/2);
+    PyObject *xnuc = Py_BuildValue("[ddddd]", 1.0, 0.0, 0.0, 0.0, 0.0);
+
+
+    auto dict1 = create_wd_wdec_implementation(wdec_dir, nspecies, 1.4);
+
+    // Print results
+    print(PyDict_GetItemString(dict1, f[N::DENSITY]));
+    print(PyDict_GetItemString(dict1, f[N::NUCLEARCOMPOSITION]));
+    print(PyDict_GetItemString(dict1, f[N::RADIUS]));
+
+
+    auto dict2 = convert_to_healpix_implementation(dict1, boxsize, centers, 0, 0, pmass);
+    auto dict3 = add_grid_particles_implementation(dict2, boxsize, 32, 2e6, 1e-4, xnuc);
+
+    print(PyDict_GetItemString(dict3, f[N::DENSITY]));
+    print(PyDict_GetItemString(dict1, f[N::INTERNALENERGY]));
+
+
+    write_dict_to_hdf5(dict3, out_name, boxsize);
 
 }
 
@@ -68,18 +121,14 @@ void test_make_polytrope() {
 
     eos_init(eos, datafile, speciesfile, 0, 1);
 
-    double xnuc[eos->nspecies];
-    xnuc[0] = xnuc[3] = xnuc[4] = 0.0;
-    xnuc[1] = xnuc[2] = 0.5;
-    auto xnuc_py = (PyArrayObject *) createPyArray(xnuc, eos->nspecies);
 
-    auto dict = create_polytrope_implementation(eos, 3, 5e6, xnuc_py, 0.0, 5e5, 1e6);
+    PyObject *xnuc = Py_BuildValue("[ddddd]", 0.0, 0.5, 0.5, 0.0, 0.0);
+
+    auto dict = create_polytrope_implementation(eos, 3, 5e6, xnuc, 0.0, 5e5, 1e6);
     eos_deinit(eos);
 
-    auto rho = (PyArrayObject *) PyDict_GetItemString(dict, "rho");
-    auto r = (PyArrayObject *) PyDict_GetItemString(dict, "r");
-    print_pyobj(r);
-    print_pyobj(rho);
+    print(PyDict_GetItemString(dict, f[N::DENSITY]));
+    print(PyDict_GetItemString(dict, f[N::RADIUS]));
 }
 
 void test_make_wd() {
@@ -89,75 +138,45 @@ void test_make_wd() {
 
     eos_init(eos, datafile, speciesfile, 0, 1);
 
-    double xnuc[eos->nspecies];
-    xnuc[0] = xnuc[3] = xnuc[4] = 0.0;
-    xnuc[1] = xnuc[2] = 0.5;
-    auto xnuc_py = (PyArrayObject *) createPyArray(xnuc, eos->nspecies);
+    PyObject *xnuc = Py_BuildValue("[ddddd]", 0.0, 0.5, 0.5, 0.0, 0.0);
 
-    auto dict = create_wd_implementation(eos, 5e6, 5e5, xnuc_py, 1e-6);
+    auto dict = create_wd_implementation(eos, 5e6, 5e5, xnuc, 1e-6);
     eos_deinit(eos);
 
-    auto rho = (PyArrayObject *) PyDict_GetItemString(dict, "rho");
-    auto r = (PyArrayObject *) PyDict_GetItemString(dict, "r");
-    print_pyobj(r);
-    print_pyobj(rho);
 }
 
 void test_make_pcolor() {
 
     const char *wdec_dir = "/home/pierre/wdec/";
-    auto dict1 = create_wd_wdec_implementation(wdec_dir);
+    int nspecies = 5;
+    auto dict1 = create_wd_wdec_implementation(wdec_dir, nspecies, 1.4);
 
     double boxsize = 1e10;
-    double centers[3] = {boxsize/2, boxsize/2, boxsize/2};
-    auto centers_py = (PyArrayObject *) createPyArray(centers, 3);
-
-
-    auto wd = convert_to_healpix_implementation(dict1, 5, boxsize,
-                                                centers_py, 1, 0, 0, 1e-6 * msol);
-
-    auto value = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_rho");
-    auto pos = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_pos");
-
-    auto value_data = (double *) PyArray_DATA(value);
-    auto value_pos = (double *) PyArray_DATA(pos);
-    auto n_value = PyArray_DIMS(value)[0];
-
-    std::cout << n_value << std::endl;
-    for (int i = 0; i < n_value; i++) {
-        if (i % 10000 == 0) {
-            std::cout << " i = " << i << ". x = " << value_pos[i * 3 + 0] << ". q = " << value_data[i] << std::endl;
-        }
-    }
-
-    double bs[2]        = {boxsize, boxsize};
-    auto boxsizes       = (PyArrayObject *) createPyArray(bs, 2);
-    int rs[2]           = {1024, 1025};
-    auto resolutions    = (PyArrayObject *) createPyArray(rs, 2);
-    int ax[2]           = {0, 1};
-    auto axes           = (PyArrayObject *) createPyArray(ax, 2);
+    PyObject *centers = Py_BuildValue("[ddd]", boxsize/2, boxsize/2, boxsize/2);
 
 
 
+    auto grid_xnuc = Py_BuildValue("[ddddd]", 1.0, 0.0, 0.0, 0.0, 0.0);
+    auto wd = convert_to_healpix_implementation(dict1, boxsize, centers,0, 0, 1e-6 * msol);
+    auto wd2 = add_grid_particles_implementation(wd, boxsize, 32, 2e6, 1e-4, grid_xnuc);
 
+    auto value = (PyArrayObject *) PyDict_GetItemString(wd2, f[N::DENSITY]);
+    auto pos = (PyArrayObject *) PyDict_GetItemString(wd2, f[N::COORDINATES]);
+    print((PyObject *) value);
+    print((PyObject *) pos);
+
+
+    PyObject *boxsizes      = Py_BuildValue("[dd]", boxsize, boxsize);
+    PyObject *resolutions   = Py_BuildValue("[ii]", 1024, 1024);
+    PyObject *axes          = Py_BuildValue("[ii]", 0, 1);
     int include_neighbours_in_output = 1;
-    int numthreads = 1;
+    int numthreads          = 1;
 
-    auto dict = make_pcolor_implementation(pos, value, axes, boxsizes, resolutions, centers_py,
+    auto dict = make_pcolor_implementation(pos, value, axes, boxsizes, resolutions, centers,
                                            include_neighbours_in_output,
                                            numthreads);
 
-    auto grid = (PyArrayObject *) PyDict_GetItemString(dict, "grid");
-    auto grid_data = (double *) PyArray_DATA(grid);
-    auto n = PyArray_DIMS(grid)[0];
-
-    std::cout << n << std::endl;
-    for (int i = 0; i < n; i++) {
-        if (i % 10 == 0) {
-            std::cout << grid_data[i] << std::endl;
-        }
-    }
-    std::cout << std::endl;
+    print(PyDict_GetItemString(dict, "grid"));
 }
 
 void test_eos() {
@@ -173,10 +192,9 @@ void test_eos() {
     // -------------------------------------------------------------------------------------------------------------
 
     int nspecies = 5;
-    auto *xnuc = static_cast<double *>(malloc(nspecies * sizeof(double)));
-
-    { int i;
-        for (i=0; i<nspecies; i++) xnuc[i] = 0;
+    auto *xnuc = (double *) malloc(nspecies * sizeof(double));
+    for (int i = 0; i < nspecies; i++) {
+        xnuc[i] = 0;
     }
 
     xnuc[0] = 0.5;
@@ -185,13 +203,20 @@ void test_eos() {
     eos_result res{};
     eos_calc_pgiven(helm_eos_table, 1e6, xnuc, 1e22, &tempguess, &res);
 
+    for (int i = 0; i < nspecies; i++) {
+        xnuc[i] = 0;
+    }
+    xnuc[0] = 1.0;
+    double tempguess2 = 1500;
+    eos_result res2{};
+    eos_calc_egiven(helm_eos_table, 1e-7, xnuc, 1e13, &tempguess2, &res2);
+    std::cout << res.p.v << std::endl;
+
     eos_deinit(helm_eos_table);
-    // -------------------------------------------------------------------------------------------------------------
+
 }
 
 void test_tree() {
-    // CREATE A TREE
-    // -------------------------------------------------------------------------------------------------------------
     t_sph_tree tree;
 
     int npart = 2;
@@ -204,36 +229,38 @@ void test_tree() {
     pos[1 * 3 + 1] = 1;
     pos[1 * 3 + 2] = 1;
 
-    createTree( &tree, npart, pos );
+    createTree(&tree, npart, pos);
     // -------------------------------------------------------------------------------------------------------------
 }
 
 void test_tree_2() {
 
     const char *wdec_dir = "/home/pierre/wdec/";
-    auto dict1 = create_wd_wdec_implementation(wdec_dir);
-
+    int nspecies = 5;
     double boxsize = 1e10;
-    double centers[3] = {boxsize/2, boxsize/2, boxsize/2};
-    auto centers_py = (PyArrayObject *) createPyArray(centers, 3);
+    double gamma = 1.4;
+    double pmass = 1e-6 * msol;
+    PyObject *centers = Py_BuildValue("[ddd]", boxsize/2, boxsize/2, boxsize/2);
 
-    auto wd = convert_to_healpix_implementation(dict1, 5, boxsize,
-                                                centers_py, 1, 0, 0, 1e-6 * msol);
+    auto dict1 = create_wd_wdec_implementation(wdec_dir, nspecies, gamma);
 
-    auto density_1 = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_rho");
-    auto pos_1 = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_pos");
-    auto mass_1 = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_mass");
+    auto wd = convert_to_healpix_implementation(dict1, boxsize,
+                                                centers, 0, 0, pmass);
+
+    auto density_1 = (PyArrayObject *) PyDict_GetItemString(wd, f[N::DENSITY]);
+    auto pos_1 = (PyArrayObject *) PyDict_GetItemString(wd, f[N::COORDINATES]);
+    auto mass_1 = (PyArrayObject *) PyDict_GetItemString(wd, f[N::MASSES]);
     int npart = PyArray_DIMS(density_1)[0];
     auto pos = (double *) PyArray_DATA(pos_1);
     auto density = (double *) PyArray_DATA(density_1);
     auto mass = (double *) PyArray_DATA(mass_1);
 
     t_sph_tree tree;
-    createTree( &tree, npart, pos );
+    createTree(&tree, npart, pos);
 
     // Coordinate
     auto *coord = (double *) malloc(3 * sizeof(double));
-    coord[0] = 1e10/2; coord[1] = 1e10/2; coord[2] = 1e10/2;
+    coord[0] = boxsize/2; coord[1] = boxsize/2; coord[2] = boxsize/2;
 
     // Domain length
     auto domainLen = getDomainLen(npart, pos);
@@ -243,10 +270,9 @@ void test_tree_2() {
     auto particles = getParticles(&tree, node);
 
     double hsml=0;
-    double weighted_neighbours, weighted_neighbours_2;
     double *dhsmldensity;
-    weighted_neighbours = calcHsml(&tree, coord, pos, mass, 4, &hsml, density);
-    weighted_neighbours_2 = calcDensity(&tree, coord, hsml, pos, mass, density,
+    auto weighted_neighbours = calcHsml(&tree, coord, pos, mass, 4, &hsml, density);
+    auto weighted_neighbours_2 = calcDensity(&tree, coord, hsml, pos, mass, density,
                                         reinterpret_cast<double *>(&dhsmldensity));
 
     //
@@ -266,34 +292,25 @@ void test_tree_2() {
 
 void test_make_radial() {
 
-    const char *wdec_dir = "/home/pierre/wdec/";
-    auto dict1 = create_wd_wdec_implementation(wdec_dir);
+    const char *wdec_dir    = "/home/pierre/wdec/";
+    int nspecies            = 5;
+    double pmass            = 1e-6 * msol;
+    auto dict1 = create_wd_wdec_implementation(wdec_dir, nspecies, 1.4);
 
     double boxsize      = 1e10;
-    double centers[3]   = {boxsize/2, boxsize/2, boxsize/2};
-    double b_val[3]     = {boxsize, boxsize/2, boxsize/2};
-    auto centers_py     = (PyArrayObject *) createPyArray(centers, 3);
-    auto b              = (PyArrayObject *) createPyArray(b_val, 3);
-    auto a              = centers_py;
+    PyObject *centers   = Py_BuildValue("[ddd]", boxsize/2, boxsize/2, boxsize/2);
+    PyObject *b         = Py_BuildValue("[ddd]", boxsize, boxsize/2, boxsize/2);
+    auto a              = centers;
     double cylinder_rad = 0.01 * boxsize;
+    int nshells         = 200;
 
-    auto wd = convert_to_healpix_implementation(dict1, 5, boxsize,
-                                                centers_py, 1, 0, 0, 1e-6 * msol);
+    auto wd = convert_to_healpix_implementation(dict1, boxsize, centers, 0, 0, pmass);
 
-    auto pos = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_pos");
-    auto value = (PyArrayObject *) PyDict_GetItemString(wd, "ndata_rho");
-    int nshells = 200;
+    auto pos = (PyArrayObject *) PyDict_GetItemString(wd, f[N::COORDINATES]);
+    auto value = (PyArrayObject *) PyDict_GetItemString(wd, f[N::DENSITY]);
 
-    auto returned_thing = make_radial_implementation(pos, value, a, b, cylinder_rad, nshells);
 
-    auto value_data = (double *) PyArray_DATA(returned_thing);
-    for (int i = 0; i < nshells; i++) {
-        std::cout << value_data[i] << " ";
-    }
-    std::cout << std::endl;
-    for (int i = 0; i < nshells; i++) {
-        std::cout << value_data[nshells + i] << " ";
-    }
-    std::cout << std::endl;
+    auto radial = make_radial_implementation(pos, value, a, b, cylinder_rad, nshells);
+    print((PyObject *) radial);
 
 }

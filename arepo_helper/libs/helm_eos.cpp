@@ -13,13 +13,13 @@
 
 // psi0 and its derivatives
 static inline double psi0(double z) {
-    return z*z*z * ( z * (-6.0 * z + 15.0) - 10.0) + 1.0;
+    return z*z*z * (z * (-6.0 * z + 15.0) - 10.0) + 1.0;
 }
 static inline double dpsi0(double z) {
-    return z*z * ( z * (-30.0 * z + 60.0) - 30.0);
+    return z*z * (z * (-30.0 * z + 60.0) - 30.0);
 }
 static inline double ddpsi0(double z) {
-    return z * ( z * (-120.0 * z + 180.0) - 60.0);
+    return z * (z * (-120.0 * z + 180.0) - 60.0);
 }
 
 // psi1 and its derivatives
@@ -38,7 +38,7 @@ static inline double psi2(double z) {
     return 0.5 * z*z * (z * (z * (-z + 3.0) - 3.0) + 1.0);
 }
 static inline double dpsi2(double z) {
-    return 0.5 * z * ( z * (z * (-5.0 * z + 12.0) - 9.0) + 2.0);
+    return 0.5 * z * (z * (z * (-5.0 * z + 12.0) - 9.0) + 2.0);
 }
 static inline double ddpsi2(double z) {
     return 0.5 * (z * (z * (-20.0 * z + 36.0) - 18.0) + 2.0);
@@ -125,7 +125,7 @@ static int helm_eos_rad(double rho, double temp, double abar, double zbar, doubl
     // srad
     srad[0] = (prad[0] * rhoi + erad[0]) * tempi;
     // dsrad dd
-    srad[1] = ( (prad[1] - prad[0] * rhoi) * rhoi + erad[1]) * tempi;
+    srad[1] = ((prad[1] - prad[0] * rhoi) * rhoi + erad[1]) * tempi;
     // dsrad dt
     srad[2] = (prad[2] * rhoi + erad[2] - srad[0]) * tempi;
     // dsrad da
@@ -599,7 +599,7 @@ static int helm_eos_coul(double rho, double temp, double abar, double zbar, doub
 
         pcoul[0] = -pion * z;
         ecoul[0] = 3.0 * pcoul[0] / rho;
-        scoul[0] = - GSL_CONST_NUM_AVOGADRO * GSL_CONST_CGS_BOLTZMANN / abar * ( c2 * x - a2 * (b2 - 1.0) / b2 * y );
+        scoul[0] = - GSL_CONST_NUM_AVOGADRO * GSL_CONST_CGS_BOLTZMANN / abar * (c2 * x - a2 * (b2 - 1.0) / b2 * y);
 
         s = 1.5 * c2 * x / plasg - a2 * b2 / 3.0 * y / plasg;
         pcoul[1] = - dpiondd * z - pion * s * plasgdd;
@@ -1039,9 +1039,9 @@ int eos_calc_egiven_y(t_helm_eos_table* helm_eos_table, double rho, const double
     { int i;
         for (i=0; i<nspecies; i++) xnuc[i] = y[i] * na[i];
     }
-    result = eos_calc_egiven( helm_eos_table, rho, xnuc, e, tempguess, res );
+    result = eos_calc_egiven(helm_eos_table, rho, xnuc, e, tempguess, res);
 
-    free( xnuc );
+    free(xnuc);
     return result;
 }
 
@@ -1099,9 +1099,6 @@ int eos_calc_ptgiven(t_helm_eos_table* helm_eos_table, double p, const double xn
             fprintf(stderr, "Newton-Raphson in function `%s' did not converge (temp=%g, rho=%g, p=%g, p0=%g).\n", __func__, temp, _rho, res->p.v, p);
         return -1;
     }
-#ifndef NDEBUG
-    printf("needed %d iterations\n", iter);
-#endif
 
     if (eos_calc_tgiven(helm_eos_table, _rho, xnuc, temp, res) != 0) return -1;
 

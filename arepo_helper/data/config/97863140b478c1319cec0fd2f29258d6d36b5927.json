@@ -1141,12 +1141,26 @@
 					"requirements": []
                 },
                 {
-                    "name": "OUTPUTPOTENTIAL",
+                    "name": "EVALPOTENTIAL",
                     "value": false,
                     "docs": "",
                     "required": false,
 					"ignored_if": [],
 					"requirements": []
+                },
+                {
+                    "name": "OUTPUTPOTENTIAL",
+                    "value": false,
+                    "docs": "",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "EVALPOTENTIAL",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
                 },
                 {
                     "name": "OUTPUTACCELERATION",
@@ -1376,7 +1390,38 @@
                     "docs": "used for WD+HeShell relaxation",
                     "required": false,
 					"ignored_if": [],
-					"requirements": []
+					"requirements": [
+                        {
+                            "name": "TempCore",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "TempShell",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "ShellBaseRadius",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "TempMin",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "RTempMin",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "BackgroundTemp",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
                 },
                 {
                     "name": "RELAXOBJECT_BINARY",

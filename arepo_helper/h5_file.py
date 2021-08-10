@@ -2,7 +2,11 @@
 Tried to use hdfdict but it flat out didn't work. Did not dump files correctly nor did it preserve attributes of groups
 """
 
+from utilities import Coordinates as C, suppress_stdout_stderr, part_fields
+from arepo_vis import make_pcolor, make_radial
 from names import ArepoHeader, n, path
+import matplotlib.pyplot as plt
+from matplotlib import colors
 import numpy as np
 import h5py
 import os
@@ -81,6 +85,9 @@ class ArepoH5File(object):
     def coords(self, ptype=0):
         return self.get_from_h5(n.COORDINATES, ptype)
 
+    def passive(self, ptype=0):
+        return self.get_from_h5(n.PASSIVESCALARS, ptype)
+
     def vel(self, ptype=0):
         return self.get_from_h5(n.VELOCITIES, ptype)
 
@@ -125,3 +132,195 @@ class ArepoH5File(object):
             if save_to_mem:
                 self.data[field] = val
             return val
+
+    def quick_pcolor(self, quantity_name, export_filename=None, inner_boxsize=None, select_column=None):
+
+        res = 1024
+        orien = ["x", "y"]
+
+        coords = self.get_from_h5(n.COORDINATES)
+
+        if select_column:
+            quant = self.get_from_h5(quantity_name)[:, select_column]
+        else:
+            quant = self.get_from_h5(quantity_name)
+
+        boxsize = self.get_from_h5(n.BOXSIZE)
+        t = self.get_from_h5(n.TIME)
+
+        if inner_boxsize is None:
+            boxsize_x = boxsize
+            boxsize_y = boxsize
+            boxsizes = [boxsize_x, boxsize_y]
+        else:
+            boxsize_x = inner_boxsize
+            boxsize_y = inner_boxsize
+            boxsizes = [boxsize_x, boxsize_y]
+
+        resolutions = [res, res]
+        xc, yc, _ = C.coordinates(orien)
+        axes = [xc, yc]
+        centers = [np.average([0, boxsize]), np.average([0, boxsize]), np.average([0, boxsize])]
+
+        with suppress_stdout_stderr():
+            data = make_pcolor(coords.astype('float64'), quant.astype('float64'),
+                               axes,
+                               boxsizes,
+                               resolutions,
+                               centers,
+                               include_neighbours_in_output=1,
+                               numthreads=1)
+
+        x = np.arange(res + 1, dtype="float64") / res * boxsize_x - 0.5 * boxsize_x + centers[0]
+        y = np.arange(res + 1, dtype="float64") / res * boxsize_y - 0.5 * boxsize_y + centers[1]
+
+        fig, ax = plt.subplots()
+        pcolor = ax.pcolormesh(x, y, np.transpose(data["grid"]),
+                               shading='flat', norm=colors.LogNorm(vmin=1e1, vmax=max(quant)),
+                               rasterized=True, cmap="inferno")
+        fig.colorbar(pcolor)
+        units = part_fields[quantity_name]["Units"]
+        ax.set(xlabel="x [cm]", ylabel="y [cm]", title=f"{quantity_name} [${units}$] (t={round(t, 2)})")
+
+        if export_filename is not None:
+            dir_name = os.path.dirname(self.filename)
+            fn = os.path.join(dir_name, export_filename)
+            fig.savefig(fn, dpi=300)
+        else:
+            plt.show()
+
+    def quick_pcolor_xnuc(self, quantity_name, export_filename=None, inner_boxsize=None, select_column=None):
+
+        res = 1024
+        orien = ["x", "y"]
+
+        coords = self.get_from_h5(n.COORDINATES)
+
+        if select_column is not None:
+            quant = self.get_from_h5(quantity_name)[:, select_column]
+        else:
+            quant = self.get_from_h5(quantity_name)
+
+        boxsize = self.get_from_h5(n.BOXSIZE)
+
+        if inner_boxsize is None:
+            boxsize_x = boxsize
+            boxsize_y = boxsize
+            boxsizes = [boxsize_x, boxsize_y]
+        else:
+            boxsize_x = inner_boxsize
+            boxsize_y = inner_boxsize
+            boxsizes = [boxsize_x, boxsize_y]
+
+        resolutions = [res, res]
+        xc, yc, _ = C.coordinates(orien)
+        axes = [xc, yc]
+        centers = [np.average([0, boxsize]), np.average([0, boxsize]), np.average([0, boxsize])]
+
+        with suppress_stdout_stderr():
+            data = make_pcolor(coords.astype('float64'), quant.astype('float64'),
+                               axes,
+                               boxsizes,
+                               resolutions,
+                               centers,
+                               include_neighbours_in_output=1,
+                               numthreads=1)
+
+        x = np.arange(res + 1, dtype="float64") / res * boxsize_x - 0.5 * boxsize_x + centers[0]
+        y = np.arange(res + 1, dtype="float64") / res * boxsize_y - 0.5 * boxsize_y + centers[1]
+
+        fig, ax = plt.subplots()
+        pcolor = ax.pcolormesh(x, y, np.transpose(data["grid"]), vmin=0, vmax=1,
+                               shading='flat', rasterized=True, cmap="hot")
+        fig.colorbar(pcolor)
+        ax.set(xlabel="x [cm]", ylabel="y [cm]", title=f"{quantity_name} (Carbon)")
+
+        if export_filename is not None:
+            dir_name = os.path.dirname(self.filename)
+            fn = os.path.join(dir_name, export_filename)
+            fig.savefig(fn, dpi=300)
+        else:
+            plt.show()
+
+    def quick_radial(self, quantity_name, export_filename=None):
+        coords = self.get_from_h5(n.COORDINATES)
+        quant = self.get_from_h5(quantity_name)
+        boxsize = self.get_from_h5(n.BOXSIZE)
+
+        y_av = 0.5 * boxsize
+        z_av = 0.5 * boxsize
+        x_left = 0.5 * boxsize
+        x_right = boxsize
+        a = [x_left, y_av, z_av]
+        b = [x_right, y_av, z_av]
+        cyl_rad = 0.01 * boxsize
+        nshells = 200
+        with suppress_stdout_stderr():
+            radial = make_radial(coords.astype('float64'),
+                                 quant.astype('float64'),
+                                 a, b,
+                                 cyl_rad,
+                                 nshells)
+
+        fig, ax = plt.subplots()
+        line = ax.plot(radial[1, :], radial[0, :])
+        plt.ylabel(f"{quantity_name}")
+        plt.show()
+
+        if export_filename is not None:
+            dir_name = os.path.dirname(self.filename)
+            fn = os.path.join(dir_name, export_filename)
+            fig.savefig(fn, dpi=300)
+
+    def quick_nuclear_compositions(self, export_filename=None):
+
+        radials     = []
+        xnuc_names  = ["Helium", "Carbon", "Oxygen", "Neon", "Magnesium"]
+        colours     = ["b", "k", "r", "g", "grey"]
+        coords      = self.get_from_h5(n.COORDINATES)
+        quant       = self.get_from_h5(n.NUCLEARCOMPOSITION)
+        boxsize     = self.get_from_h5(n.BOXSIZE)
+        inner_boxsize = boxsize
+        nspecies    = np.shape(quant)[1]
+
+        for x in range(nspecies):
+
+            this_species = quant[:, x]
+
+            y_av = 0.5 * boxsize
+            z_av = 0.5 * boxsize
+            boxsize_x = boxsize
+            x_left = 0.5 * boxsize - 0.5 * inner_boxsize
+            x_right = 0.5 * boxsize + 0.5 * inner_boxsize
+            a = [x_left, y_av, z_av]
+            b = [x_right, y_av, z_av]
+            cyl_rad = 0.01 * boxsize
+            nshells = 200
+            radial = make_radial(coords.astype('float64'),
+                                 this_species.astype('float64'),
+                                 a, b,
+                                 cyl_rad,
+                                 nshells)
+
+            radials.append(radial)
+
+        # Make plot
+        fig, ax = plt.subplots()
+        lines = []
+
+        for i, radial in enumerate(radials):
+            line = ax.plot(radial[1, :], radial[0, :], colours[i], label=f"{xnuc_names[i]}")
+            lines.append(line)
+
+        the_sum = radials[0][0, :] + radials[1][0, :] + radials[2][0, :]
+        ax.plot(radials[0][1, :], the_sum, 'yellow', label=f"sum")
+        plt.ylim((0, 1.1))
+        plt.xlabel("Radial distance [cm]")
+        plt.ylabel(f"Nuclear Composition")
+        plt.legend()
+        plt.show()
+
+        if export_filename is not None:
+            dir_name = os.path.dirname(self.filename)
+            fn = os.path.join(dir_name, export_filename)
+            fig.savefig(fn, dpi=300)

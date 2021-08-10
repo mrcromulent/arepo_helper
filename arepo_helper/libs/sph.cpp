@@ -7,7 +7,15 @@
 #include "sph.h"
 #include "mersenne.h"
 
-void _sphgetkernel( double h, double r, double *wk, double *dwk ) {
+// In SPH, the fluid is divided into a set of discrete elements called particles.
+// These particles interact through a kernel function with characteristic radius known as the "smoothing length", \
+// typically represented in equations by h. This means that the physical quantity of any particle can
+// be obtained by summing the relevant properties of all the particles that lie within the range of the kernel, the
+// latter being used as a weighting function, W.
+// Here we use the spherically symmetric spline kernel as described in the GADGET II paper:
+// "The cosmological simulation code GADGET-2", pp. 1107
+// https://wwwmpa.mpa-garching.mpg.de/gadget/gadget2-paper.pdf
+void _sphgetkernel(double h, double r, double *wk, double *dwk) {
     double coeff1, coeff2, coeff3, coeff4, coeff5, coeff6;
     double hinv, hinv3, hinv4, u, oneminusu;
     coeff1 = 8.0 / M_PI;
@@ -20,10 +28,12 @@ void _sphgetkernel( double h, double r, double *wk, double *dwk ) {
     hinv = 1.0 / h;
     hinv3 = hinv*hinv*hinv;
     hinv4 = hinv3*hinv;
+
+    // u = r/h
     u = r*hinv;
     if (u < 0.5) {
-        *wk = hinv3 * ( coeff1 + coeff2*(u-1.0)*u*u );
-        *dwk = hinv4 * u * ( coeff3 * u - coeff4 );
+        *wk = hinv3 * (coeff1 + coeff2*(u-1.0)*u*u);
+        *dwk = hinv4 * u * (coeff3 * u - coeff4);
     } else {
         oneminusu = 1.0 - u;
         *wk = hinv3 * coeff5 * oneminusu * oneminusu * oneminusu;
@@ -31,7 +41,7 @@ void _sphgetkernel( double h, double r, double *wk, double *dwk ) {
     }
 }
 
-int createTree( t_sph_tree *tree, int npart, double *pos ) {
+int createTree(t_sph_tree *tree, int npart, double *pos) {
     int maxnodes, result;
     double domainLen;
     time_t start;
@@ -39,49 +49,49 @@ int createTree( t_sph_tree *tree, int npart, double *pos ) {
     start = clock();
 
     maxnodes = (int)(1.1 * npart);
-    printf( "Creating tree for %d particles with %d nodes.\n", npart, maxnodes );
+    printf("Creating tree for %d particles with %d nodes.\n", npart, maxnodes);
 
-    initTree( tree, npart, maxnodes );
-    domainLen = getDomainLen( npart, pos );
+    initTree(tree, npart, maxnodes);
+    domainLen = getDomainLen(npart, pos);
 
-    result = makeTree( tree, pos, domainLen );
-    while ( result != 0 ) {
+    result = makeTree(tree, pos, domainLen);
+    while (result != 0) {
         switch (result) {
             case 1:
                 /* failed => increase maxnodes */
                 maxnodes = (int)(1.1 * maxnodes);
-                printf( "Repeating tree construction with %d nodes\n", maxnodes );
+                printf("Repeating tree construction with %d nodes\n", maxnodes);
                 break;
         }
 
         /* reinit tree */
-        freeTree( tree );
-        initTree( tree, npart, maxnodes );
+        freeTree(tree);
+        initTree(tree, npart, maxnodes);
 
-        result = makeTree( tree, pos, domainLen );
+        result = makeTree(tree, pos, domainLen);
     }
 
-    organizeTree( tree );
+    organizeTree(tree);
 
-    getParticles( tree, tree->topnode );
+    getParticles(tree, tree->topnode);
 
-    printf( "Tree creation took %gs\n", ((double)clock()-(double)start)/CLOCKS_PER_SEC );
+    printf("Tree creation took %gs\n", ((double)clock()-(double)start)/CLOCKS_PER_SEC);
 
     return 0;
 }
 
-void initTree( t_sph_tree *tree, int npart, int maxnodes ) {
+void initTree(t_sph_tree *tree, int npart, int maxnodes) {
     tree->npart = npart;
     tree->maxnodes = maxnodes;
     tree->nnodes = 0;
-    tree->nodes = (t_sph_treenode*)malloc( maxnodes * sizeof(t_sph_treenode) );
+    tree->nodes = (t_sph_treenode *) malloc(maxnodes * sizeof(t_sph_treenode));
 }
 
-void freeTree( t_sph_tree *tree ) {
-    free( tree->nodes );
+void freeTree(t_sph_tree *tree) {
+    free(tree->nodes);
 }
 
-double getDomainLen( int npart, double *pos ) {
+double getDomainLen(int npart, double *pos) {
     double len, *positer, *posend;
 
     len = 0;
@@ -90,12 +100,12 @@ double getDomainLen( int npart, double *pos ) {
         if (fabs(*positer) > len) len = fabs(*positer);
     }
 
-    printf( "Domainlen: %g\n", len*2.1 );
+    printf("Domainlen: %g\n", len*2.1);
 
     return len*2.1;
 }
 
-int makeTree( t_sph_tree *tree, double *pos, double domainLen ) {
+int makeTree(t_sph_tree *tree, double *pos, double domainLen) {
     int nodecount, subnode;
     int i, j, p;
     t_sph_treenode *node, *parent;
@@ -187,7 +197,7 @@ int makeTree( t_sph_tree *tree, double *pos, double domainLen ) {
     return 0;
 }
 
-int organizeTree( t_sph_tree *tree ) {
+int organizeTree(t_sph_tree *tree) {
     t_sph_treenode *node, *father;
     int i, j, k;
 
@@ -258,7 +268,7 @@ int organizeTree( t_sph_tree *tree ) {
     return 0;
 }
 
-int getParticles( t_sph_tree *tree, int node ) {
+int getParticles(t_sph_tree *tree, int node) {
     t_sph_treenode *pnode;
     int j;
 
@@ -273,14 +283,14 @@ int getParticles( t_sph_tree *tree, int node ) {
 
     for (j=0; j<8; j++) {
         if (pnode->sons[j] > -1) {
-            pnode->npart += getParticles( tree, pnode->sons[j] );
+            pnode->npart += getParticles(tree, pnode->sons[j]);
         }
     }
 
     return pnode->npart;
 }
 
-int getNearestNode( t_sph_tree *tree, double *coord ) {
+int getNearestNode(t_sph_tree *tree, double *coord) {
     int node, subnode;
     t_sph_treenode *pnode;
 
@@ -304,7 +314,7 @@ int getNearestNode( t_sph_tree *tree, double *coord ) {
     return node;
 }
 
-int getNearestNeighbour( t_sph_tree *tree, double *pos, double *coord, int *neighbour, int *worklist ) {
+int getNearestNeighbour(t_sph_tree *tree, double *pos, double *coord, int *neighbour, int *worklist) {
     int workcount, nearestNeighbour;
     double distance, distance_sqr, distance_sqr_new;
     int son, node;
@@ -314,11 +324,11 @@ int getNearestNeighbour( t_sph_tree *tree, double *pos, double *coord, int *neig
         distance_sqr = (pos[nearestNeighbour*3  ] - coord[0]) * (pos[nearestNeighbour*3  ] - coord[0]) +
                        (pos[nearestNeighbour*3+1] - coord[1]) * (pos[nearestNeighbour*3+1] - coord[1]) +
                        (pos[nearestNeighbour*3+2] - coord[2]) * (pos[nearestNeighbour*3+2] - coord[2]);
-        distance = sqrt( distance_sqr );
+        distance = sqrt(distance_sqr);
     } else {
         nearestNeighbour = -1;
 
-        node = getNearestNode( tree, coord );
+        node = getNearestNode(tree, coord);
         if (node >= tree->npart) {
             t_sph_treenode *pnode = &tree->nodes[node];
             distance = 2. * pnode->len;
@@ -328,7 +338,7 @@ int getNearestNeighbour( t_sph_tree *tree, double *pos, double *coord, int *neig
             distance_sqr = (pos[nearestNeighbour*3  ] - coord[0]) * (pos[nearestNeighbour*3  ] - coord[0]) +
                            (pos[nearestNeighbour*3+1] - coord[1]) * (pos[nearestNeighbour*3+1] - coord[1]) +
                            (pos[nearestNeighbour*3+2] - coord[2]) * (pos[nearestNeighbour*3+2] - coord[2]);
-            distance = sqrt( distance_sqr );
+            distance = sqrt(distance_sqr);
         }
     }
 
@@ -340,7 +350,7 @@ int getNearestNeighbour( t_sph_tree *tree, double *pos, double *coord, int *neig
     worklist[0] = tree->topnode;
     workcount = 1;
 
-    while( workcount > 0 ) {
+    while(workcount > 0) {
         node = worklist[ workcount-1 ];
         workcount--;
 
@@ -352,16 +362,16 @@ int getNearestNeighbour( t_sph_tree *tree, double *pos, double *coord, int *neig
             if (distance_sqr_new < distance_sqr) {
                 nearestNeighbour = node;
                 distance_sqr = distance_sqr_new;
-                distance = sqrt( distance_sqr );
+                distance = sqrt(distance_sqr);
             }
         } else {
             /* check whether any particle of this node could be closer to the target than
                our current nearest neighbour. if yes, add all subnodes to worklist */
             t_sph_treenode *pnode = &tree->nodes[node];
-            if ( sqrt( (pnode->center[0] - coord[0]) * (pnode->center[0] - coord[0]) +
+            if (sqrt((pnode->center[0] - coord[0]) * (pnode->center[0] - coord[0]) +
                        (pnode->center[1] - coord[1]) * (pnode->center[1] - coord[1]) +
-                       (pnode->center[2] - coord[2]) * (pnode->center[2] - coord[2]) )
-                 - 0.5 * pnode->len * sqrt( 3. ) < distance) {
+                       (pnode->center[2] - coord[2]) * (pnode->center[2] - coord[2]))
+                 - 0.5 * pnode->len * sqrt(3.) < distance) {
                 for (son=0; son<8; son++) {
                     if (pnode->sons[son] > -1) {
                         worklist[ workcount ] = pnode->sons[son];
@@ -375,11 +385,11 @@ int getNearestNeighbour( t_sph_tree *tree, double *pos, double *coord, int *neig
     if (neighbour) *neighbour = nearestNeighbour;
 
     if(worklist_alloc)
-        free( worklist );
+        free(worklist);
     return nearestNeighbour;
 }
 
-double calcDensity( t_sph_tree *tree, double *coord, double hsml, double *pos, double *mass, double *density, double *dhsmldensity ) {
+double calcDensity(t_sph_tree *tree, double *coord, double hsml, double *pos, double *mass, double *density, double *dhsmldensity) {
     /* Input: coord => coordinates of the point where the density should be evaluated
      *        hsml => smoothing length of the particle at coord
      * 		  pos, mass => positions and masses of the particles
@@ -417,8 +427,8 @@ double calcDensity( t_sph_tree *tree, double *coord, double hsml, double *pos, d
             ppos++;
             r2 += (*pcoord-*ppos)*(*pcoord-*ppos);
             if (r2 < hsml2) {
-                r = sqrt( r2 );
-                _sphgetkernel( hsml, r, &wk, &dwk );
+                r = sqrt(r2);
+                _sphgetkernel(hsml, r, &wk, &dwk);
                 *density += wk * mass[node];
                 dhsml -= mass[node] * hinv * (3. * wk + r * dwk);
 
@@ -434,9 +444,9 @@ double calcDensity( t_sph_tree *tree, double *coord, double hsml, double *pos, d
             pnode = &nodes[node];
             dist = hsml + 0.5 * pnode->len;
 
-            if ( (fabs( coord[0] - pnode->center[0] ) < dist) &&
-                 (fabs( coord[1] - pnode->center[1] ) < dist) &&
-                 (fabs( coord[2] - pnode->center[2] ) < dist) ) {
+            if ((fabs(coord[0] - pnode->center[0]) < dist) &&
+                 (fabs(coord[1] - pnode->center[1]) < dist) &&
+                 (fabs(coord[2] - pnode->center[2]) < dist)) {
                 node = (nodes[ node ]).firstborn;
             } else {
                 node = (nodes[ node ]).sibling;
@@ -445,7 +455,7 @@ double calcDensity( t_sph_tree *tree, double *coord, double hsml, double *pos, d
     }
 
     if (dhsmldensity) {
-        dhsml *= hsml / ( 3. * (*density) );
+        dhsml *= hsml / (3. * (*density));
         if (dhsml > -0.9) {
             *dhsmldensity = 1. / (1. + dhsml);
         } else {
@@ -456,7 +466,7 @@ double calcDensity( t_sph_tree *tree, double *coord, double hsml, double *pos, d
     return weighted_neighbours;
 }
 
-double calcHsml( t_sph_tree *tree, double *coord, double *pos, double *mass, int nneighbours, double *hsml, double *density ) {
+double calcHsml(t_sph_tree *tree, double *coord, double *pos, double *mass, int nneighbours, double *hsml, double *density) {
     /* Input:  coord => coordinates of the point where the density should be evaluated
      * 		   pos, mass => positions and masses of the particles
      *         nneighbours => the desired (weighted!!!) number of neighbours (not equal to actual numbers of neighbours within sphere of radius hsml)
@@ -474,7 +484,7 @@ double calcHsml( t_sph_tree *tree, double *coord, double *pos, double *mass, int
 
     if (*hsml == 0) {
         /* get initial guess */
-        node = getNearestNode( tree, coord );
+        node = getNearestNode(tree, coord);
         pnode = &nodes[node];
 
         while (pnode->npart < 10*nneighbours && pnode->father != -1) {
@@ -482,14 +492,14 @@ double calcHsml( t_sph_tree *tree, double *coord, double *pos, double *mass, int
             pnode = &nodes[node];
         }
 
-        *hsml = pow( 3.0 / (4 * M_PI) * nneighbours / pnode->npart, 1.0 / 3 ) * pnode->len;
+        *hsml = pow(3.0 / (4 * M_PI) * nneighbours / pnode->npart, 1.0 / 3) * pnode->len;
     }
 
     left = right = 0;
     iter = 0;
 
     while (true) {
-        weighted_neighbours = calcDensity( tree, coord, *hsml, pos, mass, density, &dhsmldensity );
+        weighted_neighbours = calcDensity(tree, coord, *hsml, pos, mass, density, &dhsmldensity);
 
         if (weighted_neighbours < nneighbours-NEIGHBOURTOLERANCE ||
             weighted_neighbours > nneighbours+NEIGHBOURTOLERANCE) {
@@ -500,7 +510,7 @@ double calcHsml( t_sph_tree *tree, double *coord, double *pos, double *mass, int
                 break;
 
             if (weighted_neighbours < nneighbours-NEIGHBOURTOLERANCE) {
-                left = std::max( *hsml, left );
+                left = std::max(*hsml, left);
             } else {
                 if (right != 0) {
                     if (*hsml < right)
@@ -511,10 +521,10 @@ double calcHsml( t_sph_tree *tree, double *coord, double *pos, double *mass, int
             }
 
             if (right > 0 && left > 0) {
-                *hsml = pow( 0.5 * (left*left*left + right*right*right), 1./3. );
+                *hsml = pow(0.5 * (left*left*left + right*right*right), 1./3.);
             } else {
                 if (right == 0 && left == 0) {
-                    printf( "Something very bad just happened...\n" );
+                    printf("Something very bad just happened...\n");
                     return -1;
                 }
 
@@ -551,7 +561,7 @@ double calcHsml( t_sph_tree *tree, double *coord, double *pos, double *mass, int
 
         iter++;
         if (iter > MAXITER) {
-            printf( "Neighbour iteration did not converge.\n" );
+            printf("Neighbour iteration did not converge.\n");
             break;
         }
     }
@@ -559,7 +569,7 @@ double calcHsml( t_sph_tree *tree, double *coord, double *pos, double *mass, int
     return weighted_neighbours;
 }
 
-double getNNeighbours( t_sph_tree *tree, double *coord, double *pos, int nneighbours, int *nneighbours_real, int **neighbours, int *converged ) {
+double getNNeighbours(t_sph_tree *tree, double *coord, double *pos, int nneighbours, int *nneighbours_real, int **neighbours, int *converged) {
     /* Input: coord => coordinates of the point where the density should be evaluated
      *        nneighbours => number of neighbours required
      * 		  pos => positions of the particles
@@ -570,7 +580,7 @@ double getNNeighbours( t_sph_tree *tree, double *coord, double *pos, int nneighb
     int node, neighbourcount, iter;
     t_sph_treenode *pnode;
 
-    node = getNearestNode( tree, coord );
+    node = getNearestNode(tree, coord);
 
     while (tree->nodes[ node ].npart < nneighbours) {
         node = tree->nodes[ node ].father;
@@ -581,21 +591,21 @@ double getNNeighbours( t_sph_tree *tree, double *coord, double *pos, int nneighb
     maxradius = pnode->len;
     minradius = pnode->len / 2.;
 
-    while ( (neighbourcount = getNeighbours( tree, coord, pos, maxradius, neighbours )) < nneighbours ) {
+    while ((neighbourcount = getNeighbours(tree, coord, pos, maxradius, neighbours)) < nneighbours) {
         minradius = maxradius;
         maxradius *= 2.;
     }
 
-    while ( (neighbourcount = getNeighbours( tree, coord, pos, minradius, neighbours )) > nneighbours ) {
+    while ((neighbourcount = getNeighbours(tree, coord, pos, minradius, neighbours)) > nneighbours) {
         maxradius = minradius;
         minradius /= 2.;
     }
 
     neighbourcount = -1;
     iter = 0;
-    while ( neighbourcount != nneighbours && iter < 50) {
+    while (neighbourcount != nneighbours && iter < 50) {
         radius = 0.5 * (minradius + maxradius);
-        neighbourcount = getNeighbours( tree, coord, pos, radius, neighbours );
+        neighbourcount = getNeighbours(tree, coord, pos, radius, neighbours);
 
         if (neighbourcount > nneighbours) {
             maxradius = radius;
@@ -619,12 +629,12 @@ double getNNeighbours( t_sph_tree *tree, double *coord, double *pos, int nneighb
     }
 
     radius = 0.5 * (minradius + maxradius);
-    neighbourcount = getNeighbours( tree, coord, pos, radius, neighbours );
+    neighbourcount = getNeighbours(tree, coord, pos, radius, neighbours);
     if (nneighbours_real) *nneighbours_real = neighbourcount;
     return radius;
 }
 
-int getNeighbours( t_sph_tree *tree, double *coord, double *pos, double hsml, int **neighbours ) {
+int getNeighbours(t_sph_tree *tree, double *coord, double *pos, double hsml, int **neighbours) {
     /* Input: coord => coordinates of the point where the density should be evaluated
      *        hsml => smoothing length of the particle at coord
      * 		  pos => positions of the particles
@@ -642,7 +652,7 @@ int getNeighbours( t_sph_tree *tree, double *coord, double *pos, double hsml, in
 
     nneighbours = 0;
     if(!(*neighbours)) {
-        *neighbours = (int*)malloc( tree->usednodes * sizeof(int) );
+        *neighbours = (int*)malloc(tree->usednodes * sizeof(int));
     }
 
     while (node != -1) {
@@ -672,9 +682,9 @@ int getNeighbours( t_sph_tree *tree, double *coord, double *pos, double hsml, in
             pnode = &nodes[node];
             dist = hsml + 0.5 * pnode->len;
 
-            if ( (fabs( coord[0] - pnode->center[0] ) < dist) &&
-                 (fabs( coord[1] - pnode->center[1] ) < dist) &&
-                 (fabs( coord[2] - pnode->center[2] ) < dist) ) {
+            if ((fabs(coord[0] - pnode->center[0]) < dist) &&
+                 (fabs(coord[1] - pnode->center[1]) < dist) &&
+                 (fabs(coord[2] - pnode->center[2]) < dist)) {
                 node = (nodes[ node ]).firstborn;
             } else {
                 node = (nodes[ node ]).sibling;
@@ -684,28 +694,28 @@ int getNeighbours( t_sph_tree *tree, double *coord, double *pos, double hsml, in
     return nneighbours;
 }
 
-int relaxData( int npart, double *pos, double *mass, double *hsml, int nneighbours, int ncells, double dr, double *rho, int nsteps ) {
+int relaxData(int npart, double *pos, double *mass, double *hsml, int nneighbours, int ncells, double dr, double *rho, int nsteps) {
     t_sph_tree tree;
     double r2, density;
     double err_min, err_max, err_avg, error;
     double coord[3], *errors;
     int i, j, idx, iter;
 
-    errors = (double*)malloc( npart * sizeof( double ) );
+    errors = (double*)malloc(npart * sizeof(double));
 
-    createTree( &tree, npart, pos );
+    createTree(&tree, npart, pos);
 
     err_min = 1e30;
     err_max = 0;
     err_avg = 0;
     for (i=0; i<npart; i++) {
         for (j=0, r2=0; j<3; j++) r2 += pos[i*3+j] * pos[i*3+j];
-        idx = sqrt( r2 ) / dr;
+        idx = sqrt(r2) / dr;
         if (idx > ncells)
             idx = ncells-1;
 
-        calcHsml( &tree, &pos[i*3], pos, mass, nneighbours, &hsml[i], &density );
-        error = fabs( rho[idx] - density ) / rho[idx];
+        calcHsml(&tree, &pos[i*3], pos, mass, nneighbours, &hsml[i], &density);
+        error = fabs(rho[idx] - density) / rho[idx];
         errors[i] = error;
 
         if (error < err_min) err_min = error;
@@ -713,15 +723,15 @@ int relaxData( int npart, double *pos, double *mass, double *hsml, int nneighbou
         err_avg += error;
     }
 
-    printf( "Min Error: %g\n", err_min );
-    printf( "Max Error: %g\n", err_max );
-    printf( "Avg Error: %g\n", err_avg / (double)npart );
+    printf("Min Error: %g\n", err_min);
+    printf("Max Error: %g\n", err_max);
+    printf("Avg Error: %g\n", err_avg / (double)npart);
 
     iter = 0;
     while (iter < nsteps) {
         if (iter > 0) {
-            freeTree( &tree );
-            createTree( &tree, npart, pos );
+            freeTree(&tree);
+            createTree(&tree, npart, pos);
         }
 
         err_min = 1e30;
@@ -734,24 +744,24 @@ int relaxData( int npart, double *pos, double *mass, double *hsml, int nneighbou
                 r2 += coord[j] * coord[j];
             }
 
-            calcHsml( &tree, coord, pos, mass, nneighbours, &hsml[i], &density );
+            calcHsml(&tree, coord, pos, mass, nneighbours, &hsml[i], &density);
 
-            idx = sqrt( r2 ) / dr;
+            idx = sqrt(r2) / dr;
             if (idx > ncells)
                 idx = ncells-1;
-            error = fabs( rho[idx] - density ) / rho[idx];
+            error = fabs(rho[idx] - density) / rho[idx];
 
-            if ((error < errors[i]) || (exp(-(error-errors[i])*1e6) > randMT()) ) {
+            if ((error < errors[i]) || (exp(-(error-errors[i])*1e6) > randMT())) {
                 for (j=0; j<3; j++)
                     pos[i*3+j] = coord[j];
             } else {
                 for (j=0, r2=0; j<3; j++)
                     r2 += pos[i*3+j] * pos[i*3+j];
 
-                idx = sqrt( r2 ) / dr;
+                idx = sqrt(r2) / dr;
                 if (idx > ncells)
                     idx = ncells-1;
-                error = fabs( rho[idx] - density ) / rho[idx];
+                error = fabs(rho[idx] - density) / rho[idx];
             }
 
             errors[i] = error;
@@ -762,13 +772,13 @@ int relaxData( int npart, double *pos, double *mass, double *hsml, int nneighbou
         }
 
         iter++;
-        printf( "Step %d, Min Error: %g\n", iter, err_min );
-        printf( "Step %d, Max Error: %g\n", iter, err_max );
-        printf( "Step %d, Avg Error: %g\n", iter, err_avg / (double)npart );
+        printf("Step %d, Min Error: %g\n", iter, err_min);
+        printf("Step %d, Max Error: %g\n", iter, err_max);
+        printf("Step %d, Avg Error: %g\n", iter, err_avg / (double)npart);
     }
 
-    freeTree( &tree );
-    free( errors );
+    freeTree(&tree);
+    free(errors);
 
     return 0;
 }

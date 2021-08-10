@@ -97,7 +97,7 @@ namespace
                    bool make_monotonic = false,
                    bd_type left  = second_deriv, double left_value  = 0.0,
                    bd_type right = second_deriv, double right_value = 0.0
-            ):
+           ):
                     m_type(type),
                     m_left(left), m_right(right),
                     m_left_value(left_value), m_right_value(right_value),
@@ -221,9 +221,9 @@ namespace
             for(size_t i=0; i<n-1; i++) {
                 const double h  = m_x[i+1]-m_x[i];
                 // from continuity and differentiability condition
-                m_c[i] = ( 3.0*(m_y[i+1]-m_y[i])/h - (2.0*m_b[i]+m_b[i+1]) ) / h;
+                m_c[i] = (3.0*(m_y[i+1]-m_y[i])/h - (2.0*m_b[i]+m_b[i+1])) / h;
                 // from differentiability condition
-                m_d[i] = ( (m_b[i+1]-m_b[i])/(3.0*h) - 2.0/3.0*m_c[i] ) / h;
+                m_d[i] = ((m_b[i+1]-m_b[i])/(3.0*h) - 2.0/3.0*m_c[i]) / h;
             }
 
             // for left extrapolation coefficients
@@ -384,8 +384,8 @@ namespace
             for(int i=0; i<n; i++) {
                 int im1 = std::max(i-1, 0);
                 int ip1 = std::min(i+1, n-1);
-                if( ((m_y[im1]<=m_y[i]) && (m_y[i]<=m_y[ip1]) && m_b[i]<0.0) ||
-                    ((m_y[im1]>=m_y[i]) && (m_y[i]>=m_y[ip1]) && m_b[i]>0.0) ) {
+                if(((m_y[im1]<=m_y[i]) && (m_y[i]<=m_y[ip1]) && m_b[i]<0.0) ||
+                    ((m_y[im1]>=m_y[i]) && (m_y[i]>=m_y[ip1]) && m_b[i]>0.0)) {
                     modified=true;
                     m_b[i]=0.0;
                 }
@@ -396,12 +396,12 @@ namespace
             for(int i=0; i<n-1; i++) {
                 double h = m_x[i+1]-m_x[i];
                 double avg = (m_y[i+1]-m_y[i])/h;
-                if( avg==0.0 && (m_b[i]!=0.0 || m_b[i+1]!=0.0) ) {
+                if(avg==0.0 && (m_b[i]!=0.0 || m_b[i+1]!=0.0)) {
                     modified=true;
                     m_b[i]=0.0;
                     m_b[i+1]=0.0;
-                } else if( (m_b[i]>=0.0 && m_b[i+1]>=0.0 && avg>0.0) ||
-                           (m_b[i]<=0.0 && m_b[i+1]<=0.0 && avg<0.0) ) {
+                } else if((m_b[i]>=0.0 && m_b[i+1]>=0.0 && avg>0.0) ||
+                           (m_b[i]<=0.0 && m_b[i+1]<=0.0 && avg<0.0)) {
                     // input data is monotonic
                     double r = sqrt(m_b[i]*m_b[i]+m_b[i+1]*m_b[i+1])/std::fabs(avg);
                     if(r>3.0) {
@@ -427,7 +427,7 @@ namespace
         {
             std::vector<double>::const_iterator it;
             it=std::upper_bound(m_x.begin(),m_x.end(),x);       // *it > x
-            size_t idx = std::max( int(it-m_x.begin())-1, 0);   // m_x[idx] <= x
+            size_t idx = std::max(int(it-m_x.begin())-1, 0);   // m_x[idx] <= x
             return idx;
         }
 
@@ -564,8 +564,8 @@ namespace
             double & band_matrix::operator () (int i, int j)
             {
                 int k=j-i;       // what band is the entry
-                assert( (i>=0) && (i<dim()) && (j>=0) && (j<dim()) );
-                assert( (-num_lower()<=k) && (k<=num_upper()) );
+                assert((i>=0) && (i<dim()) && (j>=0) && (j<dim()));
+                assert((-num_lower()<=k) && (k<=num_upper()));
                 // k=0 -> diagonal, k<0 lower left part, k>0 upper right part
                 if(k>=0)    return m_upper[k][i];
                 else        return m_lower[-k][i];
@@ -573,8 +573,8 @@ namespace
             double band_matrix::operator () (int i, int j) const
             {
                 int k=j-i;       // what band is the entry
-                assert( (i>=0) && (i<dim()) && (j>=0) && (j<dim()) );
-                assert( (-num_lower()<=k) && (k<=num_upper()) );
+                assert((i>=0) && (i<dim()) && (j>=0) && (j<dim()));
+                assert((-num_lower()<=k) && (k<=num_upper()));
                 // k=0 -> diagonal, k<0 lower left part, k>0 upper right part
                 if(k>=0)    return m_upper[k][i];
                 else        return m_lower[-k][i];
@@ -582,12 +582,12 @@ namespace
 // second diag (used in LU decomposition), saved in m_lower
             double band_matrix::saved_diag(int i) const
             {
-                assert( (i>=0) && (i<dim()) );
+                assert((i>=0) && (i<dim()));
                 return m_lower[0][i];
             }
             double & band_matrix::saved_diag(int i)
             {
-                assert( (i>=0) && (i<dim()) );
+                assert((i>=0) && (i<dim()));
                 return m_lower[0][i];
             }
 
@@ -629,7 +629,7 @@ namespace
 // solves Ly=b
             std::vector<double> band_matrix::l_solve(const std::vector<double>& b) const
             {
-                assert( this->dim()==(int)b.size() );
+                assert(this->dim()==(int)b.size());
                 std::vector<double> x(this->dim());
                 int j_start;
                 double sum;
@@ -644,7 +644,7 @@ namespace
 // solves Rx=y
             std::vector<double> band_matrix::r_solve(const std::vector<double>& b) const
             {
-                assert( this->dim()==(int)b.size() );
+                assert(this->dim()==(int)b.size());
                 std::vector<double> x(this->dim());
                 int j_stop;
                 double sum;
@@ -652,7 +652,7 @@ namespace
                     sum=0;
                     j_stop=std::min(this->dim()-1,i+this->num_upper());
                     for(int j=i+1; j<=j_stop; j++) sum += this->operator()(i,j)*x[j];
-                    x[i]=( b[i] - sum ) / this->operator()(i,i);
+                    x[i]=(b[i] - sum) / this->operator()(i,i);
                 }
                 return x;
             }
@@ -660,7 +660,7 @@ namespace
             std::vector<double> band_matrix::lu_solve(const std::vector<double>& b,
                                                       bool is_lu_decomposed)
             {
-                assert( this->dim()==(int)b.size() );
+                assert(this->dim()==(int)b.size());
                 std::vector<double>  x,y;
                 if(is_lu_decomposed==false) {
                     this->lu_decompose();

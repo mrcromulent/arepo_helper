@@ -1,7 +1,7 @@
 from utilities import suppress_stdout_stderr
 from abstract_plot import AbstractPlot
 from utilities import Coordinates as C
-import arepo_pcolor
+from arepo_vis import make_pcolor
 from names import n
 import numpy as np
 
@@ -21,22 +21,22 @@ class PColorPlot(AbstractPlot):
         boxsize_y = self.po.ylim[1] - self.po.ylim[0]
         numthreads = self.po.numthreads
 
-        resolutions = np.array([res, res])
-        boxsizes = np.array([boxsize_x, boxsize_y])
-        centers = np.array([np.average(self.po.xlim),
-                            np.average(self.po.ylim),
-                            np.average(self.po.zlim)])
+        resolutions = [res, res]
+        boxsizes = [boxsize_x, boxsize_y]
+        centers = [np.average(self.po.xlim),
+                   np.average(self.po.ylim),
+                   np.average(self.po.zlim)]
         xc, yc, _ = C.coordinates(self.po.orientation)
-        axes = np.array([xc, yc])
+        axes = [xc, yc]
 
         with suppress_stdout_stderr():
-            data = arepo_pcolor.make_pcolor(coords.astype('float64'), quant.astype('float64'),
-                                            axes,
-                                            boxsizes,
-                                            resolutions,
-                                            centers,
-                                            include_neighbours_in_output=1,
-                                            numthreads=numthreads)
+            data = make_pcolor(coords.astype('float64'), quant.astype('float64'),
+                               axes,
+                               boxsizes,
+                               resolutions,
+                               centers,
+                               include_neighbours_in_output=1,
+                               numthreads=numthreads)
 
         x = np.arange(res + 1, dtype="float64") / res * boxsize_x - 0.5 * boxsize_x + centers[0]
         y = np.arange(res + 1, dtype="float64") / res * boxsize_y - 0.5 * boxsize_y + centers[1]

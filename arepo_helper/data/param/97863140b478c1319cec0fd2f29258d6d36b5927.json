@@ -291,7 +291,7 @@
                 {
                     "name": "RelaxBaseFac",
                     "value": null,
-                    "docs": "???",
+                    "docs": "Partially controls the damping strength",
                     "required": false,
 					"ignored_if": [],
 					"requirements": [
@@ -305,12 +305,102 @@
                 {
                     "name": "RelaxTemperature",
                     "value": null,
-                    "docs": "???",
+                    "docs": "Target temperature for energy injections in cooling regime",
+                    "required": false,
+					"ignored_if": [
+                        {
+                            "name": "RELAXOBJECT_COOLING2",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ],
+					"requirements": [
+                        {
+                            "name": "RELAXOBJECT_COOLING",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "TempCore",
+                    "value": null,
+                    "docs": "",
                     "required": false,
 					"ignored_if": [],
 					"requirements": [
                         {
-                            "name": "RELAXOBJECT_COOLING",
+                            "name": "RELAXOBJECT_COOLING2",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "TempShell",
+                    "value": null,
+                    "docs": "",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RELAXOBJECT_COOLING2",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "ShellBaseRadius",
+                    "value": null,
+                    "docs": "",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RELAXOBJECT_COOLING2",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "TempMin",
+                    "value": null,
+                    "docs": "",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RELAXOBJECT_COOLING2",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "RTempMin",
+                    "value": null,
+                    "docs": "",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RELAXOBJECT_COOLING2",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "BackgroundTemp",
+                    "value": null,
+                    "docs": "",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RELAXOBJECT_COOLING2",
                             "operator": "EQ",
                             "value": true
                         }
@@ -813,7 +903,13 @@
                     "value": 0,
                     "docs": null,
                     "required": true,
-					"ignored_if": [],
+					"ignored_if": [
+                        {
+                            "name": "ComovingIntegrationOn",
+                            "operator": "EQ",
+                            "value": 0
+                        }
+                    ],
 					"requirements": []
                 },
                 {

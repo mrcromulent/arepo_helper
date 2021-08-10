@@ -723,6 +723,14 @@
 					"requirements": []
                 },
                 {
+                    "name": "EVALPOTENTIAL",
+                    "value": false,
+                    "docs": "",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
                     "name": "OUTPUTPOTENTIAL",
                     "value": false,
                     "docs": "",

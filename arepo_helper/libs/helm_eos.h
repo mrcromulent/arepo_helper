@@ -1,7 +1,6 @@
 #ifndef HELM_EOS_H
 #define HELM_EOS_H
 
-#define NDEBUG
 #define HELM_EOS_MAXITER 100
 #define HELM_EOS_EPS 1.0e-10
 
@@ -115,16 +114,16 @@ struct helm_eos_cache {
 };
 
 
-int eos_init( t_helm_eos_table* helm_eos_table, const char* datafile, const char* speciesfile, int useCoulombCorrections, int verbose );
-void eos_deinit( t_helm_eos_table* helm_eos_table );
+int eos_init(t_helm_eos_table* helm_eos_table, const char* datafile, const char* speciesfile, int useCoulombCorrections, int verbose);
+void eos_deinit(t_helm_eos_table* helm_eos_table);
 
-int eos_calc_tgiven( t_helm_eos_table* helm_eos_table, double rho, const double xnuc[], double temp, struct eos_result *res );
-int eos_calc_tgiven_onlye( t_helm_eos_table* helm_eos_table, double rho, const double xnuc[], double temp, struct eos_result *res );
-int eos_calc_tgiven_azbar( t_helm_eos_table* helm_eos_table, double rho, const struct helm_eos_cache *cache, double temp, struct eos_result *res, int only_e );
-int eos_calc_egiven( t_helm_eos_table* helm_eos_table, double rho, const double xnuc[], double e, double *tempguess, struct eos_result *res );
+int eos_calc_tgiven(t_helm_eos_table* helm_eos_table, double rho, const double xnuc[], double temp, struct eos_result *res);
+int eos_calc_tgiven_onlye(t_helm_eos_table* helm_eos_table, double rho, const double xnuc[], double temp, struct eos_result *res);
+int eos_calc_tgiven_azbar(t_helm_eos_table* helm_eos_table, double rho, const struct helm_eos_cache *cache, double temp, struct eos_result *res, int only_e);
+int eos_calc_egiven(t_helm_eos_table* helm_eos_table, double rho, const double xnuc[], double e, double *tempguess, struct eos_result *res);
 int eos_calc_pgiven(t_helm_eos_table* helm_eos_table, double rho, const double xnuc[], double p, double *tempguess, struct eos_result *res);
-int eos_calc_egiven_y( t_helm_eos_table* helm_eos_table, double rho, const double y[], double e, double *tempguess, struct eos_result *res );
-int eos_calc_ptgiven( t_helm_eos_table* helm_eos_table, double p, const double xnuc[], double temp, double *rho, struct eos_result *res );
-int helm_eos_update_cache(double rho, double abar, double zbar, struct helm_eos_cache *cache );
+int eos_calc_egiven_y(t_helm_eos_table* helm_eos_table, double rho, const double y[], double e, double *tempguess, struct eos_result *res);
+int eos_calc_ptgiven(t_helm_eos_table* helm_eos_table, double p, const double xnuc[], double temp, double *rho, struct eos_result *res);
+int helm_eos_update_cache(double rho, double abar, double zbar, struct helm_eos_cache *cache);
 
 #endif /* HELM_EOS_H */

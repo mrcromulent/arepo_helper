@@ -1,10 +1,18 @@
 #ifndef AREPO_HELPER_LIBS_UTILS_H
 #define AREPO_HELPER_LIBS_UTILS_H
 
+#include <vector>
+#include <string>
+#include <iostream>
+#include <algorithm>
 #include <string>
 #include <iostream>
 #include <vector>
 #include <hdf5.h>
+
+inline double mr_diff(double q1, double q2) {
+    return 1.989 * (pow(10.0, 33.0 - q1) - pow(10.0, 33.0 - q2));
+}
 
 inline std::vector<double> convert_to_std_vector(PyArrayObject *obj) {
     int npoints     = PyArray_DIMS(obj)[0];
@@ -20,6 +28,30 @@ inline std::vector<double> convert_to_std_vector(PyArrayObject *obj) {
     return vec;
 }
 
+inline bool contains(std::vector<const char*>& v, const char *key) {
+
+    for (const char *stri : v) {
+        if(strcmp(stri, key) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+inline double* resize(double *data, int old_size, int new_size, double fill_val = 0.0) {
+
+    auto new_data = (double *) malloc(new_size * sizeof(double));
+    memcpy(new_data, data, old_size * sizeof(double));
+//    free(data);
+
+    double *start   = &new_data[old_size];
+    double *end     = &new_data[new_size];
+    std::fill(start, end, fill_val);
+
+    return new_data;
+
+}
+
 inline long PyDict_SetStolenItem(PyObject *dict, const char *key, PyObject *object) {
 
     // Guards against segfaults
@@ -33,7 +65,12 @@ inline long PyDict_SetStolenItem(PyObject *dict, const char *key, PyObject *obje
     return success;
 }
 
-inline PyArrayObject *createPyArray(double *data, int dim1, int dim2) {
+inline void print(PyObject * to_print) {
+    PyObject_Print(to_print, stdout, 1);
+    std::cout << std::endl;
+}
+
+inline PyArrayObject *create_numpy_array(double *data, int dim1, int dim2) {
     PyArrayObject *pyData;
 
     if(PyArray_API == nullptr)
@@ -57,7 +94,8 @@ inline PyArrayObject *createPyArray(double *data, int dim1, int dim2) {
 
     return pyData;
 }
-inline PyArrayObject *createPyArray( double *data, int length ) {
+
+inline PyArrayObject *create_numpy_array(double *data, int length) {
     PyArrayObject* pyData;
 
     if(PyArray_API == nullptr) {
@@ -68,12 +106,12 @@ inline PyArrayObject *createPyArray( double *data, int length ) {
     npy_intp dims[1];
     dims[0] = length;
 
-    pyData = (PyArrayObject *)PyArray_SimpleNew( 1, dims, NPY_DOUBLE );
-    memcpy( PyArray_DATA(pyData), data, length*sizeof(double) );
+    pyData = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+    memcpy(PyArray_DATA(pyData), data, length*sizeof(double));
 
     return pyData;
 }
-inline PyArrayObject *createPyArray(int *data, int length ) {
+inline PyArrayObject *create_numpy_array(int *data, int length) {
     PyArrayObject* pyData;
 
     if(PyArray_API == nullptr) {
@@ -84,43 +122,10 @@ inline PyArrayObject *createPyArray(int *data, int length ) {
     npy_intp dims[1];
     dims[0] = length;
 
-    pyData = (PyArrayObject *)PyArray_SimpleNew( 1, dims, NPY_INT);
-    memcpy( PyArray_DATA(pyData), data, length*sizeof(int) );
+    pyData = (PyArrayObject *) PyArray_SimpleNew(1, dims, NPY_INT);
+    memcpy(PyArray_DATA(pyData), data, length*sizeof(int));
 
     return pyData;
-}
-inline double* resize( double *data, int oldsize, int newsize ) {
-    double *newdata;
-    int copylength;
-
-    newdata = (double*)malloc( newsize * sizeof(double) );
-
-    copylength = std::min( oldsize, newsize );
-
-    memcpy( newdata, data, copylength * sizeof(double) );
-    if (newsize > oldsize) {
-        memset( &newdata[oldsize], 0, (newsize-copylength)*sizeof(double) );
-    }
-
-    free(data);
-    return newdata;
-}
-
-inline void print_vector(const std::vector<double> &vec) {
-    for (double d : vec)
-        std::cout << d << " ";
-    std::cout << std::endl;
-}
-
-inline void print_pyobj(PyArrayObject *pyobj) {
-
-    int n_value = PyArray_DIMS(pyobj)[0];
-    auto value_obj = (double *) PyArray_DATA(pyobj);
-
-    std::cout << n_value << std::endl;
-    for (int i = 0; i < n_value; i++) {
-        std::cout << " i = " << i << ". val = " << value_obj[i] << std::endl;
-    }
 }
 
 inline double *convert_to_double_star(std::vector<double> vector, int n) {
@@ -287,9 +292,11 @@ struct HDFDataField {
     }
 };
 
-inline void
-write_the_hdf5_stuff(hid_t hdf5_file, hid_t hdf5_group, int num_particles, const std::vector<const char *> &field_names,
-                     const std::vector<int> &num_columns_v, const std::vector<double *> &all_data) {
+inline void write_the_hdf5_stuff(hid_t hdf5_file, hid_t hdf5_group,
+                                 int num_particles,
+                                 const std::vector<const char *> &field_names,
+                                 const std::vector<int> &num_columns_v,
+                                 const std::vector<double *> &all_data) {
 
     for(int i = 0; i < num_columns_v.size(); i++) {
         HDFDataField thing;
@@ -301,6 +308,18 @@ write_the_hdf5_stuff(hid_t hdf5_file, hid_t hdf5_group, int num_particles, const
         thing.data           = all_data[i];
         thing.write();
     }
+
+    auto *particleIDs = static_cast<uint *>(malloc(num_particles * sizeof(uint)));
+    for (int l = 0; l < num_particles; l++) {particleIDs[l] = l+1;}
+
+    hsize_t dims[1]; dims[0] = num_particles;
+    auto curr_name = "/PartType0/ParticleIDs";
+    auto hdf_datatype = H5Tcopy(H5T_NATIVE_UINT);
+    auto dataspace_id = H5Screate_simple(1, dims, nullptr);
+    auto dataset_id = H5Dcreate1(hdf5_group, curr_name, hdf_datatype, dataspace_id, H5P_DEFAULT);
+    write_float_buffer(hdf5_file, num_particles, particleIDs, curr_name, hdf_datatype);
+    H5Dclose(dataset_id);
+    H5Sclose(dataspace_id);
 
 }
 

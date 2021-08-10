@@ -1,7 +1,7 @@
 from utilities import suppress_stdout_stderr, part_fields
 from abstract_plot import AbstractPlot
 from names import n
-import arepo_radial
+from arepo_vis import make_radial
 import numpy as np
 
 
@@ -46,24 +46,15 @@ class RadialPlot(AbstractPlot):
                          self.po.ylim[1] - self.po.ylim[0],
                          self.po.zlim[1] - self.po.zlim[0]])
 
-        a = np.array([center_x, center_y, center_z])
-        b = np.array([self.po.xlim[1], center_y, center_z])
+        a = [center_x, center_y, center_z]
+        b = [self.po.xlim[1], center_y, center_z]
         radius = 0.01 * min_bs
 
-        # with suppress_stdout_stderr():
-        #     p = calcGrid.calcRadialProfile(
-        #         coords.astype('float64'),
-        #         quant.astype('float64'),
-        #         2,
-        #         self.po.nshells,
-        #         self.po.dr,
-        #         *center)
-
         with suppress_stdout_stderr():
-            p = arepo_radial.make_radial(coords.astype('float64'), quant.astype('float64'),
-                                         a, b,
-                                         radius,
-                                         self.po.nshells)
+            p = make_radial(coords.astype('float64'), quant.astype('float64'),
+                            a, b,
+                            radius,
+                            self.po.nshells)
 
         return p
 

@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from mendeleev import element
+from const import NA, KB
 import os
 
 
@@ -43,3 +44,32 @@ class ArepoSpeciesList(object):
 
         self.species_dict   = data
         self.num_species    = len(data.keys())
+
+    def azbar(self, xnuc):
+        abar = 0.0
+        zbar = 0.0
+        xsum = 0.0
+
+        for i, spec in enumerate(self.species_dict):
+            curr_a = self.species_dict[spec].mass_number
+            curr_z = self.species_dict[spec].atomic_number
+
+            ymass = xnuc[i] * curr_a
+            abar += ymass
+            zbar += curr_z * ymass
+            xsum += xnuc[i]
+
+        abar = xsum / abar
+        zbar = zbar / xsum * abar
+
+        return abar, zbar
+
+    def estimate_temp(self, rho, e, xnuc):
+
+        abar, zbar = self.azbar(xnuc)
+        ni = 1 / abar * rho * NA
+        ne = zbar * ni
+
+        temp = 2.0 / (3.0 * (ni + ne)) * 1 / KB * e * rho
+
+        return temp

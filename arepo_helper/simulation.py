@@ -1,4 +1,8 @@
 from sim_config import Param, Config, J, Paths
+from ics import ArepoICs
+from names import n
+import numpy as np
+from pyhelm_eos import loadhelm_eos
 from utilities import arepo_git_versions
 import os
 
@@ -93,10 +97,6 @@ class ArepoSimulation(object):
         self.check_for_incompatibilities(self.param)
         self.check_for_incompatibilities(self.config)
 
-        # This option causes numerical errors when running with AREPO
-        if self.version in ["ivo_2016", "dissipative"]:
-            assert not self.config.get("MESHRELAX_DENSITY_IN_INPUT")["value"]
-
         refinement = self.config.get("REFINEMENT_SPLIT_CELLS")["value"] or \
                      self.config.get("REFINEMENT_MERGE_CELLS")["value"]
         ev = self.param.data["default_value"]
@@ -114,6 +114,10 @@ class ArepoSimulation(object):
 
         if not self.config.get("REGULARIZE_MESH_FACE_ANGLE")["value"]:
             assert self.param.get("CellShapingFactor")["value"] is not ev
+
+        # Relax Runtime requires a long time scale
+        if self.config.get("RELAX_RUNTIME")["value"]:
+            assert self.param.get("TimeMax")["value"] >= 40.0
 
     def copy_files_to_input(self, file_list):
         if file_list is not None:
@@ -197,3 +201,58 @@ class ArepoSimulation(object):
 
             with open(self.paths.makefile, "w") as f:
                 f.write(data)
+
+    def validate_input_file(self, input_file_path, helm_file, species_file):
+
+        ic_h5 = ArepoICs(input_file_path)
+
+        boxsize     = self.param.get("Boxsize")["value"]
+        n_particles = ic_h5.num_particles()
+
+        #
+        coords      = ic_h5.get_from_h5(n.COORDINATES)
+        density     = ic_h5.get_from_h5(n.DENSITY)
+        masses      = ic_h5.get_from_h5(n.MASSES)
+        xnuc        = ic_h5.get_from_h5(n.NUCLEARCOMPOSITION)
+        intern_ener = ic_h5.get_from_h5(n.INTERNALENERGY)
+
+        #
+        eos = loadhelm_eos(helm_file, species_file, True)
+
+        # This option implies that density figures are stored in the masses field
+        if self.config.get("MESHRELAX_DENSITY_IN_INPUT")["value"]:
+            assert np.all(masses) < 1e8
+
+        #
+        for i in range(n_particles):
+
+            # Assert that all positions are within [0, boxsize]
+            for j in range(0, 3):
+                assert coords[i, j] >= 0.0
+                assert coords[i, j] <= boxsize
+
+            #
+            if self.config.get("EOS_DEGENERATE")["value"]:
+
+                min_temp = 1e03
+                max_temp = 1e10
+
+                temp_calculated, p_calculated = eos.egiven(density[i], xnuc[i], intern_ener[i])
+
+                if temp_calculated <= 0.0:
+                    raise ValueError(f"{temp_calculated=}")
+                else:
+                    if temp_calculated > max_temp:
+                        temp_calculated = max_temp
+                    elif temp_calculated < min_temp:
+                        temp_calculated = min_temp
+
+                    e_calculated, dedt, p_calculated, csnd = eos.tgiven(density[i], xnuc, temp_calculated)
+
+                if temp_calculated < min_temp or temp_calculated > max_temp:
+                    egy_injection = e_calculated - intern_ener[i]
+                    print(f"{e_calculated=}, {egy_injection=}")
+
+        # Volume
+        volume = np.divide(masses, density)
+        print(f"{max(volume)=}. {min(volume)=}")

@@ -16,13 +16,15 @@ arepo_git_versions = {
         {
             "commit_id": "97863140b478c1319cec0fd2f29258d6d36b5927",
             "default_folder_name": "dissipative",
-            "url": "https://github.com/boywert/dissipative.git"
+            "url": None
+            # "url": "https://github.com/boywert/dissipative.git"
         },
     "public_2021":
         {
             "commit_id": "2763ddc00994fd524504c3b43d836ec97d7f60c7",
             "default_folder_name": "arepo",
-            "url": "https://gitlab.mpcdf.mpg.de/g-fmarinac/arepo.git"
+            # "url": "https://gitlab.mpcdf.mpg.de/g-fmarinac/arepo.git"
+            "url": None
         },
 }
 
@@ -44,7 +46,7 @@ class Coordinates:
 
 common_snapbases = ["snapshot", "snap", "sh"]
 valid_orientations = [["x", "y"], ["x", "z"], ["y", "z"]]
-default_cmap = "viridis"
+default_cmap = "inferno"
 plot_quantities = [n.DENSITY, n.PRESSURE, n.MASSES, n.INTERNALENERGY]
 
 header_default = {h.NUMPARTTHISFILE: np.zeros(6, dtype=np.int32),
@@ -183,3 +185,7 @@ def convert_from_ruediger_dict(d):
             print(f"Unconverted key: {key}")
 
     return new_d
+
+
+def sci(num):
+    return '{:e}'.format(num)
