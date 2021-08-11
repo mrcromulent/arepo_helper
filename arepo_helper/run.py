@@ -1,4 +1,4 @@
-from snapshot import ArepoSnapshot
+from h5_file import ArepoSnapshot
 from names import ArepoHeader
 from utilities import common_snapbases, plot_quantities
 from names import n
@@ -238,13 +238,10 @@ class ArepoRun(object):
         plt.legend()
         # ax.set_yscale('log')
 
-        def max_percent_diff(arr):
-            max_val = max(arr)
-            min_val = min(arr)
-
-            return abs((max_val - min_val) / min_val)
-
-        print(f"Energy p/c diff: {max_percent_diff(energy_sum) * 100}")
+        max_val = max(energy_sum)
+        min_val = min(energy_sum)
+        max_pc_diff = abs((max_val - min_val) / min_val)
+        print(f"Energy p/c diff: {max_pc_diff * 100}")
 
         if export_filename is not None:
             dir_name = os.path.dirname(self.snapshots[0].filename)

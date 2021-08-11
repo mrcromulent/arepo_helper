@@ -1,8 +1,30 @@
 from numpy.distutils.core import setup, Extension
 from definitions import ROOT_DIR
 from sysconfig import get_paths
+from pathlib import Path
 import numpy as np
+import glob
 import os
+
+
+def get_cpp_sources():
+    srcs = [file for file in sorted(glob.glob(f"{c_src_dir}/*.cpp"))]
+    to_remove = ["write_ics.cpp", "main.cpp"]
+    for src_file in srcs:
+        for r in to_remove:
+            if r in src_file:
+                srcs.remove(src_file)
+
+    return srcs
+
+
+def get_py_sources():
+    srcs = [Path(file).stem for file in sorted(glob.glob(f"{py_src_dir}/*.py"))]
+    while "__init__" in srcs:
+        srcs.remove("__init__")
+
+    return srcs
+
 
 # Getting Python and numpy src dirs
 info = get_paths()
@@ -24,85 +46,31 @@ hdf5_incl = '/usr/include/hdf5/serial/'
 armadillo_incl = '/'
 armadillo_lib = '/'
 
-# Source files and definitions for this thing
-incl_dirs = [python_incl, numpy_incl, armadillo_incl, hdf5_incl, c_src_dir]
-libs_dirs = [python_lib, armadillo_lib]
-libs = ['gsl', 'gslcblas', 'm', 'armadillo']
-define_macros = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
 
+# Source files and definitions for this thing
+include_dirs = [python_incl, numpy_incl, armadillo_incl, hdf5_incl, c_src_dir]
+library_dirs = [python_lib, armadillo_lib]
+libraries = ['gsl', 'gslcblas', 'm', 'armadillo']
+define_macros = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
+ext_modules_names = ["pyhelm_eos", "ic", "create_ics", "arepo_vis"]
+sources = get_cpp_sources()
 
 if install_py_modules:
-    py_modules = [
-        os.path.join(py_src_dir, 'scatter_2d'),
-        os.path.join(py_src_dir, 'abstract_plot'),
-        os.path.join(py_src_dir, 'analysis'),
-        os.path.join(py_src_dir, 'group_animation'),
-        os.path.join(py_src_dir, 'h5_file'),
-        os.path.join(py_src_dir, 'arepo_helper'),
-        os.path.join(py_src_dir, 'ics'),
-        os.path.join(py_src_dir, 'names'),
-        os.path.join(py_src_dir, 'pcolor_plot'),
-        os.path.join(py_src_dir, 'plot_manager'),
-        os.path.join(py_src_dir, 'plot_options'),
-        os.path.join(py_src_dir, 'radial_plot'),
-        os.path.join(py_src_dir, 'run'),
-        os.path.join(py_src_dir, 'snapshot'),
-        os.path.join(py_src_dir, 'species'),
-        os.path.join(py_src_dir, 'utilities'),
-        os.path.join(py_src_dir, 'const'),
-        os.path.join(py_src_dir, 'wd_utils'),
-        os.path.join(py_src_dir, 'wdec_results')
-    ]
+    py_modules = get_py_sources()
 else:
     py_modules = []
 
-ext_modules = [
-    Extension('pyhelm_eos',
-              include_dirs=incl_dirs,
-              libraries=libs,
-              library_dirs=libs_dirs,
-              define_macros=define_macros,
-              sources=[
-                  os.path.join(c_src_dir, 'pyhelm_eos.cpp'),
-                  os.path.join(c_src_dir, 'helm_eos.cpp'),
-                  os.path.join(c_src_dir, 'const.cpp')
-              ]),
-    Extension('ic',
-              include_dirs=incl_dirs,
-              libraries=libs,
-              library_dirs=libs_dirs,
-              define_macros=define_macros,
-              sources=[
-                  os.path.join(c_src_dir, 'ic.cpp'),
-                  os.path.join(c_src_dir, 'pyhelm_eos.cpp'),
-                  os.path.join(c_src_dir, 'helm_eos.cpp'),
-                  os.path.join(c_src_dir, 'const.cpp')
-              ]),
-    Extension('create_ics',
-              include_dirs=incl_dirs,
-              libraries=libs,
-              library_dirs=libs_dirs,
-              define_macros=define_macros,
-              sources=[
-                  os.path.join(c_src_dir, 'create_ics.cpp'),
-                  os.path.join(c_src_dir, 'pyhelm_eos.cpp'),
-                  os.path.join(c_src_dir, 'helm_eos.cpp'),
-                  os.path.join(c_src_dir, 'const.cpp')
-              ]),
-    Extension('arepo_vis',
-              include_dirs=incl_dirs,
-              libraries=libs,
-              library_dirs=libs_dirs,
-              define_macros=define_macros,
-              sources=[
-                  os.path.join(c_src_dir, 'visualise.cpp'),
-                  os.path.join(c_src_dir, 'sph.cpp'),
-                  os.path.join(c_src_dir, 'ic.cpp'),
-                  os.path.join(c_src_dir, 'pyhelm_eos.cpp'),
-                  os.path.join(c_src_dir, 'helm_eos.cpp'),
-                  os.path.join(c_src_dir, 'const.cpp')
-              ])
-]
+
+ext_modules = []
+for name in ext_modules_names:
+    ext_modules.append(
+        Extension(name,
+                  include_dirs=include_dirs,
+                  libraries=libraries,
+                  library_dirs=library_dirs,
+                  define_macros=define_macros,
+                  sources=sources)
+    )
 
 setup(name='AREPO Helper Library',
       version='1.0',

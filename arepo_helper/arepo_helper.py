@@ -48,7 +48,8 @@ class ArepoHelper(object):
 
 
 def main():
-    ar = ArepoRun.from_directory("/home/pierre/Desktop/output")
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
     # ar.make_radial_time_series(n.TEMPERATURE)
     # ar.snapshots[1].quick_radial(n.TEMPERATURE)
     boxsize = ar.snapshots[0].get_from_h5(n.BOXSIZE)
@@ -59,54 +60,61 @@ def main():
     # ar.snapshots[-1].quick_pcolor_xnuc(n.NUCLEARCOMPOSITION, inner_boxsize=4e9, export_filename="merger.png",
     #                               select_column=1)
 
-    distances = []
-    times = []
-
-    for i, s in enumerate(ar.snapshots):
-        passives = s.passive()
-        t = s.get_from_h5(n.TIME)
-        tol = 1.0e-6
-        passives[abs(passives) < tol] = 0.0
-        pass0 = passives[:, 0]
-        pass1 = passives[:, 1]
-        mass = s.mass()
-
-        mass_weighted_pos_wd0 = s.coords() * pass0[:, None] * mass[:, None]
-        mass_of_wd0 = (pass0 * mass).sum()
-
-        mass_weighted_pos_wd1 = s.coords() * pass1[:, None] * mass[:, None]
-        mass_of_wd1 = (pass1 * mass).sum()
-
-        c0 = mass_weighted_pos_wd0.sum(axis=0) / mass_of_wd0
-        c1 = mass_weighted_pos_wd1.sum(axis=0) / mass_of_wd1
-
-        dist = np.sqrt((c1[0] - c0[0]) ** 2 + (c1[1] - c0[1]) ** 2 + (c1[2] - c0[2]) ** 2)
-        # print(sci(dist))
-        distances.append(dist)
-        times.append(t)
-
-    import pandas as pd
-    window_size = 3
-
-    numbers_series = pd.Series(distances)
-    windows = numbers_series.rolling(window_size)
-    moving_averages = windows.mean()
-
-    moving_averages_list = moving_averages.tolist()
-    without_nans = moving_averages_list[window_size - 1:]
-
-    print(distances)
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots()
-    plt.plot(times, distances)
-    # plt.plot(times, moving_averages_list)
-    plt.show()
+    # distances = []
+    # times = []
+    #
     # for i, s in enumerate(ar.snapshots):
+    #     passives = s.passive()
     #     t = s.get_from_h5(n.TIME)
-    #     if t > 200:
-    #         s.quick_pcolor(n.DENSITY, inner_boxsize=inner_boxsize, export_filename=f"merger_{t}.png")
-        # s.quick_nuclear_compositions(export_filename=f"{i}.png")
-    # ar.energy_balance()
+    #     tol = 1.0e-6
+    #     passives[abs(passives) < tol] = 0.0
+    #     pass0 = passives[:, 0]
+    #     pass1 = passives[:, 1]
+    #     mass = s.mass()
+    #
+    #     mass_weighted_pos_wd0 = s.coords() * pass0[:, None] * mass[:, None]
+    #     mass_of_wd0 = (pass0 * mass).sum()
+    #
+    #     mass_weighted_pos_wd1 = s.coords() * pass1[:, None] * mass[:, None]
+    #     mass_of_wd1 = (pass1 * mass).sum()
+    #
+    #     c0 = mass_weighted_pos_wd0.sum(axis=0) / mass_of_wd0
+    #     c1 = mass_weighted_pos_wd1.sum(axis=0) / mass_of_wd1
+    #
+    #     dist = np.sqrt((c1[0] - c0[0]) ** 2 + (c1[1] - c0[1]) ** 2 + (c1[2] - c0[2]) ** 2)
+    #     # print(sci(dist))
+    #     distances.append(dist)
+    #     times.append(t)
+    #
+    # import pandas as pd
+    # window_size = 3
+    #
+    # numbers_series = pd.Series(distances)
+    # windows = numbers_series.rolling(window_size)
+    # moving_averages = windows.mean()
+    #
+    # moving_averages_list = moving_averages.tolist()
+    # without_nans = moving_averages_list[window_size - 1:]
+    #
+    # print(distances)
+    # import matplotlib.pyplot as plt
+    # fig, ax = plt.subplots()
+    # plt.plot(times, distances)
+    #
+    # plt.show()
+    # # for i, s in enumerate(ar.snapshots):
+    # #     t = s.get_from_h5(n.TIME)
+    # #     if t > 400:
+    # #         s.quick_pcolor(n.DENSITY, inner_boxsize=inner_boxsize, export_filename=f"merger_{t}.png")
+    #     # s.quick_nuclear_compositions(export_filename=f"{i}.png")
+    # # ar.energy_balance()
+    s = ar.snapshots[1]
+    from analysis import ArepoAnalyser
+    aa = ArepoAnalyser({"inner_boxsize": 8e9, "cbar_lims": [1e-1, 1e7], "log_cmap": True, "logscale": False})
+    # pcp = s.quick_pcolor("Density", aa)
+    # pcp.save("test.png")
+    rad = s.quick_radial("Density", aa)
+    rad.save("test.png")
 
 
 if __name__ == "__main__":

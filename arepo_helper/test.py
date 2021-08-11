@@ -1,7 +1,8 @@
 from arepo_vis import make_pcolor, make_radial
-from snapshot import ArepoSnapshot
+from h5_file import ArepoSnapshot
 from pyhelm_eos import loadhelm_eos
 import matplotlib.pyplot as plt
+from run import ArepoRun
 from const import msol
 from names import n
 import numpy as np
@@ -17,14 +18,14 @@ def test_make_radial():
     cyl_rad = 0.01 * boxsize
     nshells = 200
 
-    s = ArepoSnapshot("/home/pierre/Desktop/output/snapshot_001.hdf5")
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+    s = ar.snapshots[1]
 
-    # rho = s.get_from_h5(n.DENSITY)
-    # u = s.get_from_h5(n.INTERNALENERGY)
-    pres = s.get_from_h5(n.PRESSURE)
+    quant = s.get_from_h5(n.DENSITY)
     coords = s.get_from_h5(n.COORDINATES)
 
-    data = make_radial(coords.astype('float64'), pres.astype('float64'),
+    data = make_radial(coords.astype('float64'), quant.astype('float64'),
                        a, b,
                        cyl_rad,
                        nshells)
@@ -40,14 +41,14 @@ def test_make_pcolor():
     boxsizes = [1e10, 1e10]
     axes = [0, 1]
 
-    s = ArepoSnapshot("/home/pierre/Desktop/output/snapshot_001.hdf5")
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+    s = ar.snapshots[1]
 
-    # rho = s.get_from_h5(n.DENSITY)
-    u = s.get_from_h5(n.INTERNALENERGY)
-    # pres = s.get_from_h5(n.PRESSURE)
+    quant = s.get_from_h5(n.DENSITY)
     coords = s.get_from_h5(n.COORDINATES)
 
-    data = make_pcolor(coords.astype('float64'), u.astype('float64'),
+    data = make_pcolor(coords.astype('float64'), quant.astype('float64'),
                        axes,
                        boxsizes,
                        resolutions,
@@ -219,7 +220,7 @@ def test_add_grid_particles():
     complete_dict = create_ics.add_grid_particles(wd, boxsize,
                                                   boxres=32, grid_pres=2e6, grid_density=1e-4, grid_xnuc=xnuc)
 
-    # print('complete_dict')
+    print(complete_dict)
 
 
 def test_rho_c_from_mtot():
@@ -297,8 +298,7 @@ def test_all_libs_functions():
 
 
 def main():
-    # test_all_libs_functions()
-    test_add_grid_particles()
+    test_all_libs_functions()
 
 
 if __name__ == '__main__':

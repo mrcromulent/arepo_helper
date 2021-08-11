@@ -47,7 +47,9 @@ class PColorPlot(AbstractPlot):
         super(PColorPlot, self).populate_plot()
 
         x, y, data = self.calc_a_slice(coords, points)
-        self.pcolor = self.ax.pcolormesh(x, y, np.transpose(data["grid"]), shading='flat')
+        self.pcolor = self.ax.pcolormesh(x, y, np.transpose(data["grid"]),
+                                         shading='flat', rasterized=True,
+                                         norm=self.po.norm, cmap=self.po.cmap)
         self.set_labels()
         self.set_title()
         self.set_lims()

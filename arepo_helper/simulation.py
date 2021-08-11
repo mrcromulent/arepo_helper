@@ -1,9 +1,9 @@
+from utilities import arepo_git_versions
 from sim_config import Param, Config, J, Paths
-from ics import ArepoICs
+from pyhelm_eos import loadhelm_eos
+from h5_file import ArepoICs
 from names import n
 import numpy as np
-from pyhelm_eos import loadhelm_eos
-from utilities import arepo_git_versions
 import os
 
 

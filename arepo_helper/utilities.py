@@ -1,7 +1,6 @@
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize, SymLogNorm
-from names import ArepoHeader as h, n
-import numpy as np
+from names import n
 import os
 
 
@@ -49,26 +48,6 @@ valid_orientations = [["x", "y"], ["x", "z"], ["y", "z"]]
 default_cmap = "inferno"
 plot_quantities = [n.DENSITY, n.PRESSURE, n.MASSES, n.INTERNALENERGY]
 
-header_default = {h.NUMPARTTHISFILE: np.zeros(6, dtype=np.int32),
-                  h.NUMPARTTOTAL: np.zeros(6, dtype=np.int32),
-                  h.NUMPARTTOTALHIGHWORD: np.zeros(6, dtype=np.int32),
-                  h.MASSTABLE: np.zeros(6, dtype=np.float64),
-                  h.TIME: 0.,
-                  h.NUMFILESPERSNAPSHOT: 1,
-                  h.BOXSIZE: 0.,
-                  h.FLAGDOUBLEPRECISION: np.array(False, dtype=np.int32),
-                  h.FLAGICINFO: np.array(0, dtype=np.int32),
-                  h.FLAGENTROPYICS: np.array(0, dtype=np.int32),
-                  h.REDSHIFT: np.array(0, dtype=np.float64),
-                  h.OMEGA0: np.array(0, dtype=np.float64),
-                  h.OMEGALAMBDA: np.array(0, dtype=np.float64),
-                  h.HUBBLEPARAM: np.array(0, dtype=np.float64),
-                  h.FLAGSFR: np.array(0, dtype=np.int32),
-                  h.FLAGSTELLARAGE: np.array(0, dtype=np.int32),
-                  h.FLAGMETALS: np.array(0, dtype=np.int32),
-                  h.FLAGFEEDBACK: np.array(0, dtype=np.int32),
-                  h.FLAGCOOLING: np.array(0, dtype=np.int32)}
-
 part_fields = {n.CENTEROFMASS: {"Dim": None, "Units": "cm", "cmap": default_cmap},
                n.COORDINATES: {"Dim": None, "Units": "cm", "cmap": default_cmap},
                n.DENSITY: {"Dim": 1, "Units": "g / cm^3", "cmap": default_cmap},
@@ -101,7 +80,7 @@ def get_cmap(quantity, bounds, log_cmap=False):
     cmap = part_fields[quantity]["cmap"]
 
     if log_cmap:
-        norm = SymLogNorm(10**5, vmin=bounds[0], vmax=bounds[1], base=10)
+        norm = SymLogNorm(bounds[0], vmin=bounds[0], vmax=bounds[1], base=10)
     else:
         norm = Normalize(bounds[0], bounds[1])
     scmp = ScalarMappable(norm=norm, cmap=cmap)

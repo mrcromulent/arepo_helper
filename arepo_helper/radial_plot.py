@@ -1,7 +1,7 @@
 from utilities import suppress_stdout_stderr, part_fields
 from abstract_plot import AbstractPlot
-from names import n
 from arepo_vis import make_radial
+from names import n
 import numpy as np
 
 
@@ -79,15 +79,10 @@ class RadialPlot(AbstractPlot):
 
         p = self.calc_radial_profile(coords, quant)
         line = self.line[0]
-
-        # line.set_data(p[1, :], p[0, :])
-
         line.set_xdata(p[1, :])
         line.set_ydata(p[0, :])
 
         self.set_title()
-        # self.set_lims(xlim=np.amax(p[1, :]), ylim=np.amax(p[0, :]))
-        # self.set_scmp_lims()
 
     def update_plot_from_plot_options(self, plot_options):
 

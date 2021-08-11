@@ -1,7 +1,7 @@
 from plot_options import PlotOptions
-from names import n, ArepoHeader
 from plot_options import mapping
 import utilities
+from names import n
 import numpy as np
 
 
