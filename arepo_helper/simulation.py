@@ -1,8 +1,8 @@
 from utilities import arepo_git_versions
 from sim_config import Param, Config, J, Paths
+from names import n, ArepoHeader as h
 from pyhelm_eos import loadhelm_eos
 from h5_file import ArepoICs
-from names import n
 import numpy as np
 import os
 
@@ -77,9 +77,9 @@ class ArepoSimulation(object):
         req_value = requirement["value"]
 
         if req_name.isupper():
-            req_actual_value = self.config.get(req_name)["value"]
+            req_actual_value = self.config.get(req_name)
         else:
-            req_actual_value = self.param.get(req_name)["value"]
+            req_actual_value = self.param.get(req_name)
 
         if op == "EQ":
             return req_actual_value == req_value
@@ -97,27 +97,26 @@ class ArepoSimulation(object):
         self.check_for_incompatibilities(self.param)
         self.check_for_incompatibilities(self.config)
 
-        refinement = self.config.get("REFINEMENT_SPLIT_CELLS")["value"] or \
-                     self.config.get("REFINEMENT_MERGE_CELLS")["value"]
+        refinement = self.config.get("REFINEMENT_SPLIT_CELLS") or self.config.get("REFINEMENT_MERGE_CELLS")
         ev = self.param.data["default_value"]
 
         if refinement:
-            assert self.param.get("ReferenceGasPartMass")["value"] is not ev
-            assert self.param.get("TargetGasMassFactor")["value"] is not ev
-            assert self.param.get("RefinementCriterion")["value"] is not ev
-            assert self.param.get("DerefinementCriterion")["value"] is not ev
+            assert self.param.get("ReferenceGasPartMass") is not ev
+            assert self.param.get("TargetGasMassFactor") is not ev
+            assert self.param.get("RefinementCriterion") is not ev
+            assert self.param.get("DerefinementCriterion") is not ev
         else:
-            assert self.param.get("ReferenceGasPartMass")["value"] is ev
-            assert self.param.get("TargetGasMassFactor")["value"] is ev
-            assert self.param.get("RefinementCriterion")["value"] is ev
-            assert self.param.get("DerefinementCriterion")["value"] is ev
+            assert self.param.get("ReferenceGasPartMass") is ev
+            assert self.param.get("TargetGasMassFactor") is ev
+            assert self.param.get("RefinementCriterion") is ev
+            assert self.param.get("DerefinementCriterion") is ev
 
-        if not self.config.get("REGULARIZE_MESH_FACE_ANGLE")["value"]:
-            assert self.param.get("CellShapingFactor")["value"] is not ev
+        if not self.config.get("REGULARIZE_MESH_FACE_ANGLE"):
+            assert self.param.get("CellShapingFactor") is not ev
 
         # Relax Runtime requires a long time scale
-        if self.config.get("RELAX_RUNTIME")["value"]:
-            assert self.param.get("TimeMax")["value"] >= 40.0
+        if self.config.get("RELAX_RUNTIME"):
+            assert self.param.get("TimeMax") >= 40.0
 
     def copy_files_to_input(self, file_list):
         if file_list is not None:
@@ -142,9 +141,10 @@ class ArepoSimulation(object):
             "make"
         ]
 
-        with open(f"{self.paths.arepo_compiler}", 'w') as f:
-            f.write('\n'.join(lines))
+        with open(f"{self.paths.arepo_compiler}", "w") as f:
+            f.write("\n".join(lines))
 
+        # Make the compiler executable
         os.chmod(self.paths.arepo_compiler, 0o755)
 
     def write_jobscript(self):
@@ -175,8 +175,8 @@ class ArepoSimulation(object):
             f"mpirun -np $PBS_NCPUS ./{self.paths.CODE}/Arepo {self.paths.PARAM}"
         ]
 
-        with open(f"{self.paths.jobscript}", 'w') as f:
-            f.write('\n'.join(lines))
+        with open(f"{self.paths.jobscript}", "w") as f:
+            f.write("\n".join(lines))
 
     def make_systype_file(self):
 
@@ -206,7 +206,7 @@ class ArepoSimulation(object):
 
         ic_h5 = ArepoICs(input_file_path)
 
-        boxsize     = self.param.get("Boxsize")["value"]
+        boxsize     = self.param.get(h.BOXSIZE)
         n_particles = ic_h5.num_particles()
 
         #
@@ -220,7 +220,7 @@ class ArepoSimulation(object):
         eos = loadhelm_eos(helm_file, species_file, True)
 
         # This option implies that density figures are stored in the masses field
-        if self.config.get("MESHRELAX_DENSITY_IN_INPUT")["value"]:
+        if self.config.get("MESHRELAX_DENSITY_IN_INPUT"):
             assert np.all(masses) < 1e8
 
         #
@@ -232,7 +232,7 @@ class ArepoSimulation(object):
                 assert coords[i, j] <= boxsize
 
             #
-            if self.config.get("EOS_DEGENERATE")["value"]:
+            if self.config.get("EOS_DEGENERATE"):
 
                 min_temp = 1e03
                 max_temp = 1e10

@@ -1,5 +1,5 @@
 from utilities import arepo_git_versions
-from definitions import ROOT_DIR
+from definitions import DATA_DIR, AREPO_SRC_DIR
 import textwrap
 import shutil
 import pprint
@@ -67,7 +67,6 @@ class Paths:
 
         else:
             wa  = arepo_git_versions[self.version]["url"]
-            dfn = arepo_git_versions[self.version]["default_folder_name"]
             c_id = arepo_git_versions[self.version]["commit_id"]
 
             if wa is not None:
@@ -76,47 +75,78 @@ class Paths:
                 repo.git.checkout(c_id)
             else:
                 # Get source code from local source
-                local_source = os.path.join(f"{ROOT_DIR}/arepo_helper/data/source", c_id)
+                local_source = os.path.join(AREPO_SRC_DIR, c_id)
                 shutil.copytree(local_source, self.code_dir)
 
 
-class Param:
+class ArepoInput:
+    comment_char = None
+    length_limit = 200
+    input_name   = None
 
-    comment_char    = "% "
+    def __init__(self, explicit_options, version):
+        self.explicit_options = explicit_options
+        self.version = version
+        self.data = None
 
-    def __init__(self,
-                 explicit_options=None,
-                 version="dissipative"):
+    def comment(self, text_string):
+        return self.comment_char + text_string + "\n"
 
-        self.explicit_options   = explicit_options
-        self.version            = version
-        self.data               = None
+    def indent_and_wrap(self, text):
+        return textwrap.indent(textwrap.fill(text, width=self.length_limit), self.comment_char) + "\n"
 
-        self.load()
+    def get(self, key):
+        for group in self.data["data"]:
+            for setting in group["items"]:
+                curr_key = setting["name"]
+                if key == curr_key:
+                    return setting["value"]
+
+        raise ValueError(f"{key} not found.")
 
     def load(self):
-        c_id = arepo_git_versions[self.version]["commit_id"]
-        json_file = os.path.join(ROOT_DIR, f"arepo_helper/data/param/{c_id}.json")
 
-        with open(json_file, 'r') as f:
+        # Load the default Config from file
+        c_id = arepo_git_versions[self.version]["commit_id"]
+        json_file = os.path.join(DATA_DIR, f"{self.input_name}/{c_id}.json")
+        with open(json_file, "r") as f:
             self.data = json.load(f)
 
+        # Overwrite default values with those in explicit_options
         for group in self.data["data"]:
             for setting in group["items"]:
                 curr_option = setting["name"]
                 if curr_option in self.explicit_options:
                     setting["value"] = self.explicit_options[curr_option]
 
-    def comment(self, text_string):
-        return self.comment_char + text_string + '\n'
-    
-    def indent_and_wrap(self, text):
-        length_limit = 200
+    def __str__(self):
 
-        return textwrap.indent(textwrap.fill(text, width=length_limit), self.comment_char) + '\n'
+        d = dict()
+        for group in self.data["data"]:
+            for setting in group["items"]:
+                curr_option = setting["name"]
+                if setting["value"]:
+                    d[curr_option] = setting["value"]
+
+        s = f"{self.input_name}: \n " \
+            f"{self.version=}. \n" \
+            f"Non-trivial settings: \n " \
+            f"{pprint.pformat(d)}"
+
+        return s
+
+
+class Param(ArepoInput):
+    comment_char = "% "
+    input_name = "param"
+
+    def __init__(self, explicit_options=None, version="dissipative"):
+
+        super(Param, self).__init__(explicit_options, version)
+        self.load()
 
     def write_file(self, filename, ignored):
-        delimiter       = self.comment_char + 50 * '-' + ' ' + '\n'
+        delimiter       = self.comment_char + 50 * "-" + " " + "\n"
         ev              = self.data["default_value"]
         double_newline  = "\n\n"
 
@@ -133,7 +163,7 @@ class Param:
             for group in self.data["data"]:
 
                 f.write(delimiter)
-                f.write(self.comment(group['heading']))
+                f.write(self.comment(group["heading"]))
                 f.write(delimiter)
                 f.write(double_newline)
 
@@ -150,89 +180,36 @@ class Param:
                             f.write(docs)
 
                         if name in ignored:
-                            text = name + ' ' + str(value) \
-                                   + '\t' + self.comment_char + "IGNORED" + double_newline
+                            text = name + " " + str(value) \
+                                   + "\t" + self.comment_char + "IGNORED" + double_newline
                         else:
-                            text = name + ' ' + str(value) + double_newline
+                            text = name + " " + str(value) + double_newline
                         f.write(text)
 
-    def get(self, key):
-        for group in self.data["data"]:
-            for setting in group["items"]:
-                curr_key = setting["name"]
-                if key == curr_key:
-                    return setting
 
-        raise ValueError(f"{key} not found.")
+class Config(ArepoInput):
+    comment_char = "# "
+    input_name = "config"
 
-    def __str__(self):
-
-        d = dict()
-        for group in self.data["data"]:
-            for setting in group["items"]:
-                curr_option = setting["name"]
-                if setting["value"]:
-                    d[curr_option] = setting["value"]
-
-        s = f"CONFIG: \n " \
-            f"{self.version=}. \n" \
-            f"Non-trivial settings: \n " \
-            f"{pprint.pformat(d)}"
-
-        return s
-
-
-class Config:
-    comment_char    = "# "
-
-    def __init__(self,
-                 explicit_options=None,
-                 version="dissipative"):
-
-        self.version            = version
-        self.explicit_options   = explicit_options
-        self.data               = None
+    def __init__(self, explicit_options=None, version="dissipative"):
+        super(Config, self).__init__(explicit_options, version)
         self.load()
 
-    def load(self):
-
-        # Load the default Config from file
-        c_id = arepo_git_versions[self.version]["commit_id"]
-        json_file = os.path.join(ROOT_DIR, f"arepo_helper/data/config/{c_id}.json")
-        with open(json_file, 'r') as f:
-            self.data = json.load(f)
-
-        # Overwrite default values with those in explicit_options
-        for group in self.data["data"]:
-            for setting in group["items"]:
-                curr_option = setting["name"]
-
-                if curr_option in self.explicit_options:
-                    setting["value"] = self.explicit_options[curr_option]
-
-    def comment(self, text_string):
-        return self.comment_char + text_string + '\n'
-
-    def indent_and_wrap(self, text):
-        length_limit = 200
-
-        return textwrap.indent(textwrap.fill(text, width=length_limit), self.comment_char) + '\n'
-
     def write_file(self, filename, ignored):
-        delimiter = self.comment_char + 50 * '-' + ' ' + '\n'
+        delimiter = self.comment_char + 50 * "-" + " " + "\n"
         ev = self.data["default_value"]
-        double_newline = '\n\n'
+        double_newline = "\n\n"
 
         with open(filename, "w") as f:
 
-            f.write('#!/bin/bash')
+            f.write("#!/bin/bash")
             f.write(double_newline)
 
             # Write info from each group
             for group in self.data["data"]:
 
                 f.write(delimiter)
-                f.write(self.comment(group['heading']))
+                f.write(self.comment(group["heading"]))
                 f.write(delimiter)
                 f.write(double_newline)
 
@@ -246,44 +223,19 @@ class Config:
                         if docs is None:
                             docs = ""
 
-                        text = name + ': ' + docs
+                        text = name + ": " + docs
                         text = self.indent_and_wrap(text)
                         f.write(text)
 
                         value_text = ""
 
                         if value is not True:
-                            value_text += name + '=' + str(value)
+                            value_text += name + "=" + str(value)
                         else:
                             value_text += name
 
                         if name in ignored:
-                            value_text += '\t' + self.comment_char + "IGNORED"
+                            value_text += "\t" + self.comment_char + "IGNORED"
 
                         value_text += double_newline
                         f.write(value_text)
-
-    def get(self, key):
-        for group in self.data["data"]:
-            for setting in group["items"]:
-                curr_key = setting["name"]
-                if key == curr_key:
-                    return setting
-
-        raise ValueError(f"{key} not found.")
-
-    def __str__(self):
-
-        d = dict()
-        for group in self.data["data"]:
-            for setting in group["items"]:
-                curr_option = setting["name"]
-                if setting["value"]:
-                    d[curr_option] = setting["value"]
-
-        s = f"CONFIG: \n " \
-            f"{self.version=}. \n" \
-            f"Non-trivial settings: \n " \
-            f"{pprint.pformat(d)}"
-
-        return s

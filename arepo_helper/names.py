@@ -1,17 +1,3 @@
-"""
-Attempting to join together all of the complicated naming conventions to actually get a complete listing of all the
-fields that can be included in the arepo snapshots
-
-
-The following four I found listed in the code but couldn't figure out their purpose.
-ERAD = "Erad"
-KAPPAP = "Kappa_P"
-KAPPAR = "Kappa_R"
-LAMBDA = "Lambda"
-
-I also disregarded some duplicates and keys with spaces in them
-"""
-
 from collections import OrderedDict
 
 
@@ -19,11 +5,11 @@ class BaseEnum:
 
     @classmethod
     def names(cls):
-        return [i for i in cls.__dict__.keys() if i[:1] != '_']
+        return [i for i in cls.__dict__.keys() if i[:1] != "_"]
 
     @classmethod
     def values(cls):
-        return [cls.__dict__[i] for i in cls.__dict__.keys() if i[:1] != '_']
+        return [cls.__dict__[i] for i in cls.__dict__.keys() if i[:1] != "_"]
 
 
 class ArepoHeader(BaseEnum):
@@ -296,10 +282,10 @@ class ArepoNames(BaseEnum):
                 setattr(self, name, getattr(en, name))
 
     def names(self):
-        return [i for i in self.__dict__.keys() if i[:1] != '_']
+        return [i for i in self.__dict__.keys() if i[:1] != "_"]
 
     def values(self):
-        return [self.__dict__[i] for i in self.__dict__.keys() if i[:1] != '_']
+        return [self.__dict__[i] for i in self.__dict__.keys() if i[:1] != "_"]
 
 
 n = ArepoNames([ArepoRoot,

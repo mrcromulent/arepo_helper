@@ -1,13 +1,11 @@
-from plot_options import PlotOptions, ScatterPlotOptions, RadialPlotOptions, PColorPlotOptions
-from abstract_plot import AbstractPlot
-from pcolor_plot import PColorPlot
-from radial_plot import RadialPlot
-from scatter_2d import Scatter2D
+from abstract_plot import AbstractPlot, get_plotter_func_from_plot_options
 import matplotlib.animation as ani
-from utilities import dummy
 import matplotlib.pyplot as plt
+from datetime import datetime
 from tqdm import tqdm
 import numpy as np
+import utilities
+import os
 
 
 class GroupAnimation(object):
@@ -15,30 +13,15 @@ class GroupAnimation(object):
     pbar = None
     animation = None
 
-    def __init__(self, trange, plot_options_array, arepo_plot_manager):
+    def __init__(self, plot_options_array, fps=5):
 
-        # plot_options_array = plot_options_array.reshape((1, 1))
-        if plot_options_array.ndim == 1:
-            plot_options_array = np.expand_dims(plot_options_array, axis=1)
-
-        self.trange = trange
-        self.apm = arepo_plot_manager
-        self.num_frames = trange[1] - trange[0]
-
-        # Initialise empty arrays for plot options and plot objects
-        self.poa = np.empty((*plot_options_array.shape, self.num_frames), dtype=PlotOptions)
-        self.plots = np.empty(plot_options_array.shape, dtype=AbstractPlot)
-
-        for idx, po in np.ndenumerate(plot_options_array):
-            for t, tval in enumerate(range(trange[0], trange[1])):
-                q = po.quantity
-                o = po.orientation
-
-                self.poa[idx[0], idx[1], t] = self.apm.compute_plot_options(tval, q, o, po.plot_type,
-                                                                            explicit_options=po.explicit_options)
-
+        self.poa    = plot_options_array
+        self.fps    = fps
         self.nrows = np.size(plot_options_array, axis=0)
         self.ncols = np.size(plot_options_array, axis=1)
+        self.num_frames = np.size(plot_options_array, axis=2)
+        self.plots = np.empty((self.nrows, self.ncols), dtype=AbstractPlot)
+
         self.fig, self.ax = plt.subplots(nrows=self.nrows,
                                          ncols=self.ncols,
                                          figsize=(8 * self.ncols, 8 * self.nrows),
@@ -53,45 +36,35 @@ class GroupAnimation(object):
                                            self.animate_frame,
                                            frames=self.num_frames,
                                            repeat=True,
-                                           init_func=dummy)
+                                           init_func=utilities.dummy)
 
     def init(self):
 
         for i in range(self.nrows):
             for j in range(self.ncols):
-
-                ax = self.ax[i, j]
                 po = self.poa[i, j, 0]
-
-                if isinstance(po, ScatterPlotOptions):
-                    self.plots[i, j] = Scatter2D(po, figure=self.fig, ax=ax)
-                elif isinstance(po, PColorPlotOptions):
-                    self.plots[i, j] = PColorPlot(po, figure=self.fig, ax=ax)
-                elif isinstance(po, RadialPlotOptions):
-                    self.plots[i, j] = RadialPlot(po, figure=self.fig, ax=ax)
-                else:
-                    raise ValueError("Unknown plot options type")
-
-                # ax.set_aspect('equal')
+                plotter = get_plotter_func_from_plot_options(po)
+                self.plots[i, j] = plotter(po, figure=self.fig, ax=self.ax[i, j])
 
     def animate_frame(self, t):
 
+        # Update progress bar
         self.pbar.update(1)
 
+        # Update all plots using their update methods
         for i in range(self.nrows):
             for j in range(self.ncols):
                 po = self.poa[i, j, t]
                 self.plots[i, j].update_plot_from_plot_options(po)
-
-                # plt.tight_layout()
 
         return self.plots
 
     def save(self, filename=None):
 
         if filename is None:
-            filename = f"./{type(self).__name__}_{self.trange}.mp4"
+            dt = datetime.now().strftime("%Y%m%d-%H%M%S")
+            fn_stem = f"{type(self).__name__}-{dt}.mp4"
+            dir_name = os.path.dirname(self.poa[0, 0, 0].ar.snapshots[0].filename)
+            filename = os.path.join(dir_name, fn_stem)
 
-        metadata = {"Comment": f"Animation with : \n {str(self.apm)}"}
-        # metadata = dict()
-        self.animation.save(filename, fps=5, metadata=metadata)
+        self.animation.save(filename, fps=self.fps, metadata={"Comment": f"Animation"})

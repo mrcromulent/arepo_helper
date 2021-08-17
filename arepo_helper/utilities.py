@@ -1,31 +1,68 @@
-from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize, SymLogNorm
+from matplotlib.cm import ScalarMappable
 from names import n
 import os
+
+
+common_snapbases = ["snapshot", "snap", "sh"]
+valid_orientations = [["x", "y"], ["x", "z"], ["y", "z"]]
+default_cmap = "inferno"
+plot_quantities = [n.DENSITY, n.PRESSURE, n.MASSES, n.INTERNALENERGY, n.NUCLEARCOMPOSITION]
 
 
 arepo_git_versions = {
     "ivo_2016":
         {
             "commit_id": "3d675e62e42340566d7626178284652f3e482305",
-            "default_folder_name": None,
             "url": None
         },
     "dissipative":
         {
             "commit_id": "97863140b478c1319cec0fd2f29258d6d36b5927",
-            "default_folder_name": "dissipative",
             "url": None
             # "url": "https://github.com/boywert/dissipative.git"
         },
     "public_2021":
         {
             "commit_id": "2763ddc00994fd524504c3b43d836ec97d7f60c7",
-            "default_folder_name": "arepo",
             # "url": "https://gitlab.mpcdf.mpg.de/g-fmarinac/arepo.git"
             "url": None
         },
 }
+
+
+ruediger_conversion_table = {n.COORDINATES: "pos",
+                             n.VELOCITIES: "vel",
+                             n.NUCLEARCOMPOSITION: "xnuc",
+                             n.INTERNALENERGY: "u",
+                             n.PARTICLEIDS: "id",
+                             n.MASSES: "mass",
+                             n.VOLUME: "vol",
+                             n.PRESSURE: "pres",
+                             n.PASSIVESCALARS: "pass",
+                             n.DENSITY: "rho",
+                             n.TEMPERATURE: "temp",
+                             n.POTENTIAL: "pot"}
+
+
+part_fields = {n.CENTEROFMASS: {"Dim": None, "Units": "cm", "cmap": default_cmap},
+               n.COORDINATES: {"Dim": 3, "Units": "cm", "cmap": default_cmap},
+               n.DENSITY: {"Dim": None, "Units": "g / cm^3", "cmap": default_cmap},
+               n.DENSITYGRADIENT: {"Dim": 3, "Units": "g / cm^3 / cm", "cmap": default_cmap},
+               n.INTERNALENERGY: {"Dim": None, "Units": "erg", "cmap": default_cmap},
+               n.MAGNETICFIELD: {"Dim": 3, "Units": "10^4 G", "cmap": default_cmap},
+               n.MAGNETICFIELDDIVERGENCE: {"Dim": None, "Units": "10^4 G / cm^3", "cmap": default_cmap},
+               n.MASSES: {"Dim": None, "Units": "g", "cmap": default_cmap},
+               n.NUCLEARCOMPOSITION: {"Dim": None, "Units": None, "cmap": default_cmap},
+               n.NUCLEARENERGYGENERATIONRATE: {"Dim": None, "Units": "erg", "cmap": default_cmap},
+               n.PARTICLEIDS: {"Dim": None, "Units": None, "cmap": default_cmap},
+               n.PASSIVESCALARS: {"Dim": 4, "Units": None, "cmap": default_cmap},
+               n.POTENTIAL: {"Dim": None, "Units": "erg/g", "cmap": default_cmap},
+               n.PRESSURE: {"Dim": None, "Units": "dynes", "cmap": default_cmap},
+               n.PRESSUREGRADIENT: {"Dim": None, "Units": "dynes/cm", "cmap": default_cmap},
+               n.TEMPERATURE: {"Dim": None, "Units": "K", "cmap": default_cmap},
+               n.VELOCITIES: {"Dim": 3, "Units": "cm/s", "cmap": default_cmap},
+               n.VELOCITYDIVERGENCE: {"Dim": None, "Units": "1/s/cm^2", "cmap": default_cmap}}
 
 
 class Coordinates:
@@ -43,56 +80,7 @@ class Coordinates:
         return xval, yval, list(zset)[0]
 
 
-common_snapbases = ["snapshot", "snap", "sh"]
-valid_orientations = [["x", "y"], ["x", "z"], ["y", "z"]]
-default_cmap = "inferno"
-plot_quantities = [n.DENSITY, n.PRESSURE, n.MASSES, n.INTERNALENERGY]
-
-part_fields = {n.CENTEROFMASS: {"Dim": None, "Units": "cm", "cmap": default_cmap},
-               n.COORDINATES: {"Dim": None, "Units": "cm", "cmap": default_cmap},
-               n.DENSITY: {"Dim": 1, "Units": "g / cm^3", "cmap": default_cmap},
-               n.DENSITYGRADIENT: {"Dim": None, "Units": "g / cm^3 / cm", "cmap": default_cmap},
-               n.INTERNALENERGY: {"Dim": 1, "Units": "erg", "cmap": default_cmap},
-               n.MAGNETICFIELD: {"Dim": None, "Units": "10^4 G", "cmap": default_cmap},
-               n.MAGNETICFIELDDIVERGENCE: {"Dim": 1, "Units": "10^4 G / cm^3", "cmap": default_cmap},
-               n.MASSES: {"Dim": 1, "Units": "g", "cmap": default_cmap},
-               n.NUCLEARCOMPOSITION: {"Dim": None, "Units": None, "cmap": default_cmap},
-               n.NUCLEARENERGYGENERATIONRATE: {"Dim": None, "Units": "erg", "cmap": default_cmap},
-               n.PARTICLEIDS: {"Dim": 1, "Units": None, "cmap": default_cmap},
-               n.PASSIVESCALARS: {"Dim": 4, "Units": None, "cmap": default_cmap},
-               n.POTENTIAL: {"Dim": 1, "Units": "erg/g", "cmap": default_cmap},
-               n.PRESSURE: {"Dim": 1, "Units": "dynes", "cmap": default_cmap},
-               n.PRESSUREGRADIENT: {"Dim": None, "Units": "dynes/cm", "cmap": default_cmap},
-               n.TEMPERATURE: {"Dim": 1, "Units": "K", "cmap": default_cmap},
-               n.VELOCITIES: {"Dim": None, "Units": "cm/s", "cmap": default_cmap},
-               n.VELOCITYDIVERGENCE: {"Dim": 1, "Units": "1/s/cm^2", "cmap": default_cmap}}
-
-
-def get_cmap(quantity, bounds, log_cmap=False):
-    """
-    :param quantity: One of the particle fields from the enum
-    :param bounds: A list containing the minimum value in the 0th position and the maximum in the first
-    :return:
-    """
-
-    assert quantity in plot_quantities, f"Cmap requested for unknown quantity {quantity}"
-
-    cmap = part_fields[quantity]["cmap"]
-
-    if log_cmap:
-        norm = SymLogNorm(bounds[0], vmin=bounds[0], vmax=bounds[1], base=10)
-    else:
-        norm = Normalize(bounds[0], bounds[1])
-    scmp = ScalarMappable(norm=norm, cmap=cmap)
-
-    return cmap, norm, scmp
-
-
-def dummy():
-    pass
-
-
-class suppress_stdout_stderr(object):
+class SuppressStdout(object):
     """
     A context manager for doing a "deep suppression" of stdout and stderr in
     Python, i.e. will suppress all print, even if the print originates in a
@@ -104,7 +92,7 @@ class suppress_stdout_stderr(object):
 
     def __init__(self):
         # Open a pair of null files
-        self.null_fds = [os.open(os.devnull, os.O_RDWR) for x in range(2)]
+        self.null_fds = [os.open(os.devnull, os.O_RDWR) for _ in range(2)]
         # Save the actual stdout (1) and stderr (2) file descriptors.
         self.save_fds = [os.dup(1), os.dup(2)]
 
@@ -122,18 +110,30 @@ class suppress_stdout_stderr(object):
             os.close(fd)
 
 
-ruediger_conversion_table = {n.COORDINATES: "pos",
-                             n.VELOCITIES: "vel",
-                             n.NUCLEARCOMPOSITION: "xnuc",
-                             n.INTERNALENERGY: "u",
-                             n.PARTICLEIDS: "id",
-                             n.MASSES: "mass",
-                             n.VOLUME: "vol",
-                             n.PRESSURE: "pres",
-                             n.PASSIVESCALARS: "pass",
-                             n.DENSITY: "rho",
-                             n.TEMPERATURE: "temp",
-                             n.POTENTIAL: "pot"}
+def get_cmap(quantity, bounds, log_cmap=False):
+    """
+    :param quantity: One of the particle fields from the enum
+    :param bounds: A list containing the minimum value in the 0th position and the maximum in the first
+    :param log_cmap:
+    :return:
+    """
+
+    assert quantity in plot_quantities, f"Cmap requested for unknown quantity {quantity}"
+
+    cmap = part_fields[quantity]["cmap"]
+
+    if log_cmap:
+        norm = SymLogNorm(bounds[0], vmin=bounds[0], vmax=bounds[1], base=10)
+    else:
+        norm = Normalize(bounds[0], bounds[1])
+
+    scmp = ScalarMappable(norm=norm, cmap=cmap)
+
+    return cmap, norm, scmp
+
+
+def dummy():
+    pass
 
 
 def convert_to_ruediger_dict(d):
@@ -167,4 +167,4 @@ def convert_from_ruediger_dict(d):
 
 
 def sci(num):
-    return '{:e}'.format(num)
+    return "{:e}".format(num)

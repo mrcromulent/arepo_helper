@@ -1,6 +1,15 @@
+from plot_manager import quick_pcolor, quick_radial, make_radial_time_series, quick_nuclear_pcolors
+from plot_manager import quick_nuclear_compositions, compute_plot_options_array
+from abstract_plot import mapping, get_plotter_func, get_plot_options_func
+from abstract_plot import PColorPlot, PColorPlotOptions
+from abstract_plot import RadialPlotOptions, RadialPlot
+from abstract_plot import ScatterPlotOptions, Scatter2D
 from arepo_vis import make_pcolor, make_radial
-from h5_file import ArepoSnapshot
+from group_animation import GroupAnimation
+from species import ArepoSpeciesList
 from pyhelm_eos import loadhelm_eos
+from analysis import ArepoAnalyser
+from definitions import DATA_DIR
 import matplotlib.pyplot as plt
 from run import ArepoRun
 from const import msol
@@ -9,6 +18,145 @@ import numpy as np
 import create_ics
 import pprint
 import ic
+import os
+
+
+def test_make_radial_time_series():
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+
+    bs  = 1e10
+    a   = [bs / 2, bs / 2, bs / 2]
+    b   = [bs / 1, bs / 2, bs / 2]
+    make_radial_time_series(ar, n.DENSITY, a=a, b=b)
+
+
+def test_quick_nuclear_pcolors():
+    asl = ArepoSpeciesList("/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt")
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/output")
+    s = ar.snapshots[1]
+    quick_nuclear_pcolors(s, asl, inner_boxsize=1e10)
+
+
+def test_quick_nuclear_compositions():
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+
+    s = ar.snapshots[1]
+    asl = ArepoSpeciesList("/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt")
+    quick_nuclear_compositions(s, asl)
+
+
+def test_quick_radial():
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+
+    s = ar.snapshots[1]
+    plot = quick_radial(s, n.DENSITY)
+    plot.save("test.png")
+
+
+def test_quick_pcolor():
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+
+    s = ar.snapshots[1]
+    plot = quick_pcolor(s, n.DENSITY)
+    plot.save("test.png")
+
+
+def test_group_animation():
+
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+
+    for plot_type in mapping:
+        poa = compute_plot_options_array(ar, [n.DENSITY, n.PRESSURE], [["x", "y"]],
+                                         plot_type=plot_type)
+        group_animation = GroupAnimation(poa, fps=1)
+        group_animation.animate()
+        group_animation.save()
+
+
+def test_animation():
+
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+
+    for plot_type in mapping:
+        poa = compute_plot_options_array(ar, [n.DENSITY, n.PRESSURE], [["x", "y"]],
+                                         plot_type=plot_type,
+                                         explicit_options={"inner_boxsize": 5e9})
+        animation = GroupAnimation(poa, fps=1)
+        animation.animate()
+        animation.save()
+
+
+def test_frames():
+
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+    aa = ArepoAnalyser({"inner_boxsize": 5e9,
+                        "t_idx": 0,
+                        "quantity": n.DENSITY,
+                        "orientation": ["x", "y"]
+                        })
+
+    for plot_type in mapping:
+        plotter = get_plotter_func(plot_type)
+        po_func = get_plot_options_func(plot_type)
+        po      = po_func(ar, aa)
+        plot    = plotter(po)
+        plot.save()
+
+
+def test_make_scatter_plot():
+
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+    aa_sp = ArepoAnalyser({"inner_boxsize": 1e10,
+                           "cbar_lims": [1e-1, 1e7],
+                           "log_cmap": True,
+                           "quantity": n.DENSITY,
+                           "orientation": ["x", "y"],
+                           "t_idx": 5})
+
+    spo = ScatterPlotOptions(ar, aa_sp)
+    sp = Scatter2D(spo)
+    sp.save()
+
+
+def test_make_pcolor_plot():
+
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+    aa_pcp = ArepoAnalyser({"cbar_lims": [0.0, 1.0],
+                            "log_cmap": False,
+                            "quantity": n.NUCLEARCOMPOSITION,
+                            "orientation": ["x", "y"],
+                            "xlim": [0, 1e10],
+                            "t_idx": 5,
+                            "select_column": 0})
+
+    pcpo = PColorPlotOptions(ar, aa_pcp)
+    pcp = PColorPlot(pcpo)
+    pcp.save()
+
+
+def test_make_radial_plot():
+
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+
+    aa_rp = ArepoAnalyser({"inner_boxsize": 1e10,
+                           "quantity": n.DENSITY,
+                           "orientation": ["x", "y"],
+                           "logscale": False,
+                           "t_idx": 5})
+
+    rpo = RadialPlotOptions(ar, aa_rp)
+    rp = RadialPlot(rpo)
+    rp.save()
 
 
 def test_make_radial():
@@ -25,12 +173,12 @@ def test_make_radial():
     quant = s.get_from_h5(n.DENSITY)
     coords = s.get_from_h5(n.COORDINATES)
 
-    data = make_radial(coords.astype('float64'), quant.astype('float64'),
+    data = make_radial(coords.astype("float64"), quant.astype("float64"),
                        a, b,
                        cyl_rad,
                        nshells)
     fig, ax = plt.subplots()
-    ax.plot(data[1, :], data[0, :], 'b')
+    ax.plot(data[1, :], data[0, :], "b")
     plt.show()
 
 
@@ -48,7 +196,7 @@ def test_make_pcolor():
     quant = s.get_from_h5(n.DENSITY)
     coords = s.get_from_h5(n.COORDINATES)
 
-    data = make_pcolor(coords.astype('float64'), quant.astype('float64'),
+    data = make_pcolor(coords.astype("float64"), quant.astype("float64"),
                        axes,
                        boxsizes,
                        resolutions,
@@ -59,14 +207,14 @@ def test_make_pcolor():
     fig, ax = plt.subplots()
     x = np.arange(resolutions[0] + 1, dtype="float64") / resolutions[0] * boxsizes[0] - 0.5 * boxsizes[0] + centers[0]
     y = np.arange(resolutions[1] + 1, dtype="float64") / resolutions[1] * boxsizes[1] - 0.5 * boxsizes[1] + centers[1]
-    im = ax.pcolormesh(x, y, np.transpose(data["grid"]), shading='flat')
+    im = ax.pcolormesh(x, y, np.transpose(data["grid"]), shading="flat")
     plt.colorbar(im, ax=ax)
     plt.show()
 
 
 def test_make_polytrope():
-    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
-    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    helm_file = os.path.join(DATA_DIR, "eostable/helm_table.dat")
+    species_file = os.path.join(DATA_DIR, "eostable/species05.txt")
     eos = loadhelm_eos(helm_file, species_file, True)
     xnuc = [0.0, 0.5, 0.5, 0.0, 0.0]
 
@@ -76,8 +224,8 @@ def test_make_polytrope():
 
 
 def test_create_wd():
-    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
-    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    helm_file = os.path.join(DATA_DIR, "eostable/helm_table.dat")
+    species_file = os.path.join(DATA_DIR, "eostable/species05.txt")
     eos = loadhelm_eos(helm_file, species_file, True)
     rho_c = 5e6
     xnuc = [0.0, 0.5, 0.5, 0.0, 0.0]
@@ -108,8 +256,8 @@ def test_create_wd_wdec():
 def test_helm_eos():
     pp = pprint.PrettyPrinter(indent=4)
 
-    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
-    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    helm_file = os.path.join(DATA_DIR, "eostable/helm_table.dat")
+    species_file = os.path.join(DATA_DIR, "eostable/species05.txt")
     eos = loadhelm_eos(helm_file, species_file, True)
     xnuc = np.array([0.0, 0.5, 0.5, 0.0, 0.0])
     rho_c = 2e6
@@ -134,49 +282,33 @@ def test_helm_eos():
 
 
 def test_create_animation():
-    from run import ArepoRun
-    from analysis import ArepoAnalyser
-    from plot_manager import PlotManager
-    from group_animation import GroupAnimation
 
-    # ar = ArepoRun.from_directory(
-    # "/run/user/1000/gvfs/sftp:host=gadi.nci.org.au/scratch/y08/ub0692/test/dissipative_3/output")
-    ar = ArepoRun.from_directory("/home/pierre/Desktop/output")
-    aa = ArepoAnalyser(analysis_options={"inner_boxsize": 5e9})
-    apm = PlotManager(ar, analyser=aa)
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
 
-    poa = np.transpose(np.array((
-        [apm.compute_plot_options(0, n.DENSITY, ["x", "y"], "Scatter", explicit_options={"log_cmap": True})]
-    )))
-
-    test = GroupAnimation([0, 20], poa, apm)
-    test.animate()
-    test.save()
+    poa = compute_plot_options_array(ar, [n.DENSITY, n.PRESSURE], [["x", "y"]],
+                                     plot_type=PColorPlotOptions.plot_type)
+    group_animation = GroupAnimation(poa, fps=1)
+    group_animation.animate()
+    group_animation.save()
 
 
 def test_create_pcolor():
-    from run import ArepoRun
-    from analysis import ArepoAnalyser
-    from plot_manager import PlotManager
-    from pcolor_plot import PColorPlot
-    # from matplotlib.cm import ScalarMappable
-    # from matplotlib.colors import SymLogNorm
-    from names import n
-
-    ar = ArepoRun.from_directory("/home/pierre/Desktop/test")
-    aa = ArepoAnalyser(analysis_options={"inner_boxsize": 1.3e9})
-    apm = PlotManager(ar, analyser=aa)
-
-    po = apm.compute_plot_options(8, n.INTERNALENERGY, ["x", "y"], "PColor", explicit_options={"log_cmap": True})
-
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/AREPO/snapshots/"
+                                 "97863140b478c1319cec0fd2f29258d6d36b5927/output_wd0_35He")
+    aa = ArepoAnalyser({"inner_boxsize": 5e9,
+                        "quantity": n.DENSITY,
+                        "orientation": ["x", "y"]
+                        })
+    po = PColorPlotOptions(ar, aa)
     pcolor_plot = PColorPlot(po)
     pcolor_plot.save()
 
 
 def test_convert_to_healpix():
     # Generate 1d profile
-    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
-    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    helm_file = os.path.join(DATA_DIR, "eostable/helm_table.dat")
+    species_file = os.path.join(DATA_DIR, "eostable/species05.txt")
     eos = loadhelm_eos(helm_file, species_file, True)
     rho_c = 5e6
     xnuc = [0.0, 0.5, 0.5, 0.0, 0.0]
@@ -198,8 +330,8 @@ def test_convert_to_healpix():
 
 def test_add_grid_particles():
     # Generate 1d profile
-    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
-    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    helm_file = os.path.join(DATA_DIR, "eostable/helm_table.dat")
+    species_file = os.path.join(DATA_DIR, "eostable/species05.txt")
     eos = loadhelm_eos(helm_file, species_file, True)
     rho_c = 5e6
     xnuc = [1.0, 0.0, 0.0, 0.0, 0.0]
@@ -228,8 +360,8 @@ def test_rho_c_from_mtot():
     temp_c = 5e5
     xnuc = [1.0, 0.0, 0.0, 0.0, 0.0]
 
-    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
-    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    helm_file = os.path.join(DATA_DIR, "eostable/helm_table.dat")
+    species_file = os.path.join(DATA_DIR, "eostable/species05.txt")
     eos = loadhelm_eos(helm_file, species_file, True)
 
     rho_c = ic.rho_c_from_mtot(mtot, temp_c, eos, xnuc)
@@ -241,8 +373,8 @@ def test_mtot_from_rho_c():
     temp_c = 5e5
     xnuc = [1.0, 0.0, 0.0, 0.0, 0.0]
 
-    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
-    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    helm_file = os.path.join(DATA_DIR, "eostable/helm_table.dat")
+    species_file = os.path.join(DATA_DIR, "eostable/species05.txt")
     eos = loadhelm_eos(helm_file, species_file, True)
 
     mtot = ic.mtot_from_rho_c(rho_c, temp_c, eos, xnuc)
@@ -251,8 +383,8 @@ def test_mtot_from_rho_c():
 
 def test_create_particles_fill_grid():
     # Generate 1d profile
-    helm_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat"
-    species_file = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt"
+    helm_file = os.path.join(DATA_DIR, "eostable/helm_table.dat")
+    species_file = os.path.join(DATA_DIR, "eostable/species05.txt")
     eos = loadhelm_eos(helm_file, species_file, True)
     rho_c = 5e6
     xnuc = [0.0, 0.5, 0.5, 0.0, 0.0]
@@ -272,7 +404,7 @@ def test_create_particles_fill_grid():
 
     pos = healpix_return[n.COORDINATES]
 
-    ugh = create_ics.create_particles_fill_grid(pos.astype('float64'), boxsize, 32)
+    ugh = create_ics.create_particles_fill_grid(pos.astype("float64"), boxsize, 32)
     print(ugh)
 
 
@@ -297,9 +429,15 @@ def test_all_libs_functions():
     test_make_pcolor()
 
 
+def test_animation_functions():
+    test_animation()
+    test_frames()
+    test_group_animation()
+
+
 def main():
-    test_all_libs_functions()
+    test_animation_functions()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

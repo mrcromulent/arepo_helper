@@ -32,7 +32,7 @@ class ArepoSpeciesList(object):
                     name, na, nz = line.split()
                     name    = name.capitalize()
                     na      = int(na)
-                    name_no_na = ''.join(i for i in name if not i.isdigit())
+                    name_no_na = "".join(i for i in name if not i.isdigit())
                     elem = element(name_no_na)
 
                     selected_isotope = None

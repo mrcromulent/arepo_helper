@@ -111,11 +111,11 @@ class WDECResults(object):
         fn = self.files["output.dat"]
 
         # Find number of points created by WDEC
-        with open(fn, 'r') as f:
+        with open(fn, "r") as f:
             next(f)
             next(f)
             line = next(f)
-            npoints = int(line.replace('points', ''))
+            npoints = int(line.replace("points", ""))
 
         pandas_kwargs = [{"sep": "\s+", "names": self.names1, "skiprows": 0, "nrows": npoints},
                          {"sep": "\s+", "names": self.names2, "skiprows": 0, "nrows": npoints},
@@ -144,20 +144,20 @@ class WDECResults(object):
         df3 = pd.read_csv(fn, **pandas_kwargs[2])
         df4 = pd.read_csv(fn, **pandas_kwargs[3])
 
-        tmp1 = pd.merge(left=df1, right=df2, on='n')
-        tmp2 = pd.merge(left=df3, right=df4, on='n')
-        df = pd.merge(left=tmp1, right=tmp2, on='n')
+        tmp1 = pd.merge(left=df1, right=df2, on="n")
+        tmp2 = pd.merge(left=df3, right=df4, on="n")
+        df = pd.merge(left=tmp1, right=tmp2, on="n")
 
         abundances = self.read_abundances()
         self.data = pd.concat([df, abundances], axis=1)
 
     def find_region_12_boundary(self):
-        menv_mr = self.mr(self.gp['m_env'])
+        menv_mr = self.mr(self.gp["m_env"])
         buffer_inner = self.ip["buffer_inner"]
         return self.q(menv_mr - buffer_inner)
 
     def find_region_23_boundary(self):
-        m_h = self.gp['m_hyd']
+        m_h = self.gp["m_hyd"]
         amhyhe_tmp = 10 ** (- m_h)
         amr_hyhe = self.mr(amhyhe_tmp)
         qhyhe = abs(log10(amr_hyhe))
@@ -196,29 +196,40 @@ class WDECResults(object):
     def plot_abundances(self):
 
         co = self.data
-        h1, h2, h3 = self.gp['hvals']
-        w1, w2, w3 = self.gp['wvals']
+        h1, h2, h3 = self.gp["hvals"]
+        w1, w2, w3 = self.gp["wvals"]
         region_12_boundary = self.find_region_12_boundary()
         region_23_boundary = self.find_region_23_boundary()
 
         fig, ax = plt.subplots()
-        co.plot(x="-log(1-Mr/M*)", y=["X_O", "X_C", "X_He", "X_H"], ax=ax, color=['red', 'black', 'blue', 'green'])
+        co.plot(x="-log(1-Mr/M*)", y=["X_O", "X_C", "X_He", "X_H"], ax=ax, color=["red", "black", "blue", "green"])
 
         if self.gp["version"] == 16:
             x = np.array([0, w1, w1 + w2, w1 + w2 + w3, 10 ** self.stpms - 1e-2])
             y = np.array([h1, h1, h2, h3, 0])
-            ax.plot(self.q(x), y, 'kx', label="HW points")
+            ax.plot(self.q(x), y, "kx", label="HW points")
 
         ax.set_ylabel("Abundance")
         ax.set_xlabel("-log10(1-Mr/M*)")
         ax.set_xlim([0, 18])
-        ax.axvline(x=region_12_boundary, label="RI/RII boundary", linestyle='--', color='k', alpha=0.6)
-        ax.axvline(x=region_23_boundary, label="RII/RIII boundary", linestyle='--', color='k', alpha=0.6)
-        ax.axvline(x=self.gp['m_env'], label="M_env", linestyle='--', color='y', alpha=0.3)
-        ax.axvline(x=self.gp['m_hel'], label="M_he", linestyle='--', color='b', alpha=0.3)
-        ax.axvline(x=self.gp['m_hyd'], label="M_h", linestyle='--', color='g', alpha=0.3)
+        ax.axvline(x=region_12_boundary, label="RI/RII boundary", linestyle="--", color="k", alpha=0.6)
+        ax.axvline(x=region_23_boundary, label="RII/RIII boundary", linestyle="--", color="k", alpha=0.6)
+        ax.axvline(x=self.gp["m_env"], label="M_env", linestyle="--", color="y", alpha=0.3)
+        ax.axvline(x=self.gp["m_hel"], label="M_he", linestyle="--", color="b", alpha=0.3)
+        ax.axvline(x=self.gp["m_hyd"], label="M_h", linestyle="--", color="g", alpha=0.3)
         ax.legend()
         fig.show()
+
+    def write_temp_profile(self, out_filename):
+
+        with open(out_filename, "w") as f:
+
+            n_part = len(self.data["r"])
+            f.write(str(n_part - 3) + "\n")
+            for i in range(n_part):
+                r = self.data["r"][i]
+                t = self.data["T"][i]
+                f.write(f"{r} {t} \n")
 
     @staticmethod
     def convert_species_name(species):
@@ -285,30 +296,18 @@ class WDECResults(object):
             raise ValueError
 
         if gridparam["version"] == 16:
-            w1, w2, w3 = gridparam['wvals']
+            w1, w2, w3 = gridparam["wvals"]
             print(f"CHECK: w1 + w2 + w3 < 0.95: {w1 + w2 + w3 <= 0.95}")
             if not w1 + w2 + w3 <= 0.95:
                 raise ValueError
-
-    def write_temp_profile(self):
-        out_filename = "TemperatureProfil.txt"
-
-        with open(out_filename, 'w') as f:
-
-            n_part = len(self.data["r"])
-            f.write(str(n_part - 3) + "\n")
-            for i in range(n_part):
-                r = self.data["r"][i]
-                t = self.data["T"][i]
-                f.write(f"{r} {t} \n")
 
     def __str__(self):
 
         gp = self.gp
         ip = self.ip
 
-        h1, h2, h3 = gp['hvals']
-        w1, w2, w3 = gp['wvals']
+        h1, h2, h3 = gp["hvals"]
+        w1, w2, w3 = gp["wvals"]
 
         s = \
             f"\nFILE: {self.files['inputprof']} \n" \
