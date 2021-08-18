@@ -10,6 +10,7 @@ import re
 
 
 class ArepoRun(object):
+    """Class to hold a series of ArepoSnapshots, forming a run."""
 
     snapshots       = []
     num_snapshots   = 0
@@ -22,6 +23,16 @@ class ArepoRun(object):
     minima          = dict()
 
     def __init__(self, snapshot_list, save_to_cache=False):
+        """ArepoRun constructor.
+
+        :param snapshot_list: List of snapshots
+        :type snapshot_list: list
+        :param save_to_cache: Switch that determines whether a cache should be saved to disk
+        :type save_to_cache: bool
+
+        :return: ArepoRun object
+        :rtype: ArepoRun
+        """
 
         self.snapshots      = snapshot_list
         self.num_snapshots  = len(snapshot_list)
@@ -36,12 +47,14 @@ class ArepoRun(object):
                 self.save_to_cache()
 
     def map_header(self):
+        """Searches all snapshots for the boxsize and records it in self.run_header."""
         snap = self.snapshots[0]
         d = [ArepoHeader.BOXSIZE]
         for key in d:
             self.run_header[key] = snap.get_from_h5(key)
 
     def map_maxima_minima(self):
+        """Maps the maxima and minima of every quantity in utilities.plot_quantities."""
 
         for quantity in tqdm(plot_quantities):
             self.maxima[quantity] = []
@@ -52,9 +65,11 @@ class ArepoRun(object):
                 self.minima[quantity].append(snap.min(quantity))
 
     def is_empty(self):
+        """Returns if the run is empty."""
         return self.num_snapshots < 1
 
     def save_to_cache(self):
+        """Saves the information contained in the snapshots to a picke file."""
 
         dt      = datetime.now().strftime("%Y%m%d-%H%M%S")
         direc   = f"{self.target_dir}/{self.cachedir}/"
@@ -70,6 +85,19 @@ class ArepoRun(object):
 
     @classmethod
     def from_directory(cls, target_dir=".", snapbase=None, from_cache=True):
+        """Alternative (and more popular) constructor for ArepoRun. Gets information from a directory which contains
+        snaps
+
+        :param target_dir: Directory containing snapshots
+        :type target_dir: str
+        :param snapbase: Base of file name (e.g. snap for snap_000.hdf5)
+        :type snapbase: str
+        :param from_cache: switch that determines whether the cache should be used
+        :type from_cache: bool
+
+        :return: ArepoRun object
+        :rtype: ArepoRun
+        """
 
         target_dir      = os.path.abspath(target_dir)
         snapshot_paths  = []
@@ -100,6 +128,14 @@ class ArepoRun(object):
     
     @classmethod
     def open_run_from_cache(cls, target_dir):
+        """Sets the internal data based on unpicked data from the cache.
+
+        :param target_dir: Directory containing cache
+        :type target_dir: str
+
+        :return: Success
+        :rtype: bool
+        """
 
         list_of_files   = glob.glob(f"{target_dir}/{cls.cachedir}/*.obj")
 
@@ -117,6 +153,16 @@ class ArepoRun(object):
 
     @staticmethod
     def check_directory_for_snapshots(target_dir, snapbase):
+        """Determines whether directory contains snapshots.
+
+        :param target_dir: Directory
+        :type target_dir: str
+        :param snapbase: Base of snapshot file (e.g. snap for snap_000.hdf5)
+        :type snapbase: str
+
+        :return: List of paths of snapshot files in directory
+        :rtype: list
+        """
 
         file_pattern    = f"{target_dir}/{snapbase}_*.hdf5"
         snapshot_paths  = [file for file in sorted(glob.glob(file_pattern))]
@@ -125,11 +171,27 @@ class ArepoRun(object):
 
     @staticmethod
     def find_snapbase(snapshot):
+        """Gets snapbase given a snapshot object
+
+        :param snapshot: ArepoSnapshot
+        :type snapshot: ArepoSnapshot
+
+        :return: Snap base
+        :rtype: str
+        """
         snap_filename = snapshot.filename
         return re.sub(r"(?=_).+$", "", os.path.basename(snap_filename))
 
     @staticmethod
     def find_target_dir(snapshot):
+        """Gets directory given a snapshot object
+
+        :param snapshot: ArepoSnapshot
+        :type snapshot: ArepoSnapshot
+
+        :return: Directory
+        :rtype: str
+        """
         return os.path.dirname(snapshot.filename)
 
     def __str__(self):

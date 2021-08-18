@@ -1,5 +1,5 @@
-from utilities import arepo_git_versions
 from definitions import DATA_DIR, AREPO_SRC_DIR
+from utilities import arepo_git_versions
 import textwrap
 import shutil
 import pprint
@@ -9,6 +9,7 @@ import os
 
 
 class J:
+    """Jobscript fields"""
     NAME = "name"
     PROJECT_CODE = "project_code"
     QUEUE_TYPE = "queue_type"
@@ -20,6 +21,7 @@ class J:
 
 
 class Paths:
+    """Directories and files which are created an modified in an AREPO simulation."""
 
     CODE = "code"
     CONFIG = "Config.sh"
@@ -32,6 +34,20 @@ class Paths:
     MAKEFILE_SYSTYPE = "Makefile.systype"
 
     def __init__(self, parent_dir, proj_name, version="dissipative"):
+        """Constructor which creates the folders and files required for an AREPO simulation.
+
+        :param parent_dir: Directory where the simulation directory should be created.
+        :type parent_dir: str
+        :param proj_name: Name of the simulation directory (also used in some files)
+        :type proj_name: str
+        :param version: Version string specifying the version of the code to be used
+        :type version: str
+
+        :raises OSError: Raised if the directory already exists
+
+        :return: Paths object
+        :rtype: Paths
+        """
 
         self.version = version
         self.project_dir = os.path.join(parent_dir, proj_name)
@@ -52,6 +68,7 @@ class Paths:
             self.make_dirs()
 
     def make_dirs(self):
+        """Creates the relevant directories."""
 
         os.mkdir(self.project_dir)
         os.mkdir(self.input_dir)
@@ -61,6 +78,12 @@ class Paths:
         self.get_code()
 
     def get_code(self):
+        """Clones code from Github or copies it from the local folder.
+
+        :raises ValueError: If unknown version requested
+
+        :rtype: None
+        """
 
         if self.version not in arepo_git_versions:
             raise ValueError(f"Unknown version requested: {self.version}")
@@ -80,22 +103,60 @@ class Paths:
 
 
 class ArepoInput:
+    """Base class for Param and Config classes"""
     comment_char = None
     length_limit = 200
     input_name   = None
 
     def __init__(self, explicit_options, version):
+        """Constructor for base class
+
+        :param explicit_options: Dict of options to override defaults
+        :type explicit_options: dict
+        :param version: String version name to specify AREPO version
+        :type version: str
+
+        :return: ArepoInput
+        :rtype: ArepoInput
+        """
         self.explicit_options = explicit_options
         self.version = version
         self.data = None
 
     def comment(self, text_string):
+        """Returns the text in text_string formatted as a comment.
+
+        :param text_string: Text to be commented
+        :type text_string: str
+
+        :return: Commented text
+        :rtype: str
+        """
         return self.comment_char + text_string + "\n"
 
     def indent_and_wrap(self, text):
+        """Indents and wraps long line of text.
+
+        :param text: Text to be wrapped
+        :type text: str
+
+        :return: Wrapped text
+        :rtype: str
+        """
         return textwrap.indent(textwrap.fill(text, width=self.length_limit), self.comment_char) + "\n"
 
     def get(self, key):
+        """Gets data from a particular element of the Config/Param
+
+        :param key: Name of element
+        :type key: str
+
+        :raises ValueError: If element is not found
+
+        :return: Value associated with element
+        :rtype: Any
+        """
+
         for group in self.data["data"]:
             for setting in group["items"]:
                 curr_key = setting["name"]
@@ -105,6 +166,7 @@ class ArepoInput:
         raise ValueError(f"{key} not found.")
 
     def load(self):
+        """Loads default values from the JSON file associated with self.version."""
 
         # Load the default Config from file
         c_id = arepo_git_versions[self.version]["commit_id"]
@@ -137,15 +199,33 @@ class ArepoInput:
 
 
 class Param(ArepoInput):
+    """Class to hold information associated with param.txt files."""
     comment_char = "% "
     input_name = "param"
 
     def __init__(self, explicit_options=None, version="dissipative"):
+        """Constructor for param.txt files
+
+        :param explicit_options: Explicit param.txt options
+        :type explicit_options: dict
+        :param version: Version of AREPO to be used
+        :type version: str
+
+        :return: Param object
+        :rtype: Param
+        """
 
         super(Param, self).__init__(explicit_options, version)
         self.load()
 
     def write_file(self, filename, ignored):
+        """Writes the param.txt file to filename, specifying which values have been ignored.
+
+        :param filename: Location to which file is written
+        :type filename: str
+        :param ignored: Ignored options
+        :type ignored: list
+        """
         delimiter       = self.comment_char + 50 * "-" + " " + "\n"
         ev              = self.data["default_value"]
         double_newline  = "\n\n"
@@ -188,14 +268,33 @@ class Param(ArepoInput):
 
 
 class Config(ArepoInput):
+    """Class to hold information associated with Config.sh files."""
     comment_char = "# "
     input_name = "config"
 
     def __init__(self, explicit_options=None, version="dissipative"):
+        """Constructor for Config.sh files
+
+        :param explicit_options: Explicit Config.sh options
+        :type explicit_options: dict
+        :param version: Version of AREPO to be used
+        :type version: str
+
+        :return: Config object
+        :rtype: Config
+        """
+
         super(Config, self).__init__(explicit_options, version)
         self.load()
 
     def write_file(self, filename, ignored):
+        """Writes the Config.sh file to filename, specifying which values have been ignored.
+
+        :param filename: Location to which file is written
+        :type filename: str
+        :param ignored: Ignored options
+        :type ignored: list
+        """
         delimiter = self.comment_char + 50 * "-" + " " + "\n"
         ev = self.data["default_value"]
         double_newline = "\n\n"

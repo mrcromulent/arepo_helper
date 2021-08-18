@@ -5,10 +5,13 @@ import matplotlib.pyplot as plt
 from names import n
 import numpy as np
 import utilities
+import analysis
+import run
 import os
 
 
 class PlotOptions(object):
+    """Abstract class for plotting options."""
 
     plot_type = None
     t_idx = 0
@@ -18,12 +21,24 @@ class PlotOptions(object):
     orientation = None
     xlim = [None, None]
     ylim = [None, None]
+    zlim = [None, None]
     title = None
     xlabel = None
     ylabel = None
 
     def __init__(self, ar, aa, *args, **kwargs):
+        """Constructor for abstract plotting options class
 
+        :param ar: Arepo run
+        :type ar: run.ArepoRun
+        :param aa: Arepo analyser
+        :type aa: analysis.ArepoAnalyser
+        :param args: Explicit plotting options (e.g. title)
+        :param kwargs: Explicit plotting options (e.g. title)
+
+        :rtype: PlotOptions
+        :returns: PlotOptions object
+        """
         self.ar = ar
         self.aa = aa
 
@@ -37,6 +52,7 @@ class PlotOptions(object):
             setattr(self, key, kwargs[key])
 
     def find_inner_boxsize(self):
+        """Returns the inner boxsize of the self.ar space"""
 
         if self.aa.inner_boxsize is None:
             return self.ar.run_header[n.BOXSIZE]
@@ -44,6 +60,7 @@ class PlotOptions(object):
             return self.aa.inner_boxsize
 
     def compute_title(self):
+        """Computes the title"""
         units = part_fields[self.quantity]["Units"]
         t = round(self.ar.snapshots[self.t_idx].get_from_h5(n.TIME), 2)
         self.title = f"{self.quantity} time evolution, t = {t} sec. [${units}$]"
@@ -64,6 +81,19 @@ class ScatterPlotOptions(PlotOptions):
     log_cmap            = True
 
     def __init__(self, ar, aa, *args, **kwargs):
+        """Abstract constructor of plot options for Scatter2D class
+
+        :param ar: Arepo run
+        :type ar: run.ArepoRun
+        :param aa: Arepo Analyser
+        :type aa: analysis.ArepoAnalyser
+        :param args: Explicit options (e.g. title)
+        :param kwargs: Explicit options (e.g. title)
+
+        :rtype: ScatterPlotOptions
+        :returns: ScatterPlotOptions object
+        """
+
         super(ScatterPlotOptions, self).__init__(ar, aa, *args, **kwargs)
 
         self.compute_title()
@@ -77,12 +107,14 @@ class ScatterPlotOptions(PlotOptions):
                 setattr(self, key, aa.analysis_options[key])
 
     def compute_cbar_lims(self):
+        """Computes colorbar limits"""
         if self.quantity in utilities.plot_quantities:
             self.cbar_lims = [np.min(self.ar.minima[self.quantity]), np.max(self.ar.maxima[self.quantity])]
         else:
             raise NotImplemented("Not implemented for other quantities.")
 
     def compute_limits(self):
+        """Computes limits in x,y,z space"""
 
         boxsize = self.ar.run_header[n.BOXSIZE]
         inner_bs = self.find_inner_boxsize()
@@ -93,10 +125,12 @@ class ScatterPlotOptions(PlotOptions):
         self.zlim = [0.5 * boxsize - 0.5 * sw * inner_bs, 0.5 * boxsize + 0.5 * sw * inner_bs]
 
     def compute_labels(self):
+        """Compute x/ylabels"""
         self.xlabel = f"{self.orientation[0]} [$cm$]"
         self.ylabel = f"{self.orientation[1]} [$cm$]"
 
     def compute_colormap(self):
+        """Creates colorbar based on the cbar_lims"""
         self.cmap, self.norm, self.scmp = utilities.get_cmap(self.quantity, self.cbar_lims, log_cmap=self.log_cmap)
 
 
@@ -113,6 +147,19 @@ class RadialPlotOptions(PlotOptions):
     zlim                = None
 
     def __init__(self, ar, aa, *args, **kwargs):
+        """Plotting options for RadialPlot
+
+        :param ar: Arepo run
+        :type ar: run.ArepoRun
+        :param aa: Arepo Analyser
+        :type aa: analysis.ArepoAnalyser
+        :param args: Explicit plot options (e.g. title)
+        :param kwargs: Explicit plot options (e.g. title)
+
+        :rtype: RadialPlotOptions
+        :return: RadialPlotOptions object
+        """
+
         super(RadialPlotOptions, self).__init__(ar, aa, *args, **kwargs)
 
         self.compute_title()
@@ -124,6 +171,7 @@ class RadialPlotOptions(PlotOptions):
                 setattr(self, key, aa.analysis_options[key])
 
     def compute_ab_radius(self):
+        """Computes the a & b points of the radial cylinder, as well as its radius"""
 
         inner_bs = self.find_inner_boxsize()
         boxsize = self.ar.run_header[n.BOXSIZE]
@@ -143,6 +191,7 @@ class RadialPlotOptions(PlotOptions):
             self.b = [self.xlim[1], center_y, center_z]
 
     def compute_labels(self):
+        """Computes the x/ylabels of the plot"""
         self.xlabel = f"r [$cm$]"
         self.ylabel = f"{self.quantity}"
 
@@ -162,6 +211,19 @@ class PColorPlotOptions(PlotOptions):
     select_column       = None
 
     def __init__(self, ar, aa, *args, **kwargs):
+        """Plotting options for PColorPlot
+
+        :param ar: Arepo Run
+        :type ar: run.ArepoRun
+        :param aa: Arepo Analyser
+        :type aa: analysis.ArepoAnalyser
+        :param args: Explicit plot options (e.g. title)
+        :param kwargs: Explicit plot options (e.g. title)
+
+        :rtype: PColorPlotOptions
+        :returns: PColorPlotOptions object
+        """
+
         super(PColorPlotOptions, self).__init__(ar, aa, *args, **kwargs)
 
         self.compute_title()
@@ -175,17 +237,20 @@ class PColorPlotOptions(PlotOptions):
                 setattr(self, key, aa.analysis_options[key])
 
     def compute_colormap(self):
+        """Computes the colormap with limits cbar_lims"""
         self.cmap, self.norm, self.scmp = utilities.get_cmap(self.quantity, self.cbar_lims, log_cmap=self.log_cmap)
 
     def compute_cbar_lims(self):
+        """Computes the cbar_lims of the colorbar"""
         if self.quantity in utilities.plot_quantities:
             self.cbar_lims = [np.min(self.ar.minima[self.quantity]), np.max(self.ar.maxima[self.quantity])]
         else:
             raise NotImplementedError(f"Not implemented for {self.quantity}")
 
     def compute_limits(self):
+        """Computes the x,y,z limits of the self.ar space"""
 
-        boxsize = self.ar.run_header[n.BOXSIZE]
+        boxsize = self.ar.snapshots[0].get_from_h5(n.BOXSIZE)
         inner_bs = self.find_inner_boxsize()
 
         self.xlim = [0.5 * boxsize - 0.5 * inner_bs, 0.5 * boxsize + 0.5 * inner_bs]
@@ -193,44 +258,72 @@ class PColorPlotOptions(PlotOptions):
         self.zlim = [0.5 * boxsize - 0.5 * inner_bs, 0.5 * boxsize + 0.5 * inner_bs]
 
     def compute_labels(self):
+        """Computes the x/ylabels"""
         self.xlabel = f"{self.orientation[0]} [$cm$]"
         self.ylabel = f"{self.orientation[1]} [$cm$]"
 
 
 class AbstractPlot(object):
+    """Abstract class to for Arepo type plots
+    """
 
     cb = None
 
     def __init__(self, plot_options, figure=None, ax=None):
+        """Constructor for abstract plot class
+
+        :param plot_options: A plot options object which contains information about what appears on the plot
+        :type plot_options: Any
+        :param figure: Optional matplotlib figure to plot results on
+        :type figure: matplotlib.figure.Figure
+        :param ax: Optional matplotlib axes to plot results on
+        :type ax: matplotlib.axes._subplots.AxesSubplot
+
+        :rtype: AbstractPlot
+        :returns: AbstractPlot object
+        """
+
         self.po = plot_options
 
-        if figure is None:
+        if figure is None or ax is None:
             self.fig, self.ax = plt.subplots()
         else:
             self.fig, self.ax = figure, ax
 
     def set_title(self, new_title):
+        """Sets the title"""
         self.ax.set_title(new_title)
 
     def set_labels(self, xlabel, ylabel):
+        """Sets the x/ylabels
+
+        :param xlabel:
+        :type xlabel: str
+        :param ylabel:
+        :type ylabel: str
+        """
         self.ax.set(xlabel=xlabel, ylabel=ylabel)
 
     def set_lims(self, xlim, ylim):
+        """Sets the limits
+
+        :param xlim:
+        :type xlim: list
+        :param ylim:
+        :type ylim: list
+        """
         self.ax.set(xlim=xlim, ylim=ylim)
 
-    def set_scmp_lims(self, lims):
-        self.po.scmp.set_clim(lims)
-
-    def set_colorbar(self):
-        if self.po.include_colorbar:
-            divider = make_axes_locatable(self.ax)
-            cax = divider.append_axes("right", size="5%", pad=0.05)
-            self.cb = self.fig.colorbar(self.po.scmp, cax=cax)
-            self.set_scmp_lims(self.po.cbar_lims)
-            self.cb.set_alpha(1)
-            self.cb.draw_all()
-
     def apply_location_cutoffs(self, coords, quant):
+        """Applies location cutoffs in the space defined by an arepo run
+
+        :param coords: Coordinate array
+        :type coords: np.ndarray
+        :param quant: Quantity array
+        :type quant: np.ndarray
+        :rtype: (np.ndarray, np.ndarray)
+        :return: Trimmed coordinates and trimmed quantity
+        """
         xc, yc, zc = Coords.coordinates(self.po.orientation)
 
         mask = np.multiply(coords[:, zc] > self.po.zlim[0], coords[:, zc] < self.po.zlim[1])
@@ -243,18 +336,31 @@ class AbstractPlot(object):
 
         return trimmed_coords[mask, :], trimmed_quant[mask]
 
-    def apply_quantity_cutoffs(self, trimmed_coords, trimmed_quant):
+    def apply_quantity_cutoffs(self, coords, quant):
+        """Removes all but the points which fall in the ranges specified by the cutoff_table
+
+        :param coords: Coordinate array
+        :type coords: np.ndarray
+        :param quant: Quantity array
+        :type quant: np.ndarray
+        :rtype: (np.ndarray, np.ndarray)
+        :return: Trimmed coordinates and trimmed quantity
+        """
 
         if self.po.quantity in self.po.aa.cutoff_table.keys():
             cutoffs = self.po.aa.cutoff_table[self.po.quantity]
-            mask = np.multiply(trimmed_quant > cutoffs[0], trimmed_quant < cutoffs[1])
+            mask = np.multiply(quant > cutoffs[0], quant < cutoffs[1])
+            coords = coords[mask, :]
+            quant = quant[mask]
 
-            trimmed_coords = trimmed_coords[mask, :]
-            trimmed_quant = trimmed_quant[mask]
-
-        return trimmed_coords, trimmed_quant
+        return coords, quant
 
     def save(self, filename=None):
+        """Saves the plot to the location specified by filename
+
+        :param filename: None or absolute filename or file stem
+        :type filename: str
+        """
 
         if filename is None:
             fn_stem = f"{type(self).__name__}_{self.po.t_idx}_{self.po.quantity}_{self.po.orientation}.png"
@@ -267,12 +373,21 @@ class AbstractPlot(object):
         self.fig.savefig(filename, dpi=300)
 
     def populate_plot(self):
+        """Populates the plot
+
+        :return:
+        """
         pass
 
     def update_plot(self):
         pass
 
     def compute_plot_content(self):
+        """Computes the content of the plot using location and quantity cutoffs
+
+        :return: Trimmed coordinates and quantities
+        :rtype: (np.ndarray, np.ndarray)
+        """
         pass
 
     def update_plot_from_plot_options(self):
@@ -282,6 +397,21 @@ class AbstractPlot(object):
 class RadialPlot(AbstractPlot):
 
     def __init__(self, plot_options, figure=None, ax=None, do_not_plot=False):
+        """Radial Plot
+
+        :param plot_options: Plot options
+        :type plot_options: RadialPlotOptions
+        :param figure: Optional matplotlib figure to plot results on
+        :type figure: matplotlib.figure.Figure
+        :param ax: Optional matplotlib axes to plot results on
+        :type ax: matplotlib.axes._subplots.AxesSubplot
+        :param do_not_plot: Stops the plot from being plotted
+        :type do_not_plot: bool
+
+        :rtype: RadialPlot
+        :return: RadialPlot object
+        """
+
         super(RadialPlot, self).__init__(plot_options, figure, ax)
 
         self.line    = None
@@ -314,6 +444,15 @@ class RadialPlot(AbstractPlot):
         return tc, tq
 
     def calc_radial_profile(self, coords, quant):
+        """Calculates the content of the cylinder
+
+        :param coords: Coordinates
+        :type coords: np.ndarray
+        :param quant: Quantity
+        :type quant: np.ndarray
+        :return: p
+        :rtype: np.ndarray
+        """
 
         with SuppressStdout():
             p = make_radial(coords.astype("float64"), quant.astype("float64"),
@@ -343,6 +482,11 @@ class RadialPlot(AbstractPlot):
         self.set_title(self.po.title)
 
     def update_plot_from_plot_options(self, plot_options):
+        """Updates the plot from plot options
+
+        :param plot_options: New plot options
+        :type plot_options: RadialPlotOptions
+        """
 
         super(RadialPlot, self).update_plot_from_plot_options()
 
@@ -352,16 +496,34 @@ class RadialPlot(AbstractPlot):
 
 
 class Scatter2D(AbstractPlot):
+    """Class for scatter plots
+    """
+
     scatter = None
     cb = None
 
     def __init__(self, plot_options, figure=None, ax=None):
+        """Constructor
+
+        :param plot_options: Plot options for scatter
+        :type plot_options: ScatterPlotOptions
+        :param figure: Optional matplotlib figure to plot results on
+        :type figure: matplotlib.figure.Figure
+        :param ax: Optional matplotlib axes to plot results on
+        :type ax: matplotlib.axes._subplots.AxesSubplot
+
+        :rtype: Scatter2D
+        :returns: Scatter2D object
+        """
+
         super(Scatter2D, self).__init__(plot_options, figure, ax)
 
         tc, tq = self.compute_plot_content()
         self.populate_plot(tc, tq)
 
     def set_a(self, quant):
+        """Sets the plot frequency. i.e. every ath point is plotted"""
+
         num_points = np.size(quant, axis=0)
         self.po.a = int(np.ceil(num_points / 100_000))
 
@@ -387,6 +549,20 @@ class Scatter2D(AbstractPlot):
 
         return self.scatter
 
+    def set_scmp_lims(self, lims):
+        """Sets limits on the scalar mappable"""
+        self.po.scmp.set_clim(lims)
+
+    def set_colorbar(self):
+        """Creates the colorbar"""
+        if self.po.include_colorbar:
+            divider = make_axes_locatable(self.ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            self.cb = self.fig.colorbar(self.po.scmp, cax=cax)
+            self.set_scmp_lims(self.po.cbar_lims)
+            self.cb.set_alpha(1)
+            self.cb.draw_all()
+
     def update_plot(self, coords, quant):
 
         super(Scatter2D, self).update_plot()
@@ -402,6 +578,11 @@ class Scatter2D(AbstractPlot):
         self.set_scmp_lims(self.po.cbar_lims)
 
     def update_plot_from_plot_options(self, plot_options):
+        """Updates the plot from plot options
+
+        :param plot_options: New plot options
+        :type plot_options: ScatterPlotOptions
+        """
 
         super(Scatter2D, self).update_plot_from_plot_options()
 
@@ -428,9 +609,27 @@ class Scatter2D(AbstractPlot):
 
 
 class PColorPlot(AbstractPlot):
+    """Class to create PColors
+    """
+
     pcolor = None
 
     def __init__(self, plot_options, figure=None, ax=None, do_not_plot=False):
+        """PColor Plot constructor
+
+        :param plot_options: Plot options
+        :type plot_options: PColorPlotOptions
+        :param figure: Optional matplotlib figure to plot results on
+        :type figure: matplotlib.figure.Figure
+        :param ax: Optional matplotlib axes to plot results on
+        :type ax: matplotlib.axes._subplots.AxesSubplot
+        :param do_not_plot: Stops the plot from being plotted
+        :type do_not_plot: bool
+
+        :rtype: PColorPlot
+        :return: PColorPlot object
+        """
+
         super(PColorPlot, self).__init__(plot_options, figure, ax)
 
         self.x = None
@@ -442,6 +641,16 @@ class PColorPlot(AbstractPlot):
             self.populate_plot()
 
     def calc_a_slice(self, coords, quant):
+        """Computes the content of the pcolor
+
+        :param coords: Coordinates
+        :type coords: np.ndarray
+        :param quant: Quantity
+        :type quant: np.ndarray
+        :return: x, y and data dict containing values under the key "grid"
+        :rtype: dict
+        """
+
         res = self.po.resolution
         boxsize_x = self.po.xlim[1] - self.po.xlim[0]
         boxsize_y = self.po.ylim[1] - self.po.ylim[0]
@@ -483,6 +692,20 @@ class PColorPlot(AbstractPlot):
 
         return self.pcolor
 
+    def set_scmp_lims(self, lims):
+        """Sets limits on the scalar mappable"""
+        self.po.scmp.set_clim(lims)
+
+    def set_colorbar(self):
+        """Creates the colorbar"""
+        if self.po.include_colorbar:
+            divider = make_axes_locatable(self.ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            self.cb = self.fig.colorbar(self.po.scmp, cax=cax)
+            self.set_scmp_lims(self.po.cbar_lims)
+            self.cb.set_alpha(1)
+            self.cb.draw_all()
+
     def compute_plot_content(self):
         super(PColorPlot, self).compute_plot_content()
 
@@ -515,6 +738,12 @@ class PColorPlot(AbstractPlot):
         self.set_scmp_lims(self.po.cbar_lims)
 
     def update_plot_from_plot_options(self, plot_options):
+        """Updates the plot from plot options
+
+        :param plot_options: New plot options
+        :type plot_options: PColorPlotOptions
+        """
+
         super(PColorPlot, self).update_plot_from_plot_options()
 
         self.po = plot_options
@@ -528,10 +757,24 @@ mapping = {ScatterPlotOptions.plot_type: [ScatterPlotOptions, Scatter2D],
 
 
 def get_plotter_func(plot_name):
+    """Gets the corresponding Plot class from the string name
+
+    :param plot_name: string name of plot class
+    :type plot_name: str
+    :return: Plot class
+    :rtype: Any
+    """
     return mapping[plot_name][1]
 
 
 def get_plotter_func_from_plot_options(po):
+    """Gets the corresponding Plot class from an instance of plot options.
+
+    :param po: plot_options
+    :type po: Any
+    :return: Plot class
+    :rtype: Any
+    """
     for plot_type in mapping:
         if isinstance(po, mapping[plot_type][0]):
             return mapping[plot_type][1]
@@ -540,4 +783,11 @@ def get_plotter_func_from_plot_options(po):
 
 
 def get_plot_options_func(plot_name):
+    """Gets the corresponding Plot Options class from the plot name.
+
+    :param plot_name: string name of plot class
+    :type plot_name: str
+    :return: Plot class
+    :rtype: Any
+    """
     return mapping[plot_name][0]

@@ -66,12 +66,21 @@ part_fields = {n.CENTEROFMASS: {"Dim": None, "Units": "cm", "cmap": default_cmap
 
 
 class Coordinates:
+    """Class to work with Coordinates"""
+
     x = 0
     y = 1
     z = 2
 
     @classmethod
     def coordinates(cls, orientation):
+        """Returns coordinates in a tuple
+
+        :param orientation: orientation list
+        :type orientation: list
+        :return: Number representing orientation
+        :rtype: (int, int, int)
+        """
         xstr, ystr = orientation
         xval = getattr(cls, xstr)
         yval = getattr(cls, ystr)
@@ -111,11 +120,16 @@ class SuppressStdout(object):
 
 
 def get_cmap(quantity, bounds, log_cmap=False):
-    """
+    """Gets the appropriate colormap
+
     :param quantity: One of the particle fields from the enum
+    :type quantity: str
     :param bounds: A list containing the minimum value in the 0th position and the maximum in the first
-    :param log_cmap:
-    :return:
+    :type bounds: list
+    :param log_cmap: Bool to indicate whether a logarithmic colormap is desired
+    :type log_cmap: bool
+    :return: Tuple of cmap, norm, scmp
+    :rtype: (str, SymLogNorm, ScalarMappable)
     """
 
     assert quantity in plot_quantities, f"Cmap requested for unknown quantity {quantity}"
@@ -133,10 +147,19 @@ def get_cmap(quantity, bounds, log_cmap=False):
 
 
 def dummy():
+    """Dummy function that does nothing"""
     pass
 
 
 def convert_to_ruediger_dict(d):
+    """Converts to Ruediger-style dictionary
+
+    :param d: dict with Ruediger-style names
+    :type d: dict
+
+    :return: dict with my style of names
+    :rtype: dict
+    """
 
     new_d = dict()
 
@@ -151,6 +174,14 @@ def convert_to_ruediger_dict(d):
 
 
 def convert_from_ruediger_dict(d):
+    """Converts from Ruediger-style dictionary
+
+    :param d: dict with my style of names
+    :type d: dict
+
+    :return: dict with Ruediger-style names
+    :rtype: dict
+    """
 
     inv_map = {v: k for k, v in ruediger_conversion_table.items()}
 
@@ -167,4 +198,11 @@ def convert_from_ruediger_dict(d):
 
 
 def sci(num):
+    """Converts to scientific notation
+
+    :param num: number
+    :type num: float
+    :return: number in scientific notation
+    :rtype: str
+    """
     return "{:e}".format(num)

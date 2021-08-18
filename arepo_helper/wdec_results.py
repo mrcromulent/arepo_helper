@@ -6,6 +6,8 @@ import os
 
 
 class WDECResults(object):
+    """Class to hold the results of WDEC experiments"""
+
     required_files = ["inputprof", "controlparams", "gridparameters", "corsico.dat", "output.dat"]
     names1 = ["n", "r", "Mr", "Lr", "T", "Rho", "P", "Eps", "Kap", "Cv"]
     names2 = ["n", "Chr", "Cht", "Epsr", "Epst", "Kapr", "Kapt", "Del", "Delad", "XHe"]
@@ -14,6 +16,14 @@ class WDECResults(object):
     stpms = -4.365e-3
 
     def __init__(self, directory):
+        """Constructor
+
+        :param directory: Directory containing WDEC results
+        :type directory: str
+
+        :return: WDECResults object
+        :rtype: WDECResults
+        """
 
         if not os.path.exists(directory):
             raise OSError
@@ -29,6 +39,7 @@ class WDECResults(object):
             self.extract_input_params()
 
     def check_for_wdec_files(self):
+        """Checks if WDEC results are in path."""
 
         for filename in self.required_files:
             full_path = self.directory + "/" + filename
@@ -36,11 +47,18 @@ class WDECResults(object):
             self.files[filename] = os.path.abspath(full_path)
 
     def extract_input_params(self):
+        """Dummy function to get results frim inputprof and gridparam files"""
 
         self.ip = self.read_inputprof()
         self.gp = self.read_gridparam()
 
     def read_abundances(self):
+        """Reads the abundances from the corisico.dat file.
+
+        :return: Dataframe containing abundance data
+        :rtype: pd.DataFrame
+        """
+
         fn = self.files["corsico.dat"]
 
         with open(fn, "r") as f:
@@ -51,6 +69,11 @@ class WDECResults(object):
         return df
 
     def read_gridparam(self):
+        """Reads the contents of the gridparameters file
+
+        :return: Returns dict with things from the files
+        :rtype: dict
+        """
 
         gridparam = dict()
 
@@ -97,6 +120,12 @@ class WDECResults(object):
         return gridparam
 
     def read_inputprof(self):
+        """Reads the information in the inputprof file.
+
+        :return: Dict containing info from the file.
+        :rtype: dict
+        """
+
         inputprof = dict()
 
         with open(self.files["inputprof"], "r") as f:
@@ -108,6 +137,12 @@ class WDECResults(object):
         return inputprof
 
     def determine_pandas_df_keywords(self):
+        """Returns a list of the headers from the output file
+
+        :return: List of header items.
+        :rtype: list
+        """
+
         fn = self.files["output.dat"]
 
         # Find number of points created by WDEC
@@ -136,6 +171,8 @@ class WDECResults(object):
         return pandas_kwargs
 
     def read_all_output_data(self):
+        """Reads in all the data in the output.dat file to self.data"""
+
         fn = self.files["output.dat"]
         pandas_kwargs = self.determine_pandas_df_keywords()
 
@@ -152,11 +189,13 @@ class WDECResults(object):
         self.data = pd.concat([df, abundances], axis=1)
 
     def find_region_12_boundary(self):
+        """Finds the RegionI-RegionII boundary"""
         menv_mr = self.mr(self.gp["m_env"])
         buffer_inner = self.ip["buffer_inner"]
         return self.q(menv_mr - buffer_inner)
 
     def find_region_23_boundary(self):
+        """Finds the RegionII-RegionIII boundary"""
         m_h = self.gp["m_hyd"]
         amhyhe_tmp = 10 ** (- m_h)
         amr_hyhe = self.mr(amhyhe_tmp)
@@ -166,6 +205,7 @@ class WDECResults(object):
         return qhyhe - buffer_outer
 
     def plot_results(self):
+        """Plots the 1D profiles from self.data"""
 
         df = self.data
 
@@ -194,6 +234,7 @@ class WDECResults(object):
         plt.show()
 
     def plot_abundances(self):
+        """Plots the abundances from the corsico.dat file."""
 
         co = self.data
         h1, h2, h3 = self.gp["hvals"]
@@ -221,6 +262,11 @@ class WDECResults(object):
         fig.show()
 
     def write_temp_profile(self, out_filename):
+        """Writes a file containing the temperature at specified radii
+
+        :param out_filename: location to write file to
+        :type out_filename: str
+        """
 
         with open(out_filename, "w") as f:
 
@@ -236,7 +282,12 @@ class WDECResults(object):
         """
         Converts ArepoSpeciesList indexes to WDEC indexes
         :param species:
-        :return:
+        :type species: str
+
+        :raises ValueError: If species is not found
+
+        :return: String of the WDEC name
+        :rtype: str
         """
 
         if species == "H1":
@@ -252,34 +303,49 @@ class WDECResults(object):
 
     @staticmethod
     def q(mr):
+        """q"""
         return -log10(1 - mr)
 
     @staticmethod
     def mr(q):
+        """mr"""
         return 1.0 - 10 ** (-q)
 
     @staticmethod
     def mr_diff(q1, q2):
-        """
-        :param q1: Inner q value
-        :param q2: Outer q value
-        :return: The equivalent Delta Mr for the corresponding qs
+        """Finds the difference in mass
 
-        Delta Mr
-        = Mr2 - Mr1
-        = msol * (1 - 10 ** -q2 - (1 - 10 ** -q2))
-        = msol *(10 ** -q1 - 10 ** -q2)
-        But msol = 1.989 * 10 ** 33 in grams
-        = 1.989 * (10 ** (-q1 + 33) - 10 ** (-q2 + 33))
+        :param q1: Inner q value
+        :type q1: float
+        :param q2: Outer q value
+        :type q2: float
+        :return: The equivalent Delta Mr for the corresponding qs
+        :rtype: float
+
+        .. notes::
+            `Delta Mr
+            = Mr2 - Mr1
+            = msol * (1 - 10 ** -q2 - (1 - 10 ** -q2))
+            = msol *(10 ** -q1 - 10 ** -q2)
+            But msol = 1.989 * 10 ** 33 in grams
+            = 1.989 * (10 ** (-q1 + 33) - 10 ** (-q2 + 33))`
         """
         return 1.989 * (10 ** (-q1 + 33) - 10 ** (-q2 + 33))
 
     @staticmethod
     def fortran_float(strnum):
+        """fortran_float"""
         return float(strnum.replace("d-", "e-").replace("d", "e+"))
 
     @classmethod
     def check_values(cls, gridparam, inputprof):
+        """Performs sense checks on the values you specify
+
+        :param gridparam: gridparam
+        :type gridparam: dict
+        :param inputprof: inputprof
+        :type inputprof: dict
+        """
 
         m_hyd = gridparam["m_hyd"]
         m_env = gridparam["m_env"]

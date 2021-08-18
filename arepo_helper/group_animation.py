@@ -9,11 +9,24 @@ import os
 
 
 class GroupAnimation(object):
+    """Class to create a group of animations in a grid"""
     plots = []
     pbar = None
     animation = None
 
     def __init__(self, plot_options_array, fps=5):
+        """Constructor
+
+        :param plot_options_array: Array of PlotOptions objects, where axis 2 indicates the passive of time
+        :type plot_options_array: np.ndarray
+        :param fps: The frames-per-second of the animation
+        :type fps: int
+
+        :return: Group animation object
+        :rtype: GroupAnimation
+
+        .. seealso::
+        """
 
         self.poa    = plot_options_array
         self.fps    = fps
@@ -28,6 +41,7 @@ class GroupAnimation(object):
                                          squeeze=False)
 
     def animate(self):
+        """Creates the animation"""
         self.pbar = tqdm(total=self.num_frames)
 
         self.init()
@@ -39,6 +53,7 @@ class GroupAnimation(object):
                                            init_func=utilities.dummy)
 
     def init(self):
+        """Initialises all plots to be animated"""
 
         for i in range(self.nrows):
             for j in range(self.ncols):
@@ -47,6 +62,14 @@ class GroupAnimation(object):
                 self.plots[i, j] = plotter(po, figure=self.fig, ax=self.ax[i, j])
 
     def animate_frame(self, t):
+        """Updates the progress bar and animates a single frame
+
+        :param t: The frame number to be animated
+        :type t: int
+
+        :return: Array of AbstractPlots
+        :rtype: np.ndarray
+        """
 
         # Update progress bar
         self.pbar.update(1)
@@ -60,6 +83,11 @@ class GroupAnimation(object):
         return self.plots
 
     def save(self, filename=None):
+        """Saves the animation to the file specified by filename
+
+        :param filename: Location to save file to
+        :type filename: str
+        """
 
         if filename is None:
             dt = datetime.now().strftime("%Y%m%d-%H%M%S")

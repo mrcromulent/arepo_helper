@@ -2,17 +2,30 @@ from collections import OrderedDict
 
 
 class BaseEnum:
+    """Base class for the Enums used in the project."""
 
     @classmethod
     def names(cls):
+        """Returns a list of user-specified attributes names in the class.
+
+        :return: List of attributes
+        :rtype: list
+        """
         return [i for i in cls.__dict__.keys() if i[:1] != "_"]
 
     @classmethod
     def values(cls):
+        """Returns a list of user-specified attribute values in the class.
+
+        :return: List of attribute values
+        :rtype: list
+        """
         return [cls.__dict__[i] for i in cls.__dict__.keys() if i[:1] != "_"]
 
 
 class ArepoHeader(BaseEnum):
+    """Fields which appear in the Snapshot/IC header"""
+
     BOXSIZE = "BoxSize"
     COMPOSITIONVECTORLENGTH = "Composition_vector_length"
     FLAGCOOLING = "Flag_Cooling"
@@ -50,9 +63,7 @@ class ArepoHeader(BaseEnum):
 
 
 class ArepoRoot(BaseEnum):
-    """
-    Root groups
-    """
+    """Root groups in the snapshot/IC files"""
     HEADER = "Header"
     PARAMETERS = "Parameters"
     PARTTYPE = "PartType"
@@ -63,6 +74,8 @@ class ArepoRoot(BaseEnum):
 
 
 class ArepoGasFields(BaseEnum):
+    """Particle type fields which tend to appear for gas particles (Type 0)"""
+
     # Fields common to all particle types
     ACCELERATION = "Acceleration"
     COORDINATES = "Coordinates"
@@ -125,6 +138,7 @@ class ArepoGasFields(BaseEnum):
 
 
 class ArepoStarFields(BaseEnum):
+    """Particle type fields which tend to appear for star particles (Type 4)"""
     # Fields common to all particle types
     ACCELERATION = "Acceleration"
     COORDINATES = "Coordinates"
@@ -153,6 +167,7 @@ class ArepoStarFields(BaseEnum):
 
 
 class ArepoBHFields(BaseEnum):
+    """Particle type fields which tend to appear for Black hole particles (Type 5)"""
     # Fields common to all particle types
     ACCELERATION = "Acceleration"
     COORDINATES = "Coordinates"
@@ -182,6 +197,7 @@ class ArepoBHFields(BaseEnum):
 
 
 class ArepoTreeFields(BaseEnum):
+    """Probably unused Tree fields"""
     DESCENDANT = "Descendant"
     FILENR = "FileNr"
     FIRSTHALOINFOFGROUP = "FirstHaloInFOFGroup"
@@ -246,6 +262,7 @@ class ArepoTreeFields(BaseEnum):
 
 
 class ArepoGroupFields(BaseEnum):
+    """Probably unused group fields"""
     GROUPBHMASS = "GroupBHMass"
     GROUPBHMDOT = "GroupBHMdot"
     GROUPCM = "GroupCM"
@@ -300,6 +317,19 @@ d = OrderedDict({ArepoGasFields: {"Root": ArepoRoot.PARTTYPE, "Attr": False},
 
 
 def path(field, ptype=0):
+    """Returns the formatted path name of the field given
+
+    :param field: String name of field which is desired
+    :type field: str
+    :param ptype: Particle type (almost always zero for gas particles)
+    :type ptype: int
+
+    :raises ValueError: If field is not found
+
+    :return: Field path and a bool specifying if it's an attribute
+    :rtype: (str, bool)
+    """
+
     if field not in n.values():
         raise ValueError(f"Attempting to access non-existant field {field}")
     else:

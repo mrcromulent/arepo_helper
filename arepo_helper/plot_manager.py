@@ -1,6 +1,8 @@
 from abstract_plot import PlotOptions, PColorPlot, PColorPlotOptions
 from abstract_plot import RadialPlotOptions, RadialPlot, get_plot_options_func
+from species import ArepoSpeciesList
 from analysis import ArepoAnalyser
+from h5_file import ArepoSnapshot
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from run import ArepoRun
@@ -9,48 +11,109 @@ import numpy as np
 import os
 
 
-def quick_pcolor(s, quantity_name, inner_boxsize=None):
-    ar = ArepoRun([s])
-    aa = ArepoAnalyser({"inner_boxsize": inner_boxsize,
-                        "quantity": quantity_name,
+def quick_pcolor(s, quantity_name, explicit_options=None):
+    """Shortcut to generate a PColorPlot
+
+    :param s: Snapshot
+    :type s: ArepoSnapshot
+    :param quantity_name: String name of quantity to be examined
+    :type quantity_name: str
+    :param explicit_options: Explicit options
+    :type explicit_options: dict
+    :return: PColorPlot
+    :rtype: PColorPlot
+    """
+
+    if explicit_options is None:
+        explicit_options = dict()
+
+    analysis_options = {"quantity": quantity_name,
                         "orientation": ["x", "y"],
                         "t_idx": 0
-                        })
+                        }
+
+    analysis_options.update(explicit_options)
+
+    ar = ArepoRun([s])
+    aa = ArepoAnalyser(analysis_options)
 
     po = PColorPlotOptions(ar, aa)
     return PColorPlot(po)
 
 
-def quick_radial(s, quantity_name, a=None, b=None, logscale=False, inner_boxsize=None):
+def quick_radial(s, quantity_name, a=None, b=None, explicit_options=None):
+    """Shortcut to create RadialPlot
 
-    ar = ArepoRun([s])
-    aa = ArepoAnalyser({"a": a,
+    :param s: Snapshot
+    :type s: ArepoSnapshot
+    :param quantity_name: Quantity name
+    :type quantity_name: str
+    :param a: Coordinates of start of radial cylinder
+    :type a: list
+    :param b: Coordinates of end of radial cylinder
+    :type b: list
+    :param explicit_options: Explicit options
+    :type explicit_options: dict
+
+    :return: RadialPlot
+    :rtype: RadialPlot
+    """
+
+    if explicit_options is None:
+        explicit_options = dict()
+
+    analysis_options = {"a": a,
                         "b": b,
-                        "logscale": logscale,
+                        "logscale": False,
                         "quantity": quantity_name,
                         "t_idx": 0,
                         "orientation": ["x", "y"],  # TODO: Refactor to exclude
-                        "inner_boxsize": inner_boxsize,
-                        })
+                        }
+    analysis_options.update(explicit_options)
+
+    ar = ArepoRun([s])
+    aa = ArepoAnalyser(analysis_options)
 
     po = RadialPlotOptions(ar, aa)
     return RadialPlot(po)
 
 
-def quick_nuclear_compositions(s, asl, a=None, b=None, logscale=False):
+def quick_nuclear_compositions(s, asl, a=None, b=None, explicit_options=None):
+    """Shortcut to create a radial plot showing location of different species.
+
+    :param s: Snapshot
+    :type s: ArepoSnapshot
+    :param asl: Arepo species list object
+    :type asl: ArepoSpeciesList
+    :param a: Coordinates of start of radial cylinder
+    :type a: list
+    :param b: Coordinates of end of radial cylinder
+    :type b: list
+    :param explicit_options: Explicit options
+    :type explicit_options: dict
+
+    :return: Matplotlib figure
+    :rtype: matplotlib.figure.Figure
+    """
+
+    if explicit_options is None:
+        explicit_options = dict()
+
     ar = ArepoRun([s])
-    lines   = []
+    lines = []
     fig, ax = plt.subplots()
 
     for i, spec in enumerate(asl.species_dict):
-        aa = ArepoAnalyser({"a": a,
+        analysis_options = {"a": a,
                             "b": b,
-                            "logscale": logscale,
+                            "logscale": False,
                             "quantity": n.NUCLEARCOMPOSITION,
                             "select_column": i,
                             "t_idx": 0,
                             "orientation": ["x", "y"],  # TODO: Refactor to exclude
-                            })
+                            }
+        analysis_options.update(explicit_options)
+        aa = ArepoAnalyser(analysis_options)
 
         po = RadialPlotOptions(ar, aa)
         rp = RadialPlot(po, figure=fig, ax=ax, do_not_plot=True)
@@ -78,43 +141,76 @@ def quick_nuclear_compositions(s, asl, a=None, b=None, logscale=False):
     return fig
 
 
-def quick_nuclear_pcolors(s, asl, inner_boxsize=None):
+def quick_nuclear_pcolors(s, asl, explicit_options=None):
+    """Shortcut to create a pcolor plots showing location of different species.
+
+    :param s: Snapshot
+    :type s: ArepoSnapshot
+    :param asl: Arepo species list object
+    :type asl: ArepoSpeciesList
+    :param explicit_options: Explicit options
+    :type explicit_options: dict
+
+    """
+
+    if explicit_options is None:
+        explicit_options = dict()
 
     ar = ArepoRun([s])
     for i, spec in enumerate(asl.species_dict):
-
         print(f"Creating PColor for species {spec}")
 
-        aa = ArepoAnalyser({"inner_boxsize": inner_boxsize,
-                            "quantity": n.NUCLEARCOMPOSITION,
+        analysis_options = {"quantity": n.NUCLEARCOMPOSITION,
                             "orientation": ["x", "y"],
                             "t_idx": 0,
                             "select_column": i,
                             "title": f"Location of {spec}",
                             "log_cmap": False,
-                            })
+                            }
+
+        analysis_options.update(explicit_options)
+        aa = ArepoAnalyser(analysis_options)
 
         po = PColorPlotOptions(ar, aa)
         pcp = PColorPlot(po)
         pcp.save(f"{i}_{spec}.png")
 
 
-def make_radial_time_series(ar, quantity_name, a=None, b=None, logscale=False):
+def make_radial_time_series(ar, quantity_name, a=None, b=None, explicit_options=None):
+    """Makes a plot showing radials across a number of snapshots
+
+    :param ar: Arepo Run
+    :type ar: ArepoRun
+    :param quantity_name: Name of relevant quantity
+    :type quantity_name: str
+    :param a: Coordinates of start of radial cylinder
+    :type a: list
+    :param b: Coordinates of end of radial cylinder
+    :type b: list
+    :param explicit_options: Explicit options
+    :type explicit_options: dict
+    """
+
+    if explicit_options is None:
+        explicit_options = dict()
 
     fig, ax = plt.subplots()
-    nsnaps  = len(ar.snapshots)
-    colors  = cm.viridis(np.linspace(0, 1, nsnaps))
-    rp      = None
+    nsnaps = len(ar.snapshots)
+    colors = cm.viridis(np.linspace(0, 1, nsnaps))
+    rp = None
 
     for i, s in enumerate(ar.snapshots):
-        aa = ArepoAnalyser({"a": a,
+
+        analysis_options = {"a": a,
                             "b": b,
-                            "logscale": logscale,
+                            "logscale": False,
                             "quantity": quantity_name,
                             "t_idx": i,
                             "orientation": ["x", "y"],  # TODO: Refactor to exclude
                             "color": colors[i],
-                            })
+                            }
+        analysis_options.update(explicit_options)
+        aa = ArepoAnalyser(analysis_options)
 
         po = RadialPlotOptions(ar, aa)
         rp = RadialPlot(po, figure=fig, ax=ax)
@@ -128,6 +224,13 @@ def make_radial_time_series(ar, quantity_name, a=None, b=None, logscale=False):
 
 
 def energy_balance(ar, export_filename=None):
+    """Checks energy balance of all the energy types in an Arepo Run
+
+    :param ar: Arepo Run
+    :type ar: ArepoRun
+    :param export_filename: Location to save plot to
+    :type export_filename: str
+    """
 
     ie_list = []
     ke_list = []
@@ -182,12 +285,23 @@ def energy_balance(ar, export_filename=None):
 def compute_plot_options_array(ar, qs, oris,
                                plot_type=PColorPlotOptions.plot_type,
                                explicit_options=None, ts=None):
-    """
+    """Computes an array of plot options with (orientations, quantities, time) representing axes (0,1,2) respectively
+
     :param ar: Arepo run
+    :type ar: ArepoRun
     :param qs: list of quantities
+    :type qs: list
     :param oris: list of orientations
+    :type oris: list
     :param plot_type: string of plot type
+    :type plot_type: str
+    :param explicit_options: Explicit options
+    :type explicit_options: dict
+    :param ts: Explicit specification of the relevant time indices
+    :type ts: list
+
     :return: np.array of ArepoPlotOptions objects
+    :rtype: np.ndarray
     """
 
     if explicit_options is None:
@@ -196,13 +310,12 @@ def compute_plot_options_array(ar, qs, oris,
     if ts is None:
         ts = list(range(0, len(ar.snapshots)))
 
-    poa     = np.empty((len(oris), len(qs), len(ts)), dtype=PlotOptions)
+    poa = np.empty((len(oris), len(qs), len(ts)), dtype=PlotOptions)
     po_func = get_plot_options_func(plot_type)
 
     for i, o in enumerate(oris):
         for j, q in enumerate(qs):
             for k, t in enumerate(ts):
-
                 analysis_options = {"quantity": q,
                                     "orientation": o,
                                     "t_idx": t
