@@ -28,10 +28,13 @@ PyObject *make_radial(PyObject *self, PyObject *args);
 
 PyObject *make_pcolor(PyObject *self, PyObject *args, PyObject *kwargs);
 
+PyObject *get_indices_of_neighbours(PyObject *self, PyObject *args);
+
 // Python Module definition
 static PyMethodDef vis_methods[] = {
         {"make_radial", make_radial, METH_VARARGS, ""},
         {"make_pcolor", (PyCFunction) make_pcolor, METH_VARARGS | METH_KEYWORDS, ""},
+        {"get_indices_of_neighbours", get_indices_of_neighbours, METH_VARARGS, ""},
         {nullptr, nullptr, 0,nullptr}
 };
 

@@ -4,8 +4,8 @@
 #define HELM_EOS_MAXITER 100
 #define HELM_EOS_EPS 1.0e-10
 
-#define IMAX 271
-#define JMAX 101
+#define IMAX 541
+#define JMAX 201
 
 typedef double helm_eos_table_entry[IMAX][JMAX];
 

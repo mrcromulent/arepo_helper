@@ -187,7 +187,7 @@ PyObject* loadhelm_eos(PyObject *self, PyObject *args) {
 
 PyMODINIT_FUNC PyInit_pyhelm_eos(void) {
 
-    import_array();
+    import_array()
     pyHelmEosType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&pyHelmEosType) < 0) {
         return nullptr;

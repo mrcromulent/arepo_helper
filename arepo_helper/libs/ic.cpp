@@ -277,6 +277,7 @@ PyObject *create_wd_implementation(t_helm_eos_table *eos,
         xnuc[i] = PyFloat_AsDouble(PyList_GetItem(xnuc_py, i));
     }
 
+
     // Initialise the profile primitive variable containers
     auto r = (double *) malloc(max_profile_length * sizeof(double));
     auto p = (double *) malloc(max_profile_length * sizeof(double));
@@ -373,6 +374,7 @@ PyObject *create_wd_implementation(t_helm_eos_table *eos,
     free(mr);
     free(csnd);
     free(xnuc_radial);
+    free(xnuc);
 
     gsl_odeiv_evolve_free(ev);
     gsl_odeiv_control_free(c);
@@ -715,6 +717,6 @@ PyObject *rho_c_from_mtot(PyObject *self, PyObject *args) {
 
 PyMODINIT_FUNC PyInit_ic(void)
 {
-    import_array();
+    import_array()
     return PyModule_Create(&moduledef_ic);
 }

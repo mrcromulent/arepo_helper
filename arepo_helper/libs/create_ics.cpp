@@ -165,7 +165,7 @@ PyObject *add_grid_particles(PyObject *self, PyObject *args, PyObject *kwargs) {
     PyObject *dict;
     double boxsize;
     int boxres          = 32;
-    double grid_pres    = 2e6;
+    double grid_pres    = 4e6;
     double grid_density = 1e-4;
     PyObject *grid_xnuc = nullptr;
 
@@ -481,7 +481,7 @@ PyObject *convert_to_healpix(PyObject *self, PyObject *args, PyObject *kwargs) {
 }
 
 PyMODINIT_FUNC PyInit_create_ics(void) {
-    import_array();
+    import_array()
 
     return PyModule_Create(&moduledef_create_ics);
 }

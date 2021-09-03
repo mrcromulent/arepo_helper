@@ -41,15 +41,16 @@ numpy_incl = os.path.join(np.get_include(), "numpy")
 # Home
 install_py_modules = False
 hdf5_incl = "/usr/include/hdf5/serial/"
+hdf5_lib_dir = "/usr/lib/x86_64-linux-gnu/hdf5/serial/"
 armadillo_incl = "/"
 armadillo_lib = "/"
 
 
 # Source files and definitions for this thing
 include_dirs = [python_incl, numpy_incl, armadillo_incl, hdf5_incl, C_SRC_DIR]
-library_dirs = [python_lib, armadillo_lib]
-libraries = ["gsl", "gslcblas", "m", "armadillo"]
-define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")]
+library_dirs = [python_lib, armadillo_lib, hdf5_lib_dir]
+libraries = ["gsl", "gslcblas", "m", "armadillo", "hdf5"]
+define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"), ('H5_BUILT_AS_DYNAMIC_LIB', True)]
 ext_modules_names = ["pyhelm_eos", "ic", "create_ics", "arepo_vis"]
 sources = get_cpp_sources()
 

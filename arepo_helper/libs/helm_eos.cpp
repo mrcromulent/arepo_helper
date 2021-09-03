@@ -802,11 +802,12 @@ int eos_calc_tgiven_azbar(t_helm_eos_table* helm_eos_table, double rho, const st
     const size_t offsets[5] = {offsetof(struct eos_value, v), offsetof(struct eos_value, drho), offsetof(struct eos_value, dtemp), offsetof(struct eos_value, dabar), offsetof(struct eos_value, dzbar)};
     const double abar = cache->abar, zbar = cache->zbar;
     double ltemp = log(temp);
+    double l10temp = ltemp * (1.0 / log(10));
 
     if (helm_eos_ion(rho, temp, ltemp, cache, zbar, pion, eion, sion) != 0) return -1;
 #ifndef EOS_IDEAL
     if (helm_eos_rad(rho, temp, abar, zbar, prad, erad, srad) != 0) return -1;
-    if (helm_eos_ele(helm_eos_table, rho, temp, ltemp * (1.0 / log(10)), pele, eele, sele, etaele, xne, cache, only_e) != 0) return -1;
+    if (helm_eos_ele(helm_eos_table, rho, temp, l10temp, pele, eele, sele, etaele, xne, cache, only_e) != 0) return -1;
 //#ifdef EOS_COULOMB_CORRECTIONS
     if(helm_eos_table->useCoulombCorrections)
     {

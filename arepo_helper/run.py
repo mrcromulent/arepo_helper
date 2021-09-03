@@ -1,9 +1,11 @@
-from utilities import common_snapbases, plot_quantities
+from utilities import common_snapbases, plot_quantities, part_fields
+from typing import List
 from h5_file import ArepoSnapshot
-from names import ArepoHeader
+from names import ArepoHeader, n
 from datetime import datetime
 from tqdm import tqdm
 import pickle as pk
+import numpy as np
 import glob
 import os
 import re
@@ -26,7 +28,7 @@ class ArepoRun(object):
         """ArepoRun constructor.
 
         :param snapshot_list: List of snapshots
-        :type snapshot_list: list
+        :type snapshot_list: List[ArepoSnapshot]
         :param save_to_cache: Switch that determines whether a cache should be saved to disk
         :type save_to_cache: bool
 
@@ -82,6 +84,46 @@ class ArepoRun(object):
             pk.dump((self.snapshots, self.run_header, self.maxima, self.minima), handle)
 
         print(f"Cache saved at: {path}")
+
+    def get_created_destroyed_particles(self, t_idx):
+
+        if t_idx < 1:
+            raise ValueError(f"Cannot find created particles {t_idx=}")
+
+        old_part = self.snapshots[t_idx - 1].get_from_h5(n.PARTICLEIDS)
+        new_part = self.snapshots[t_idx].get_from_h5(n.PARTICLEIDS)
+
+        created = np.setdiff1d(new_part, old_part)
+        destroyed = np.setdiff1d(old_part, new_part)
+
+        return created, destroyed
+
+    def get_particle_lifetimes(self, pids_requested, fields=None):
+
+        if fields is None:
+            fields = self.snapshots[0].get_field_names()
+
+        ret_list = []
+
+        for i, p in enumerate(pids_requested):
+            data = dict()
+            for field in fields:
+                ncols = part_fields[field]["Dim"]
+                if ncols is None:
+                    shape = (len(self.snapshots), 1)
+                else:
+                    shape = (len(self.snapshots), ncols)
+
+                data[field] = np.array(np.full(shape, np.nan), ndmin=2)
+                for j, s in enumerate(self.snapshots):
+                    p_exists = s.particle_exists(p)
+
+                    if p_exists:
+                        data[field][j, :] = s.get_values_from_pids(field, np.array([p]))
+
+            ret_list.append(data)
+
+        return ret_list
 
     @classmethod
     def from_directory(cls, target_dir=".", snapbase=None, from_cache=True):

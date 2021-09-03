@@ -7,6 +7,7 @@ import numpy as np
 import utilities
 import analysis
 import run
+from run import ArepoRun
 import os
 
 
@@ -26,11 +27,11 @@ class PlotOptions(object):
     xlabel = None
     ylabel = None
 
-    def __init__(self, ar, aa, *args, **kwargs):
+    def __init__(self, ar: ArepoRun, aa: analysis.ArepoAnalyser, *args, **kwargs) -> None:
         """Constructor for abstract plotting options class
 
         :param ar: Arepo run
-        :type ar: run.ArepoRun
+        :type ar: ArepoRun
         :param aa: Arepo analyser
         :type aa: analysis.ArepoAnalyser
         :param args: Explicit plotting options (e.g. title)
@@ -62,8 +63,8 @@ class PlotOptions(object):
     def compute_title(self):
         """Computes the title"""
         units = part_fields[self.quantity]["Units"]
-        t = round(self.ar.snapshots[self.t_idx].get_from_h5(n.TIME), 2)
-        self.title = f"{self.quantity} time evolution, t = {t} sec. [${units}$]"
+        t_val = float(self.ar.snapshots[self.t_idx].get_from_h5(n.TIME))
+        self.title = f"{self.quantity} time evolution, t = {round(t_val, 2)} sec. [${units}$]"
 
 
 class ScatterPlotOptions(PlotOptions):
@@ -326,15 +327,26 @@ class AbstractPlot(object):
         """
         xc, yc, zc = Coords.coordinates(self.po.orientation)
 
-        mask = np.multiply(coords[:, zc] > self.po.zlim[0], coords[:, zc] < self.po.zlim[1])
-        trimmed_coords = coords[mask, :]
-        trimmed_quant = quant[mask]
+        zmask = np.multiply(coords[:, zc] > self.po.zlim[0], coords[:, zc] < self.po.zlim[1])
+        tc = coords[zmask, :]
+        tq = quant[zmask]
 
-        xmask = np.multiply(trimmed_coords[:, xc] > self.po.xlim[0], trimmed_coords[:, xc] < self.po.xlim[1])
-        ymask = np.multiply(trimmed_coords[:, yc] > self.po.ylim[0], trimmed_coords[:, yc] < self.po.ylim[1])
+        xmask = np.multiply(tc[:, xc] > self.po.xlim[0], tc[:, xc] < self.po.xlim[1])
+        ymask = np.multiply(tc[:, yc] > self.po.ylim[0], tc[:, yc] < self.po.ylim[1])
         mask = np.multiply(xmask, ymask)
+        tc = tc[mask, :]
+        tq = tq[mask]
 
-        return trimmed_coords[mask, :], trimmed_quant[mask]
+        if self.po.aa.weight_by_mass:
+            snap = self.po.ar.snapshots[self.po.t_idx]
+            mass = snap.get_from_h5(n.MASSES)
+            tm = mass[zmask]
+            tm = tm[mask]
+
+            #
+            tq *= tm / tm.sum()
+
+        return tc, tq
 
     def apply_quantity_cutoffs(self, coords, quant):
         """Removes all but the points which fall in the ranges specified by the cutoff_table
@@ -363,7 +375,8 @@ class AbstractPlot(object):
         """
 
         if filename is None:
-            fn_stem = f"{type(self).__name__}_{self.po.t_idx}_{self.po.quantity}_{self.po.orientation}.png"
+            t_val   = self.po.ar.snapshots[self.po.t_idx].get_from_h5(n.TIME)
+            fn_stem = f"{type(self).__name__}_{t_val:.2f}_{self.po.quantity}_{self.po.orientation}.png"
             dir_name = os.path.dirname(self.po.ar.snapshots[0].filename)
             filename = os.path.join(dir_name, fn_stem)
         elif not os.path.isabs(filename):

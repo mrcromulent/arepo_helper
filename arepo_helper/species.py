@@ -72,45 +72,83 @@ class ArepoSpeciesList(object):
 
         :param xnuc: Nuclear composition, indicating the percentage of each species
         :type xnuc: np.ndarray
-        :return: Mean baryons and mean charge per baryon
+
+        :return: The mean number of nucleons per isotope, the mean charge per isotope
         :rtype: (float, float)
+
+        .. seealso::
+            https://iopscience.iop.org/article/10.1086/313304/fulltext/40612.text.html
+        .. notes::
+            Let isotope i have Z protons and A nucleons (protons + neutrons).
+            Let the aggregate total of isotope i have a number density of ni
+            Define the dimensionless mass fraction of isotope i as:
+
+            Xi = rhoi / rho = ni Ai / (rho NA)
+
+            Then
+            abar = Sum(Xi / Ai) ^(-1)
+            zbar = abar * Sum(Zi Xi / Ai)
+
+            Also:
+            Ye = zbar / abar
+
         """
-        abar = 0.0
-        zbar = 0.0
-        xsum = 0.0
+        abar_inv = 0.0
+        zbar_sum = 0.0
 
         for i, spec in enumerate(self.species_dict):
-            curr_a = self.species_dict[spec].mass_number
-            curr_z = self.species_dict[spec].atomic_number
+            ai = self.species_dict[spec].mass_number
+            zi = self.species_dict[spec].atomic_number
+            xi = xnuc[i]
 
-            ymass = xnuc[i] * curr_a
-            abar += ymass
-            zbar += curr_z * ymass
-            xsum += xnuc[i]
+            abar_inv += xi / ai
+            zbar_sum += zi * xi / ai
 
-        abar = xsum / abar
-        zbar = zbar / xsum * abar
+        abar = abar_inv ** (-1)
+        zbar = abar * zbar_sum
 
         return abar, zbar
 
-    def estimate_temp(self, rho, e, xnuc):
-        """Estimates temperature based on density, spec. internal energy and nuclear composition
+    def estimate_temp_from_e(self, e, xnuc, gamma=1.667):
+        """Estimates temperature based on spec. internal energy and nuclear composition
 
-        :param rho: Density
-        :type rho: float
         :param e: Specific internal energy
         :type e: float
         :param xnuc: Nuclear composition
         :type xnuc: np.ndarray
+        :param gamma:
+        :type gamma: float
 
         :return: Estimated temperature
         :rtype: float
+
+        .. notes::
+            From the C++ code
+            _temp = 2.0 / 3.0 * p / (ni + ne) / GSL_CONST_CGS_BOLTZMANN;
+
+            where
+            - ni = 1.0 / cache.abar * rho * GSL_CONST_NUM_AVOGADRO;
+            - ne = cache.zbar * ni;
+
+            so:
+            T = 2.0 / 3.0 * p / (ni + ne) / KB
+            ni = rho * NA / abar
+            ne = rho * NA / abar * zbar
+
+            and we will use the relation
+            p = e * rho * (gamma - 1)
+
+            Thus
+            T = 2.0 / 3.0 * e * rho * (gamma - 1) / (rho * NA / abar * (zbar + 1)) * 1 / KB
+            T = 2.0 / 3.0 * e * (gamma - 1) / (NA * KB / abar * (zbar + 1))
+
+            Rearranging for clarity:
+            T = 2.0 / 3.0 * (abar * e * (gamma - 1)) / (KB * NA * (zbar + 1))
         """
 
         abar, zbar = self.azbar(xnuc)
-        ni = 1 / abar * rho * NA
-        ne = zbar * ni
+        return 2.0 / 3.0 * (abar * e * (gamma - 1)) / (KB * NA * (zbar + 1))
 
-        temp = 2.0 / (3.0 * (ni + ne)) * 1 / KB * e * rho
-
-        return temp
+    def estimate_e_from_temp(self, temp, xnuc, gamma=1.667):
+        abar, zbar = self.azbar(xnuc)
+        return 3.0 / 2.0 * (NA * KB * temp * (zbar + 1)) / (abar * (gamma - 1))

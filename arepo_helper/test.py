@@ -350,7 +350,7 @@ def test_add_grid_particles():
                                        pmass=pmass)
 
     complete_dict = create_ics.add_grid_particles(wd, boxsize,
-                                                  boxres=32, grid_pres=2e6, grid_density=1e-4, grid_xnuc=xnuc)
+                                                  boxres=32, grid_pres=4e6, grid_density=1e-4, grid_xnuc=xnuc)
 
     print(complete_dict)
 

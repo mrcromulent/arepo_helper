@@ -306,7 +306,7 @@ class ArepoSimulation(object):
                     elif temp_calculated < min_temp:
                         temp_calculated = min_temp
 
-                    e_calculated, dedt, p_calculated, csnd = eos.tgiven(density[i], xnuc, temp_calculated)
+                    e_calculated, dedt, p_calculated, csnd = eos.tgiven(density[i], xnuc[i], temp_calculated)
 
                 if temp_calculated < min_temp or temp_calculated > max_temp:
                     egy_injection = e_calculated - intern_ener[i]

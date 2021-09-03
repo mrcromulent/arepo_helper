@@ -326,3 +326,28 @@ def compute_plot_options_array(ar, qs, oris,
                 poa[i, j, k] = po_func(ar, aa)
 
     return poa
+
+
+def plot_particle_lifetimes(ar, list_of_pids, limit=10):
+
+    if len(list_of_pids) > limit:
+        list_of_pids = list_of_pids[:limit]
+
+    data = np.empty((len(list_of_pids), len(ar.snapshots), 3))
+
+    for t_idx, s in enumerate(ar.snapshots):
+        for i, p in enumerate(list_of_pids):
+            if s.particle_exists(p):
+                data[i, t_idx, :] = s.get_values_from_pids(n.COORDINATES, np.array([p]))
+            else:
+                data[i, t_idx, :] = np.nan
+
+    fig, ax = plt.subplots()
+    for i, p in enumerate(list_of_pids):
+        ax.scatter(data[i, :, 0], data[i, :, 1],
+                   c=data[i, :, 1],
+                   s=1.5)
+    for i, p in enumerate(list_of_pids):
+        ax.annotate(f"{p}", (data[i, 0, 0], data[i, 0, 1]))
+
+    fig.show()

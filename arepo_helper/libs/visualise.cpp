@@ -2,6 +2,7 @@
 #include <armadillo>
 #include <arrayobject.h>
 
+#include "const.h"
 #include "sph.h"
 #include "utils.h"
 #include "omp_util.h"
@@ -311,8 +312,7 @@ PyObject *make_pcolor(PyObject *self, PyObject *args, PyObject *kwargs) {
     int numthreads = 1;
     int include_neighbours_in_output = 1; // Don't try to turn the include variable into a bool. It caused nothing but problems
 
-    const char *kwlist[] = {"pos", "quant", "axes", "boxsizes", "resolutions", "centers",
-                            "include_neighbours_in_output", "numthreads", nullptr};
+    const char *kwlist[] = {"pos", "quant", "axes", "boxsizes", "resolutions", "centers", "include_neighbours_in_output", "numthreads", nullptr};
     auto keywords = (char **) kwlist;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
@@ -384,9 +384,69 @@ PyObject *make_radial(PyObject *self, PyObject *args) {
     return PyArray_Return(pyProfile);
 }
 
+PyObject *get_indices_of_neighbours(PyObject *self, PyObject *args) {
+
+    PyObject *dict;
+    int n_neighbours;
+    PyArrayObject *target_coord;
+
+    if (!PyArg_ParseTuple(args, "OiO!:get_indices_of_neighbours(dict, n_neighbours, target_coord)",
+                          &dict,
+                          &n_neighbours,
+                          &PyArray_Type, &target_coord)) {
+        return nullptr;
+    }
+
+    auto pos = (double *) PyArray_DATA((PyArrayObject *) PyDict_GetItemString(dict, f[N::COORDINATES]));
+    auto coord = (double *) PyArray_DATA(target_coord);
+    auto mass = (double *) PyArray_DATA((PyArrayObject *) PyDict_GetItemString(dict, f[N::MASSES]));
+    auto density_1 = (PyArrayObject *) PyDict_GetItemString(dict, f[N::DENSITY]);
+    auto density = (double *) PyArray_DATA(density_1);
+    int npart = PyArray_DIMS(density_1)[0];
+
+    t_sph_tree tree;
+    createTree(&tree, npart, pos);
+
+    double hsml = 0;
+    calcHsml(&tree, coord, pos, mass, n_neighbours, &hsml, density);
+
+    int nneighbours_real;
+    int converged;
+    auto neighbours = static_cast<int *>(malloc(tree.usednodes * sizeof(int)));
+
+    auto radius = getNNeighbours(&tree, coord, pos,
+                                 n_neighbours,
+                                 &nneighbours_real,
+                                 &neighbours,
+                                 &converged);
+
+    if (nneighbours_real == 0 && converged == 1) {
+        coord[0] += 0.0001 * coord[0];
+        coord[1] += 0.0001 * coord[1];
+        coord[2] += 0.0001 * coord[2];
+
+        radius = getNNeighbours(&tree, coord, pos,
+                                n_neighbours,
+                                &nneighbours_real,
+                                &neighbours,
+                                &converged);
+    }
+
+    auto ret_dict = PyDict_New();
+    PyDict_SetStolenItem(ret_dict, "Radius", (PyObject*) PyFloat_FromDouble(radius));
+    PyDict_SetStolenItem(ret_dict, "Converged", (PyObject *) PyLong_FromLong(converged));
+    PyDict_SetStolenItem(ret_dict, "NNeighboursReal", (PyObject *) PyLong_FromLong(nneighbours_real));
+    PyDict_SetStolenItem(ret_dict, "Neighbours", (PyObject *) create_numpy_array(neighbours, nneighbours_real));
+
+    freeTree(&tree);
+    free(neighbours);
+
+    return ret_dict;
+}
+
 
 PyMODINIT_FUNC PyInit_arepo_vis(void) {
-    import_array();
+    import_array()
 
     return PyModule_Create(&moduledef_arepo_vis);
 }

@@ -1,5 +1,5 @@
-from names import ArepoHeader as h, n, path
-from utilities import Coordinates as Coords
+from names import ArepoHeader as h, n, path, ArepoGasFields
+from utilities import Coordinates as Coords, sci
 from sim_config import Param, Config
 from species import ArepoSpeciesList
 import numpy as np
@@ -272,6 +272,88 @@ class ArepoH5File(object):
             if save_to_mem:
                 self.data[field] = val
             return val
+
+    def particle_exists(self, pid):
+        pids = self.get_from_h5(n.PARTICLEIDS)
+        return np.isin(pids, np.array([pid])).any()
+
+    def get_ids_of_largest(self, quant_name, k=10, pids=None):
+
+        if pids is None:
+            pids = self.get_from_h5(n.PARTICLEIDS)
+
+        quant = self.get_values_from_pids(quant_name, pids)
+        return self.get_pids_of_k_largest_from_array(pids, quant, k)
+
+    def get_ids_of_smallest(self, quant_name, k=10, pids=None):
+
+        if pids is None:
+            pids = self.get_from_h5(n.PARTICLEIDS)
+
+        quant = self.get_values_from_pids(quant_name, pids)
+        return self.get_pids_of_k_smallest_from_array(pids, quant, k)
+
+    def get_values_from_pids(self, quant_name, pids_requested):
+
+        quant = self.get_from_h5(quant_name)
+        pid = self.get_from_h5(n.PARTICLEIDS)
+        mask = np.isin(pid, pids_requested)
+
+        # Error if non-existant id requested
+        if np.count_nonzero(mask) != len(pids_requested):
+            found_particles = pid[mask]
+            not_found_particles = np.setdiff1d(pids_requested, found_particles)
+            raise ValueError(f"Found particles {found_particles} but not {not_found_particles}")
+
+        orig_indices = pid.argsort()
+        ndx = orig_indices[np.searchsorted(pid[orig_indices], pids_requested)]
+
+        return quant[ndx]
+
+    def get_field_names(self):
+        field_names = []
+        for field in ArepoGasFields.values():
+            try:
+                self.get_from_h5(field)
+                field_names.append(field)
+            except (KeyError, ValueError) as e:
+                pass
+
+        return field_names
+
+    def print_particle_info(self, list_of_pids, limit=10, fields=None):
+
+        # Limit the output
+        if len(list_of_pids) > limit:
+            list_of_pids = list_of_pids[:limit]
+
+        if fields is None:
+            fields = self.get_field_names()
+
+        info = np.full((len(list_of_pids), ), "", dtype=f"S{50 * len(fields)}")
+
+        for quant_name in fields:
+            vals = self.get_values_from_pids(quant_name, list_of_pids)
+            for i, p in enumerate(list_of_pids):
+                if vals.ndim == 1:
+                    formatted_val = sci(vals[i])
+                else:
+                    formatted_val = vals[i, :]
+
+                info[i] += str.encode(f"{quant_name}: {formatted_val} \n")
+
+        np.set_printoptions(precision=4)
+        for i, info_str in enumerate(info):
+            print(f"{list_of_pids[i]=}")
+            print(info_str.decode())
+
+    @staticmethod
+    def get_pids_of_k_largest_from_array(pids, quant, k):
+        return pids[np.argpartition(quant, -k)[-k:]]
+
+    @staticmethod
+    def get_pids_of_k_smallest_from_array(pids, quant, k):
+        return pids[np.argpartition(quant, k)[:k]]
 
 
 class ArepoICs(ArepoH5File):

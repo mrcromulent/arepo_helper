@@ -4,6 +4,7 @@ class ArepoAnalyser(object):
     cutoff_table        = dict()
     analysis_options    = dict()
     select_column       = None
+    weight_by_mass      = False
 
     def __init__(self, analysis_options=None):
         """Arepo Analyser object

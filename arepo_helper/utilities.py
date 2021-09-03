@@ -7,7 +7,7 @@ import os
 common_snapbases = ["snapshot", "snap", "sh"]
 valid_orientations = [["x", "y"], ["x", "z"], ["y", "z"]]
 default_cmap = "inferno"
-plot_quantities = [n.DENSITY, n.PRESSURE, n.MASSES, n.INTERNALENERGY, n.NUCLEARCOMPOSITION]
+plot_quantities = [n.DENSITY, n.PRESSURE, n.MASSES, n.INTERNALENERGY, n.NUCLEARCOMPOSITION, n.TEMPERATURE]
 
 
 arepo_git_versions = {

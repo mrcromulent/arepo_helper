@@ -1,3 +1,4 @@
+from pyhelm_eos import loadhelm_eos
 import matplotlib.pyplot as plt
 from numpy import log10
 import pandas as pd
@@ -260,6 +261,35 @@ class WDECResults(object):
         ax.axvline(x=self.gp["m_hyd"], label="M_h", linestyle="--", color="g", alpha=0.3)
         ax.legend()
         fig.show()
+
+    def get_xnuc_at_idx(self, i, asl):
+
+        c = self.data["X_C"]
+        o = self.data["X_O"]
+
+        return np.array([1 - c[i] - o[i], c[i], o[i], 0.0, 0.0])
+
+    def estimate_sound_crossing_time(self, helm_file, species_file):
+
+        eos = loadhelm_eos(helm_file, species_file, True)
+
+        r = self.data["r"]
+        pres = self.data["P"]
+        t_c = self.data["T"][0]
+        c = self.data["X_C"]
+        o = self.data["X_O"]
+
+        sound_crossing_time = 0.0
+
+        for i in range(1, len(r)):
+            dr = r[i] - r[i - 1]
+            xnuc = np.array([1 - c[i] - o[i], c[i], o[i], 0.0, 0.0])
+
+            res = eos.ptgivenfull(pres[i], xnuc, t_c)
+            csnd = res["csnd"]
+            sound_crossing_time += dr / csnd
+
+        print(f"Sound Crossing Time: {sound_crossing_time}")
 
     def write_temp_profile(self, out_filename):
         """Writes a file containing the temperature at specified radii

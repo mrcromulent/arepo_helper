@@ -1,8 +1,6 @@
 #include <Python.h>
 #include <arrayobject.h>
-#include <string>
 #include <cmath>
-#include <random>
 
 #include "helm_eos.h"
 #include "sph.h"
@@ -22,16 +20,16 @@ int main() {
         import_array()
     }
 
-    test_eos();
-    test_tree();
-    test_tree_2();
-    test_make_pcolor();
-    test_make_radial();
+//    test_eos();
+//    test_tree();
+//    test_tree_2();
+//    test_make_pcolor();
+//    test_make_radial();
     test_make_wd();
-    test_make_polytrope();
-    test_make_wdec_newest();
-    test_make_he_wd();
-    test_add_grid_particles();
+//    test_make_polytrope();
+//    test_make_wdec_newest();
+//    test_make_he_wd();
+//    test_add_grid_particles();
 
     return 0;
 }
@@ -49,7 +47,7 @@ void test_add_grid_particles() {
     auto wd = convert_to_healpix_implementation(dict1, boxsize, centers, 0, 0, pmass);
 
     PyObject *xnuc = Py_BuildValue("[ddddd]", 1.0, 0.0, 0.0, 0.0, 0.0);
-    auto ret_dict = add_grid_particles_implementation(wd, boxsize, 32, 2e6, 1e-4, xnuc);
+    auto ret_dict = add_grid_particles_implementation(wd, boxsize, 32, 4e6, 1e-4, xnuc);
     print((PyObject *) ret_dict);
 
 }
@@ -63,7 +61,7 @@ void test_make_he_wd() {
     double boxsize                = 1e10;
     const char* out_name          = "0_35He.hdf5";
 
-    eos_init(eos, datafile, speciesfile, 0, 1);
+    eos_init(eos, datafile, speciesfile, 1, 1);
 
     PyObject *centers = Py_BuildValue("[ddd]", boxsize/2, boxsize/2, boxsize/2);
     PyObject *xnuc = Py_BuildValue("[ddddd]", 1.0, 0.0, 0.0, 0.0, 0.0);
@@ -76,12 +74,11 @@ void test_make_he_wd() {
     eos_deinit(eos);
 
     auto dict2 = convert_to_healpix_implementation(dict, boxsize, centers, 0, 0, pmass);
-    auto dict3 = add_grid_particles_implementation(dict2, boxsize, 32, 2e6, 1e-4, xnuc);
+    auto dict3 = add_grid_particles_implementation(dict2, boxsize, 32, 4e6, 1e-4, xnuc);
 
-    print(PyDict_GetItemString(dict3, f[N::DENSITY]));
-    print(PyDict_GetItemString(dict3, f[N::INTERNALENERGY]));
+    print(dict3);
 
-    write_dict_to_hdf5(dict3, out_name, boxsize);
+//    write_dict_to_hdf5(dict3, out_name, boxsize);
 }
 
 void test_make_wdec_newest() {
@@ -103,7 +100,7 @@ void test_make_wdec_newest() {
 
 
     auto dict2 = convert_to_healpix_implementation(dict1, boxsize, centers, 0, 0, pmass);
-    auto dict3 = add_grid_particles_implementation(dict2, boxsize, 32, 2e6, 1e-4, xnuc);
+    auto dict3 = add_grid_particles_implementation(dict2, boxsize, 32, 4e6, 1e-4, xnuc);
 
     print(PyDict_GetItemString(dict3, f[N::DENSITY]));
     print(PyDict_GetItemString(dict1, f[N::INTERNALENERGY]));
@@ -119,7 +116,7 @@ void test_make_polytrope() {
     const char *datafile          = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat";
     const char *speciesfile       = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt";
 
-    eos_init(eos, datafile, speciesfile, 0, 1);
+    eos_init(eos, datafile, speciesfile, 1, 1);
 
 
     PyObject *xnuc = Py_BuildValue("[ddddd]", 0.0, 0.5, 0.5, 0.0, 0.0);
@@ -133,14 +130,17 @@ void test_make_polytrope() {
 
 void test_make_wd() {
     auto *eos = (t_helm_eos_table *) malloc(sizeof(t_helm_eos_table));
-    const char *datafile          = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat";
+    const char *datafile          = "/home/pierre/Downloads/helm_table.dat";
     const char *speciesfile       = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt";
 
-    eos_init(eos, datafile, speciesfile, 0, 1);
+    eos_init(eos, datafile, speciesfile, 1, 0);
 
-    PyObject *xnuc = Py_BuildValue("[ddddd]", 0.0, 0.5, 0.5, 0.0, 0.0);
+    PyObject *xnuc = Py_BuildValue("[ddddd]", 1.0, 0.0, 0.0, 0.0, 0.0);
 
-    auto dict = create_wd_implementation(eos, 5e6, 5e5, xnuc, 1e-6);
+    double temp_c = 5e5;
+    double rho_c = rho_c_from_mtot_implementation(0.35, temp_c, eos, xnuc);
+    auto dict = create_wd_implementation(eos, rho_c, temp_c, xnuc, 1e-6);
+//    print(dict);
     eos_deinit(eos);
 
 }
@@ -158,7 +158,7 @@ void test_make_pcolor() {
 
     auto grid_xnuc = Py_BuildValue("[ddddd]", 1.0, 0.0, 0.0, 0.0, 0.0);
     auto wd = convert_to_healpix_implementation(dict1, boxsize, centers,0, 0, 1e-6 * msol);
-    auto wd2 = add_grid_particles_implementation(wd, boxsize, 32, 2e6, 1e-4, grid_xnuc);
+    auto wd2 = add_grid_particles_implementation(wd, boxsize, 32, 4e6, 1e-4, grid_xnuc);
 
     auto value = (PyArrayObject *) PyDict_GetItemString(wd2, f[N::DENSITY]);
     auto pos = (PyArrayObject *) PyDict_GetItemString(wd2, f[N::COORDINATES]);
@@ -183,10 +183,10 @@ void test_eos() {
     // LOADING A HELM EOS FILE
     // -------------------------------------------------------------------------------------------------------------
     auto *helm_eos_table = (t_helm_eos_table *) malloc(sizeof(t_helm_eos_table));
-    const char *datafile          = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/helm_table.dat";
+    const char *datafile          = "/home/pierre/Downloads/helm_table.dat";
     const char *speciesfile       = "/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt";
 
-    eos_init(helm_eos_table, datafile, speciesfile, 0, 1);
+    eos_init(helm_eos_table, datafile, speciesfile, 1, 1);
 
     // Calling the 'given' functions
     // -------------------------------------------------------------------------------------------------------------
@@ -199,7 +199,7 @@ void test_eos() {
 
     xnuc[0] = 0.5;
     xnuc[1] = 0.5;
-    double tempguess = 1e8;
+    double tempguess = -1;
     eos_result res{};
     eos_calc_pgiven(helm_eos_table, 1e6, xnuc, 1e22, &tempguess, &res);
 
@@ -207,7 +207,7 @@ void test_eos() {
         xnuc[i] = 0;
     }
     xnuc[0] = 1.0;
-    double tempguess2 = 1500;
+    double tempguess2 = -1;
     eos_result res2{};
     eos_calc_egiven(helm_eos_table, 1e-7, xnuc, 1e13, &tempguess2, &res2);
     std::cout << res.p.v << std::endl;
@@ -240,51 +240,120 @@ void test_tree_2() {
     double boxsize = 1e10;
     double gamma = 1.4;
     double pmass = 1e-6 * msol;
+    auto grid_xnuc = Py_BuildValue("[ddddd]", 1.0, 0.0, 0.0, 0.0, 0.0);
     PyObject *centers = Py_BuildValue("[ddd]", boxsize/2, boxsize/2, boxsize/2);
 
     auto dict1 = create_wd_wdec_implementation(wdec_dir, nspecies, gamma);
 
-    auto wd = convert_to_healpix_implementation(dict1, boxsize,
-                                                centers, 0, 0, pmass);
+    auto wd = convert_to_healpix_implementation(dict1, boxsize, centers, 0, 0, pmass);
+    auto wd2 = add_grid_particles_implementation(wd, boxsize, 32, 4e6, 1e-4, grid_xnuc);
 
-    auto density_1 = (PyArrayObject *) PyDict_GetItemString(wd, f[N::DENSITY]);
-    auto pos_1 = (PyArrayObject *) PyDict_GetItemString(wd, f[N::COORDINATES]);
-    auto mass_1 = (PyArrayObject *) PyDict_GetItemString(wd, f[N::MASSES]);
-    int npart = PyArray_DIMS(density_1)[0];
-    auto pos = (double *) PyArray_DATA(pos_1);
+    auto density_1 = (PyArrayObject *) PyDict_GetItemString(wd2, f[N::DENSITY]);
     auto density = (double *) PyArray_DATA(density_1);
-    auto mass = (double *) PyArray_DATA(mass_1);
+    int npart = PyArray_DIMS(density_1)[0];
+    auto pos = (double *) PyArray_DATA((PyArrayObject *) PyDict_GetItemString(wd2, f[N::COORDINATES]));
+    auto mass = (double *) PyArray_DATA((PyArrayObject *) PyDict_GetItemString(wd2, f[N::MASSES]));
 
     t_sph_tree tree;
     createTree(&tree, npart, pos);
 
+    // Forward definitions
+    double *coord;
+    double hsml, x, y, z, domainLen, weighted_neighbours;
+    int n_neighbours, n, node;
+    int *neighbours;
+    t_sph_treenode pnode;
+
     // Coordinate
-    auto *coord = (double *) malloc(3 * sizeof(double));
-    coord[0] = boxsize/2; coord[1] = boxsize/2; coord[2] = boxsize/2;
+    coord = (double *) malloc(3 * sizeof(double));
+
+    // Number of neighbours is n_neighbours
+    // Neighbour numbers stored in neighbours
+    hsml = 1e7;
+    neighbours = static_cast<int *>(malloc(tree.usednodes * sizeof(int)));
+    coord[0] = boxsize; coord[1] = boxsize; coord[2] = boxsize;
+    n_neighbours = getNeighbours(&tree, coord, pos, hsml, &neighbours);
+
+    for (int i = 0; i < n_neighbours; i++) {
+        n = neighbours[i];
+        if (n < tree.npart) { // particle node, that contains only one particle
+            x = pos[n * 3 + 0];
+            y = pos[n * 3 + 1];
+            z = pos[n * 3 + 2];
+
+        } else { // real node
+            pnode = tree.nodes[n];
+            x = pnode.center[0];
+            y = pnode.center[1];
+            z = pnode.center[2];
+        }
+        printf("n = %i; x, y, z = %g, %g, %g \n", n + 1, x, y, z);
+    }
 
     // Domain length
-    auto domainLen = getDomainLen(npart, pos);
+    domainLen = getDomainLen(npart, pos);
+    printf("domainLen = %g \n", domainLen);
 
-    // Get Nearest Node/Particles
-    auto node = getNearestNode(&tree, coord);
-    auto particles = getParticles(&tree, node);
+    coord[0] = boxsize; coord[1] = boxsize; coord[2] = boxsize;
+    node = getNearestNode(&tree, coord);
+    if (node < tree.npart) { // particle node, that contains only one particle
+        x = pos[node * 3 + 0];
+        y = pos[node * 3 + 1];
+        z = pos[node * 3 + 2];
 
-    double hsml=0;
-    double *dhsmldensity;
-    auto weighted_neighbours = calcHsml(&tree, coord, pos, mass, 4, &hsml, density);
-    auto weighted_neighbours_2 = calcDensity(&tree, coord, hsml, pos, mass, density,
-                                        reinterpret_cast<double *>(&dhsmldensity));
+    } else { // we found a real node
+        pnode = tree.nodes[node];
+        x = pnode.center[0];
+        y = pnode.center[1];
+        z = pnode.center[2];
+    }
+    printf("node = %i; x, y, z = %g, %g, %g \n", node + 1, x, y, z);
+
+    // Calculates the smoothing length
+    hsml = 0;
+    n_neighbours = 4;
+    coord[0] = boxsize / 2; coord[1] = boxsize / 2; coord[2] = boxsize / 2;
+    weighted_neighbours = calcHsml(&tree, coord, pos, mass, n_neighbours, &hsml, density);
+    printf("weighted_neighbours = %f. Nneighbours = %i \n", weighted_neighbours, n_neighbours);
+    printf("Smoothing length = %g \n", hsml);
+
+
+    double dhsmldensity = 0;
+    hsml = 1e7;
+    coord[0] = boxsize / 2; coord[1] = boxsize / 2; coord[2] = boxsize / 2;
+    weighted_neighbours = calcDensity(&tree, coord, hsml, pos, mass, density, &dhsmldensity);
+    printf("weighted_neighbours = %g. \n", weighted_neighbours);
 
     //
-    int nneighbours_real = 4;
-    int *neighbours = static_cast<int *>(malloc(tree.usednodes * sizeof(int)));
+    n_neighbours = 4;
+    neighbours = static_cast<int *>(malloc(tree.usednodes * sizeof(int)));
+    coord[0] = 0.2 * boxsize; coord[1] = 0.2 * boxsize; coord[2] = 0.2 * boxsize;
+    int nneighbours_real;
     int converged;
-    auto nneighbours = getNeighbours(&tree, coord, pos, hsml, reinterpret_cast<int **>(neighbours));
 
-    auto radius = getNNeighbours(&tree, coord, pos, 4,
+    auto radius = getNNeighbours(&tree, coord, pos,
+                                 n_neighbours,
                                  &nneighbours_real,
-                                 reinterpret_cast<int **>(&neighbours),
+                                 &neighbours,
                                  &converged);
+
+    printf("Radius = %g. converged = %i \n", radius, converged);
+
+    for (int i = 0; i < nneighbours_real; i++) {
+        n = neighbours[i];
+        if (n < tree.npart) { // particle node, that contains only one particle
+            x = pos[n * 3 + 0];
+            y = pos[n * 3 + 1];
+            z = pos[n * 3 + 2];
+
+        } else { // real node
+            pnode = tree.nodes[n];
+            x = pnode.center[0];
+            y = pnode.center[1];
+            z = pnode.center[2];
+        }
+        printf("n = %i; x, y, z = %g, %g, %g \n", n + 1, x, y, z);
+    }
 
     // Free tree
     freeTree(&tree);
