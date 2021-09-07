@@ -2,15 +2,15 @@
 #include <arrayobject.h>
 #include <cmath>
 
-#include "helm_eos.h"
-#include "sph.h"
-#include "ic.h"
+#include "headers/helm_eos.h"
+#include "headers/sph.h"
+#include "headers/ic.h"
 #include "main.h"
-#include "const.h"
-#include "utils.h"
-#include "visualise.h"
-#include "create_ics.h"
-#include "write_ics.h"
+#include "headers/const.h"
+#include "headers/utils.h"
+#include "headers/visualise.h"
+#include "headers/create_ics.h"
+#include "headers/write_ics.h"
 
 int main() {
 

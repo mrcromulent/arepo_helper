@@ -1,5 +1,5 @@
+from definitions import PY_SRC_DIR, C_SRC_DIR, C_INC_DIR
 from numpy.distutils.core import setup, Extension
-from definitions import PY_SRC_DIR, C_SRC_DIR
 from sysconfig import get_paths
 from pathlib import Path
 import numpy as np
@@ -47,11 +47,11 @@ armadillo_lib = "/"
 
 
 # Source files and definitions for this thing
-include_dirs = [python_incl, numpy_incl, armadillo_incl, hdf5_incl, C_SRC_DIR]
+include_dirs = [python_incl, numpy_incl, armadillo_incl, hdf5_incl, C_INC_DIR]
 library_dirs = [python_lib, armadillo_lib, hdf5_lib_dir]
 libraries = ["gsl", "gslcblas", "m", "armadillo", "hdf5"]
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"), ('H5_BUILT_AS_DYNAMIC_LIB', True)]
-ext_modules_names = ["pyhelm_eos", "ic", "create_ics", "arepo_vis"]
+ext_modules_names = ["pyhelm_eos", "ic", "create_ics", "arepo_vis", "pyeos", "pyopal_eos", "pysph"]
 sources = get_cpp_sources()
 
 if install_py_modules:
@@ -68,6 +68,8 @@ for name in ext_modules_names:
                   libraries=libraries,
                   library_dirs=library_dirs,
                   define_macros=define_macros,
+                  extra_compile_args=['-fopenmp'],
+                  extra_link_args=['-fopenmp'],
                   sources=sources)
     )
 

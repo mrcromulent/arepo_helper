@@ -16,9 +16,52 @@ from const import msol
 from names import n
 import numpy as np
 import create_ics
+import pyopal_eos
 import pprint
+import pysph
+import pyeos
 import ic
 import os
+
+
+def test_pyeos():
+    print(dir(pyeos))
+
+
+def test_pyopal_eos():
+    opal_file = os.path.join(DATA_DIR, "eostable", "EOS5_data")
+    eos = pyopal_eos.loadopal_eos(opal_file)
+    print(dir(eos))
+    print(eos.getrholim())
+    print(eos.gettlim())
+    print(eos.gettvalues())
+    print(eos.getxlim())
+    x_frac = 0.75
+    rho = 6e7
+    temp = 5e5
+    print(eos.tgiven(x_frac, rho, temp))
+
+
+def test_pysph():
+
+    ar = ArepoRun.from_directory("/home/pierre/Desktop/wd0_35He_no_relax")
+    s = ar.snapshots[1]
+    coords = s.coords()
+    masses = s.mass()
+
+    tree = pysph.makeTree(coords)
+    coord = np.array([5e9, 5e9, 5e9])
+    hsml = 1e7
+    print(tree.calcDensity(coord, hsml, coords, masses))
+
+    # coord, pos, mass, neighbours, [hsml]
+    hsml, density, weighted_neighbours = tree.calcHsml(coord, coords, masses, 4)
+    print(hsml)
+
+    # coord, pos, [numthreads]
+    coord2 = np.array([1e10, 1e10, 1e10], ndmin=2)
+    neighbours = tree.getNearestNeighbours(coord2, coords, 1)
+    print(neighbours)
 
 
 def test_make_radial_time_series():
