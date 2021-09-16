@@ -1,12 +1,14 @@
+from species import ArepoSpeciesList
 from pyhelm_eos import loadhelm_eos
 import matplotlib.pyplot as plt
 from numpy import log10
+from typing import Union
 import pandas as pd
 import numpy as np
 import os
 
 
-class WDECResults(object):
+class WDECResults:
     """Class to hold the results of WDEC experiments"""
 
     required_files = ["inputprof", "controlparams", "gridparameters", "corsico.dat", "output.dat"]
@@ -16,7 +18,8 @@ class WDECResults(object):
     names4 = ["n", "C4", "B1", "B2", "B3", "B4", "alfa", "Tthl", "derdelad", "eta"]
     stpms = -4.365e-3
 
-    def __init__(self, directory):
+    def __init__(self,
+                 directory: str) -> None:
         """Constructor
 
         :param directory: Directory containing WDEC results
@@ -39,7 +42,7 @@ class WDECResults(object):
             self.read_all_output_data()
             self.extract_input_params()
 
-    def check_for_wdec_files(self):
+    def check_for_wdec_files(self) -> None:
         """Checks if WDEC results are in path."""
 
         for filename in self.required_files:
@@ -47,13 +50,13 @@ class WDECResults(object):
             assert os.path.exists(full_path)
             self.files[filename] = os.path.abspath(full_path)
 
-    def extract_input_params(self):
+    def extract_input_params(self) -> None:
         """Dummy function to get results frim inputprof and gridparam files"""
 
         self.ip = self.read_inputprof()
         self.gp = self.read_gridparam()
 
-    def read_abundances(self):
+    def read_abundances(self) -> pd.DataFrame:
         """Reads the abundances from the corisico.dat file.
 
         :return: Dataframe containing abundance data
@@ -69,7 +72,7 @@ class WDECResults(object):
 
         return df
 
-    def read_gridparam(self):
+    def read_gridparam(self) -> dict:
         """Reads the contents of the gridparameters file
 
         :return: Returns dict with things from the files
@@ -120,7 +123,7 @@ class WDECResults(object):
 
         return gridparam
 
-    def read_inputprof(self):
+    def read_inputprof(self) -> dict:
         """Reads the information in the inputprof file.
 
         :return: Dict containing info from the file.
@@ -137,11 +140,11 @@ class WDECResults(object):
 
         return inputprof
 
-    def determine_pandas_df_keywords(self):
+    def determine_pandas_df_keywords(self) -> list[dict]:
         """Returns a list of the headers from the output file
 
         :return: List of header items.
-        :rtype: list
+        :rtype: list[dict]
         """
 
         fn = self.files["output.dat"]
@@ -171,7 +174,7 @@ class WDECResults(object):
 
         return pandas_kwargs
 
-    def read_all_output_data(self):
+    def read_all_output_data(self) -> None:
         """Reads in all the data in the output.dat file to self.data"""
 
         fn = self.files["output.dat"]
@@ -189,13 +192,13 @@ class WDECResults(object):
         abundances = self.read_abundances()
         self.data = pd.concat([df, abundances], axis=1)
 
-    def find_region_12_boundary(self):
+    def find_region_12_boundary(self) -> float:
         """Finds the RegionI-RegionII boundary"""
         menv_mr = self.mr(self.gp["m_env"])
         buffer_inner = self.ip["buffer_inner"]
         return self.q(menv_mr - buffer_inner)
 
-    def find_region_23_boundary(self):
+    def find_region_23_boundary(self) -> float:
         """Finds the RegionII-RegionIII boundary"""
         m_h = self.gp["m_hyd"]
         amhyhe_tmp = 10 ** (- m_h)
@@ -205,7 +208,7 @@ class WDECResults(object):
 
         return qhyhe - buffer_outer
 
-    def plot_results(self):
+    def plot_results(self) -> None:
         """Plots the 1D profiles from self.data"""
 
         df = self.data
@@ -234,7 +237,7 @@ class WDECResults(object):
         plt.tight_layout()
         plt.show()
 
-    def plot_abundances(self):
+    def plot_abundances(self) -> None:
         """Plots the abundances from the corsico.dat file."""
 
         co = self.data
@@ -262,14 +265,18 @@ class WDECResults(object):
         ax.legend()
         fig.show()
 
-    def get_xnuc_at_idx(self, i, asl):
+    def get_xnuc_at_idx(self,
+                        i: int,
+                        asl: ArepoSpeciesList) -> np.ndarray:
 
         c = self.data["X_C"]
         o = self.data["X_O"]
 
         return np.array([1 - c[i] - o[i], c[i], o[i], 0.0, 0.0])
 
-    def estimate_sound_crossing_time(self, helm_file, species_file):
+    def estimate_sound_crossing_time(self,
+                                     helm_file: str,
+                                     species_file: str) -> None:
 
         eos = loadhelm_eos(helm_file, species_file, True)
 
@@ -291,7 +298,8 @@ class WDECResults(object):
 
         print(f"Sound Crossing Time: {sound_crossing_time}")
 
-    def write_temp_profile(self, out_filename):
+    def write_temp_profile(self,
+                           out_filename: str) -> None:
         """Writes a file containing the temperature at specified radii
 
         :param out_filename: location to write file to
@@ -308,7 +316,7 @@ class WDECResults(object):
                 f.write(f"{r} {t} \n")
 
     @staticmethod
-    def convert_species_name(species):
+    def convert_species_name(species: str) -> str:
         """
         Converts ArepoSpeciesList indexes to WDEC indexes
         :param species:
@@ -332,17 +340,18 @@ class WDECResults(object):
             raise ValueError
 
     @staticmethod
-    def q(mr):
+    def q(mr: Union[float, np.ndarray]):
         """q"""
         return -log10(1 - mr)
 
     @staticmethod
-    def mr(q):
+    def mr(q: Union[float, np.ndarray]):
         """mr"""
         return 1.0 - 10 ** (-q)
 
     @staticmethod
-    def mr_diff(q1, q2):
+    def mr_diff(q1: float,
+                q2: float) -> float:
         """Finds the difference in mass
 
         :param q1: Inner q value
@@ -352,7 +361,7 @@ class WDECResults(object):
         :return: The equivalent Delta Mr for the corresponding qs
         :rtype: float
 
-        .. notes::
+        .. note::
             `Delta Mr
             = Mr2 - Mr1
             = msol * (1 - 10 ** -q2 - (1 - 10 ** -q2))
@@ -363,12 +372,14 @@ class WDECResults(object):
         return 1.989 * (10 ** (-q1 + 33) - 10 ** (-q2 + 33))
 
     @staticmethod
-    def fortran_float(strnum):
+    def fortran_float(strnum: str) -> float:
         """fortran_float"""
         return float(strnum.replace("d-", "e-").replace("d", "e+"))
 
     @classmethod
-    def check_values(cls, gridparam, inputprof):
+    def check_values(cls,
+                     gridparam: dict,
+                     inputprof: dict) -> None:
         """Performs sense checks on the values you specify
 
         :param gridparam: gridparam
@@ -397,7 +408,7 @@ class WDECResults(object):
             if not w1 + w2 + w3 <= 0.95:
                 raise ValueError
 
-    def __str__(self):
+    def __str__(self) -> str:
 
         gp = self.gp
         ip = self.ip

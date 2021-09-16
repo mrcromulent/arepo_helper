@@ -1,12 +1,16 @@
-class ArepoAnalyser(object):
+from typing import Any
 
-    inner_boxsize       = None
-    cutoff_table        = dict()
-    analysis_options    = dict()
-    select_column       = None
-    weight_by_mass      = False
 
-    def __init__(self, analysis_options=None):
+class ArepoAnalyser:
+
+    inner_boxsize: float = None
+    cutoff_table: dict[str, list[float]] = dict()
+    analysis_options: dict[str, Any] = dict()
+    select_column: int = None
+    weight_by_mass: bool = False
+
+    def __init__(self,
+                 analysis_options: dict = None):
         """Arepo Analyser object
 
         :param analysis_options: Explicit options

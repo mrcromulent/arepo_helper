@@ -6,12 +6,15 @@ from h5_file import ArepoSnapshot
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from run import ArepoRun
+from typing import Any
 from names import n
 import numpy as np
 import os
 
 
-def quick_pcolor(s, quantity_name, explicit_options=None):
+def quick_pcolor(s: ArepoSnapshot,
+                 quantity_name: str,
+                 explicit_options: dict = None) -> PColorPlot:
     """Shortcut to generate a PColorPlot
 
     :param s: Snapshot
@@ -41,7 +44,11 @@ def quick_pcolor(s, quantity_name, explicit_options=None):
     return PColorPlot(po)
 
 
-def quick_radial(s, quantity_name, a=None, b=None, explicit_options=None):
+def quick_radial(s: ArepoSnapshot,
+                 quantity_name: str,
+                 a: list[float] = None,
+                 b: list[float] = None,
+                 explicit_options: dict = None) -> RadialPlot:
     """Shortcut to create RadialPlot
 
     :param s: Snapshot
@@ -78,7 +85,11 @@ def quick_radial(s, quantity_name, a=None, b=None, explicit_options=None):
     return RadialPlot(po)
 
 
-def quick_nuclear_compositions(s, asl, a=None, b=None, explicit_options=None):
+def quick_nuclear_compositions(s: ArepoSnapshot,
+                               asl: ArepoSpeciesList,
+                               a: list[float] = None,
+                               b: list[float] = None,
+                               explicit_options: dict = None) -> Any:
     """Shortcut to create a radial plot showing location of different species.
 
     :param s: Snapshot
@@ -141,7 +152,9 @@ def quick_nuclear_compositions(s, asl, a=None, b=None, explicit_options=None):
     return fig
 
 
-def quick_nuclear_pcolors(s, asl, explicit_options=None):
+def quick_nuclear_pcolors(s: ArepoSnapshot,
+                          asl: ArepoSpeciesList,
+                          explicit_options: dict = None) -> None:
     """Shortcut to create a pcolor plots showing location of different species.
 
     :param s: Snapshot
@@ -176,7 +189,11 @@ def quick_nuclear_pcolors(s, asl, explicit_options=None):
         pcp.save(f"{i}_{spec}.png")
 
 
-def make_radial_time_series(ar, quantity_name, a=None, b=None, explicit_options=None):
+def make_radial_time_series(ar: ArepoRun,
+                            quantity_name: str,
+                            a: list[float] = None,
+                            b: list[float] = None,
+                            explicit_options: dict = None) -> None:
     """Makes a plot showing radials across a number of snapshots
 
     :param ar: Arepo Run
@@ -214,16 +231,17 @@ def make_radial_time_series(ar, quantity_name, a=None, b=None, explicit_options=
 
         po = RadialPlotOptions(ar, aa)
         rp = RadialPlot(po, figure=fig, ax=ax)
-        t = s.get_from_h5(n.TIME)
+        t = float(s.get_from_h5(n.TIME))
         rp.line[0].set_label(f"t = {round(t, 2)}")
 
     #
     ax.legend()
-    plt.title("Radial time series")
-    rp.save()
+    plt.title(f"Radial time series: {quantity_name}")
+    rp.save(f"Radial_Time_Series_n={nsnaps}_{quantity_name}.png")
 
 
-def energy_balance(ar, export_filename=None):
+def energy_balance(ar: ArepoRun,
+                   export_filename: str = None) -> None:
     """Checks energy balance of all the energy types in an Arepo Run
 
     :param ar: Arepo Run
@@ -282,9 +300,12 @@ def energy_balance(ar, export_filename=None):
         plt.show()
 
 
-def compute_plot_options_array(ar, qs, oris,
-                               plot_type=PColorPlotOptions.plot_type,
-                               explicit_options=None, ts=None):
+def compute_plot_options_array(ar: ArepoRun,
+                               qs: list[str],
+                               oris: list,
+                               plot_type: str = PColorPlotOptions.plot_type,
+                               explicit_options: dict = None,
+                               ts: list[int] = None) -> np.ndarray:
     """Computes an array of plot options with (orientations, quantities, time) representing axes (0,1,2) respectively
 
     :param ar: Arepo run
@@ -328,7 +349,9 @@ def compute_plot_options_array(ar, qs, oris,
     return poa
 
 
-def plot_particle_lifetimes(ar, list_of_pids, limit=10):
+def plot_particle_lifetimes(ar: ArepoRun,
+                            list_of_pids: list[int],
+                            limit: int = 10) -> None:
 
     if len(list_of_pids) > limit:
         list_of_pids = list_of_pids[:limit]

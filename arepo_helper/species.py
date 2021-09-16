@@ -5,13 +5,14 @@ import numpy as np
 import os
 
 
-class ArepoSpeciesList(object):
+class ArepoSpeciesList:
     """Class to work with species.txt files for the nuclear network"""
 
     species_dict    = OrderedDict()
     num_species     = 0
 
-    def __init__(self, species_file):
+    def __init__(self,
+                 species_file: str) -> None:
         """Constructor to load data from the species.txt file.
 
         :param species_file: Species file name
@@ -24,9 +25,11 @@ class ArepoSpeciesList(object):
         if not os.path.exists(species_file):
             raise FileNotFoundError(f"Species file {species_file} does not exist.")
 
+        self.filename = species_file
         self.load_species(species_file)
 
-    def index_of(self, elem):
+    def index_of(self,
+                 elem: str) -> int:
         """Index of a particular species
 
         :param elem: Element name (e.g. He4)
@@ -37,7 +40,8 @@ class ArepoSpeciesList(object):
         """
         return list(self.species_dict).index(elem)
 
-    def load_species(self, filename):
+    def load_species(self,
+                     filename: str) -> None:
         """Loads the data located in the file at filename
 
         :param filename: species.txt filename
@@ -67,7 +71,8 @@ class ArepoSpeciesList(object):
         self.species_dict   = data
         self.num_species    = len(data.keys())
 
-    def azbar(self, xnuc):
+    def azbar(self,
+              xnuc: np.ndarray) -> (float, float):
         """Computes the mean number of baryons and mean charge per baryon
 
         :param xnuc: Nuclear composition, indicating the percentage of each species
@@ -78,19 +83,19 @@ class ArepoSpeciesList(object):
 
         .. seealso::
             https://iopscience.iop.org/article/10.1086/313304/fulltext/40612.text.html
-        .. notes::
-            Let isotope i have Z protons and A nucleons (protons + neutrons).
-            Let the aggregate total of isotope i have a number density of ni
-            Define the dimensionless mass fraction of isotope i as:
+        .. note::
+            - Let isotope i have Z protons and A nucleons (protons + neutrons).
+            - Let the aggregate total of isotope i have a number density of ni
+            - Define the dimensionless mass fraction of isotope i as:
 
-            Xi = rhoi / rho = ni Ai / (rho NA)
+            - Xi = rhoi / rho = ni Ai / (rho NA)
 
-            Then
-            abar = Sum(Xi / Ai) ^(-1)
-            zbar = abar * Sum(Zi Xi / Ai)
+            - Then
+            - abar = Sum(Xi / Ai) ^(-1)
+            - zbar = abar * Sum(Zi Xi / Ai)
 
-            Also:
-            Ye = zbar / abar
+            - Also:
+            - Ye = zbar / abar
 
         """
         abar_inv = 0.0
@@ -109,7 +114,10 @@ class ArepoSpeciesList(object):
 
         return abar, zbar
 
-    def estimate_temp_from_e(self, e, xnuc, gamma=1.667):
+    def estimate_temp_from_e(self,
+                             e: float,
+                             xnuc: np.ndarray,
+                             gamma: float = 1.667) -> float:
         """Estimates temperature based on spec. internal energy and nuclear composition
 
         :param e: Specific internal energy
@@ -122,7 +130,7 @@ class ArepoSpeciesList(object):
         :return: Estimated temperature
         :rtype: float
 
-        .. notes::
+        .. note::
             From the C++ code
             _temp = 2.0 / 3.0 * p / (ni + ne) / GSL_CONST_CGS_BOLTZMANN;
 
@@ -149,6 +157,9 @@ class ArepoSpeciesList(object):
         abar, zbar = self.azbar(xnuc)
         return 2.0 / 3.0 * (abar * e * (gamma - 1)) / (KB * NA * (zbar + 1))
 
-    def estimate_e_from_temp(self, temp, xnuc, gamma=1.667):
+    def estimate_e_from_temp(self,
+                             temp: float,
+                             xnuc: np.ndarray,
+                             gamma: float = 1.667) -> float:
         abar, zbar = self.azbar(xnuc)
         return 3.0 / 2.0 * (NA * KB * temp * (zbar + 1)) / (abar * (gamma - 1))

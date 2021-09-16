@@ -89,7 +89,7 @@ class Coordinates:
         return xval, yval, list(zset)[0]
 
 
-class SuppressStdout(object):
+class SuppressStdout:
     """
     A context manager for doing a "deep suppression" of stdout and stderr in
     Python, i.e. will suppress all print, even if the print originates in a
@@ -119,7 +119,9 @@ class SuppressStdout(object):
             os.close(fd)
 
 
-def get_cmap(quantity, bounds, log_cmap=False):
+def get_cmap(quantity: str,
+             bounds: list[float, float],
+             log_cmap: bool = False) -> (str, SymLogNorm, ScalarMappable):
     """Gets the appropriate colormap
 
     :param quantity: One of the particle fields from the enum
@@ -151,7 +153,7 @@ def dummy():
     pass
 
 
-def convert_to_ruediger_dict(d):
+def convert_to_ruediger_dict(d: dict) -> dict:
     """Converts to Ruediger-style dictionary
 
     :param d: dict with Ruediger-style names
@@ -173,7 +175,7 @@ def convert_to_ruediger_dict(d):
     return new_d
 
 
-def convert_from_ruediger_dict(d):
+def convert_from_ruediger_dict(d: dict) -> dict:
     """Converts from Ruediger-style dictionary
 
     :param d: dict with my style of names
@@ -197,7 +199,7 @@ def convert_from_ruediger_dict(d):
     return new_d
 
 
-def sci(num):
+def sci(num: float) -> str:
     """Converts to scientific notation
 
     :param num: number

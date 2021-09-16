@@ -1,5 +1,5 @@
 from definitions import PY_SRC_DIR, C_SRC_DIR, C_INC_DIR
-from numpy.distutils.core import setup, Extension
+from distutils.core import setup, Extension
 from sysconfig import get_paths
 from pathlib import Path
 import numpy as np
@@ -51,7 +51,6 @@ include_dirs = [python_incl, numpy_incl, armadillo_incl, hdf5_incl, C_INC_DIR]
 library_dirs = [python_lib, armadillo_lib, hdf5_lib_dir]
 libraries = ["gsl", "gslcblas", "m", "armadillo", "hdf5"]
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"), ('H5_BUILT_AS_DYNAMIC_LIB', True)]
-ext_modules_names = ["pyhelm_eos", "ic", "create_ics", "arepo_vis", "pyeos", "pyopal_eos", "pysph"]
 sources = get_cpp_sources()
 
 if install_py_modules:
@@ -61,7 +60,7 @@ else:
 
 
 ext_modules = []
-for name in ext_modules_names:
+for name in ["pyhelm_eos", "ic", "create_ics", "arepo_vis", "pyeos", "pyopal_eos", "pysph"]:
     ext_modules.append(
         Extension(name,
                   include_dirs=include_dirs,

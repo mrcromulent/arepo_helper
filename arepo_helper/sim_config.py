@@ -1,5 +1,6 @@
 from definitions import DATA_DIR, AREPO_SRC_DIR
 from utilities import arepo_git_versions
+from typing import Any
 import textwrap
 import shutil
 import pprint
@@ -33,7 +34,10 @@ class Paths:
     MAKEFILE = "Makefile"
     MAKEFILE_SYSTYPE = "Makefile.systype"
 
-    def __init__(self, parent_dir, proj_name, version="dissipative"):
+    def __init__(self,
+                 parent_dir: str,
+                 proj_name: str,
+                 version: str = "dissipative"):
         """Constructor which creates the folders and files required for an AREPO simulation.
 
         :param parent_dir: Directory where the simulation directory should be created.
@@ -67,7 +71,7 @@ class Paths:
         else:
             self.make_dirs()
 
-    def make_dirs(self):
+    def make_dirs(self) -> None:
         """Creates the relevant directories."""
 
         os.mkdir(self.project_dir)
@@ -77,7 +81,7 @@ class Paths:
 
         self.get_code()
 
-    def get_code(self):
+    def get_code(self) -> None:
         """Clones code from Github or copies it from the local folder.
 
         :raises ValueError: If unknown version requested
@@ -108,7 +112,9 @@ class ArepoInput:
     length_limit = 200
     input_name   = None
 
-    def __init__(self, explicit_options, version):
+    def __init__(self,
+                 explicit_options: dict,
+                 version: str) -> None:
         """Constructor for base class
 
         :param explicit_options: Dict of options to override defaults
@@ -123,7 +129,8 @@ class ArepoInput:
         self.version = version
         self.data = None
 
-    def comment(self, text_string):
+    def comment(self,
+                text_string: str) -> str:
         """Returns the text in text_string formatted as a comment.
 
         :param text_string: Text to be commented
@@ -134,7 +141,8 @@ class ArepoInput:
         """
         return self.comment_char + text_string + "\n"
 
-    def indent_and_wrap(self, text):
+    def indent_and_wrap(self,
+                        text: str) -> str:
         """Indents and wraps long line of text.
 
         :param text: Text to be wrapped
@@ -145,7 +153,8 @@ class ArepoInput:
         """
         return textwrap.indent(textwrap.fill(text, width=self.length_limit), self.comment_char) + "\n"
 
-    def get(self, key):
+    def get(self,
+            key: str) -> Any:
         """Gets data from a particular element of the Config/Param
 
         :param key: Name of element
@@ -165,7 +174,7 @@ class ArepoInput:
 
         raise ValueError(f"{key} not found.")
 
-    def load(self):
+    def load(self) -> None:
         """Loads default values from the JSON file associated with self.version."""
 
         # Load the default Config from file
@@ -181,7 +190,7 @@ class ArepoInput:
                 if curr_option in self.explicit_options:
                     setting["value"] = self.explicit_options[curr_option]
 
-    def __str__(self):
+    def __str__(self) -> str:
 
         d = dict()
         for group in self.data["data"]:
@@ -203,7 +212,9 @@ class Param(ArepoInput):
     comment_char = "% "
     input_name = "param"
 
-    def __init__(self, explicit_options=None, version="dissipative"):
+    def __init__(self,
+                 explicit_options: dict = None,
+                 version: str = "dissipative") -> None:
         """Constructor for param.txt files
 
         :param explicit_options: Explicit param.txt options
@@ -218,13 +229,15 @@ class Param(ArepoInput):
         super(Param, self).__init__(explicit_options, version)
         self.load()
 
-    def write_file(self, filename, ignored):
+    def write_file(self,
+                   filename: str,
+                   ignored: list[str]) -> None:
         """Writes the param.txt file to filename, specifying which values have been ignored.
 
         :param filename: Location to which file is written
         :type filename: str
         :param ignored: Ignored options
-        :type ignored: list
+        :type ignored: list[str]
         """
         delimiter       = self.comment_char + 50 * "-" + " " + "\n"
         ev              = self.data["default_value"]
@@ -272,7 +285,9 @@ class Config(ArepoInput):
     comment_char = "# "
     input_name = "config"
 
-    def __init__(self, explicit_options=None, version="dissipative"):
+    def __init__(self,
+                 explicit_options: dict = None,
+                 version: str = "dissipative") -> None:
         """Constructor for Config.sh files
 
         :param explicit_options: Explicit Config.sh options
@@ -287,13 +302,15 @@ class Config(ArepoInput):
         super(Config, self).__init__(explicit_options, version)
         self.load()
 
-    def write_file(self, filename, ignored):
+    def write_file(self,
+                   filename: str,
+                   ignored: list[str]) -> None:
         """Writes the Config.sh file to filename, specifying which values have been ignored.
 
         :param filename: Location to which file is written
         :type filename: str
         :param ignored: Ignored options
-        :type ignored: list
+        :type ignored: list[str]
         """
         delimiter = self.comment_char + 50 * "-" + " " + "\n"
         ev = self.data["default_value"]

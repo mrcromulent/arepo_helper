@@ -45,22 +45,25 @@ def test_pyopal_eos():
 def test_pysph():
 
     ar = ArepoRun.from_directory("/home/pierre/Desktop/wd0_35He_no_relax")
-    s = ar.snapshots[1]
+    s = ar.snapshots[0]
     coords = s.coords()
     masses = s.mass()
 
     tree = pysph.makeTree(coords)
+
+    #
     coord = np.array([5e9, 5e9, 5e9])
-    hsml = 1e7
-    print(tree.calcDensity(coord, hsml, coords, masses))
-
-    # coord, pos, mass, neighbours, [hsml]
     hsml, density, weighted_neighbours = tree.calcHsml(coord, coords, masses, 4)
-    print(hsml)
+    print(hsml, density, weighted_neighbours)
 
-    # coord, pos, [numthreads]
-    coord2 = np.array([1e10, 1e10, 1e10], ndmin=2)
-    neighbours = tree.getNearestNeighbours(coord2, coords, 1)
+    #
+    dens = tree.calcDensity(coord, hsml, coords, masses)
+    print(dens)
+
+    #
+    search_coords = np.array([[1e10, 1e10, 1e10], [5e9, 5e9, 5e9]], ndmin=2)
+    numthreads = 1
+    neighbours = tree.getNearestNeighbours(search_coords, coords, numthreads)
     print(neighbours)
 
 
@@ -78,7 +81,7 @@ def test_quick_nuclear_pcolors():
     asl = ArepoSpeciesList("/home/pierre/PycharmProjects/arepo_helper/arepo_helper/data/eostable/species05.txt")
     ar = ArepoRun.from_directory("/home/pierre/Desktop/output")
     s = ar.snapshots[1]
-    quick_nuclear_pcolors(s, asl, inner_boxsize=1e10)
+    quick_nuclear_pcolors(s, asl, {"inner_boxsize": 1e10})
 
 
 def test_quick_nuclear_compositions():
@@ -479,7 +482,7 @@ def test_animation_functions():
 
 
 def main():
-    test_animation_functions()
+    test_quick_pcolor()
 
 
 if __name__ == "__main__":

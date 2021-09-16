@@ -405,6 +405,20 @@
                             "value": true
                         }
                     ]
+                },
+                {
+                    "name": "MassRatio",
+                    "value": null,
+                    "docs": "Mass Ratio of a binary (secondary / primary), where the primary is on the left of the box",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RELAXOBJECT_BINARY",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
                 }
             ]
         },

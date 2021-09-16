@@ -7,10 +7,11 @@ import h5py
 import os
 
 
-class ArepoH5File(object):
+class ArepoH5File:
     """Base class for ArepoSnapshot and ArepoICs"""
 
-    def __init__(self, filename):
+    def __init__(self,
+                 filename: str) -> None:
         """Constructor for hdf5 file object
 
         :param filename: Location of file on disk
@@ -25,7 +26,8 @@ class ArepoH5File(object):
         self.minima = dict()
         self.filename = os.path.abspath(filename)
 
-    def r(self, center):
+    def r(self,
+          center: np.ndarray) -> np.ndarray:
         """Returns an array of radii between center and each particle in Coordinates
 
         :param center: 3D coordinates of center
@@ -41,7 +43,7 @@ class ArepoH5File(object):
             (coords[:, 1] - center[1]) ** 2 +
             (coords[:, 2] - center[2]) ** 2)
 
-    def center_of_mass(self):
+    def center_of_mass(self) -> np.ndarray:
         """Computes the center of mass of all particles in Coordinates
 
         :return: Center of mass
@@ -53,7 +55,8 @@ class ArepoH5File(object):
         rcm = [(coords[:, i] / mass.sum() * mass).sum() for i in [0, 1, 2]]
         return np.array(rcm)
 
-    def mean_a(self, species_list):
+    def mean_a(self,
+               species_list: ArepoSpeciesList) -> np.ndarray:
         """Computes mean molecular weight
 
         :param species_list:
@@ -71,7 +74,8 @@ class ArepoH5File(object):
             mean_a += xnuc[:, i] * a[i].mass_number
         return mean_a
 
-    def coords_center_at(self, center):
+    def coords_center_at(self,
+                         center: np.ndarray) -> np.ndarray:
         """Returns an array which gives the offset from center to each particle in coordinates
 
         :param center: Center from which to calculate offsets
@@ -82,11 +86,12 @@ class ArepoH5File(object):
         """
         return self.get_from_h5(n.COORDINATES) - np.array(center)[None, :]
 
-    def angular_momentum(self, orientation):
+    def angular_momentum(self,
+                         orientation: list[str]) -> np.ndarray:
         """Computes angular momentum given an orientation
 
         :param orientation: Orientation
-        :type orientation: list
+        :type orientation: list[str]
 
         :return: Array of angular momentum values
         :rtype: np.ndarray
@@ -107,7 +112,8 @@ class ArepoH5File(object):
 
         return angmom
 
-    def max(self, quantity):
+    def max(self,
+            quantity: str) -> float:
         """Gets max value of quantity in the current file
 
         :param quantity: Quantity
@@ -118,7 +124,8 @@ class ArepoH5File(object):
         """
         return np.max(self.get_from_h5(quantity, save_to_mem=False))
 
-    def min(self, quantity):
+    def min(self,
+            quantity: str) -> float:
         """Gets min value of quantity in the current file
 
         :param quantity: Quantity
@@ -129,7 +136,8 @@ class ArepoH5File(object):
         """
         return np.min(self.get_from_h5(quantity, save_to_mem=False))
 
-    def num_particles(self, ptype=None):
+    def num_particles(self,
+                      ptype: int = None) -> int:
         """Gets the total number of particles in the file
 
         :param ptype: Particle type
@@ -146,7 +154,8 @@ class ArepoH5File(object):
         else:
             return p[ptype]
 
-    def coords(self, ptype=0):
+    def coords(self,
+               ptype: int = 0) -> np.ndarray:
         """Convenience function to get coordinates.
 
         :param ptype: Particle type
@@ -157,7 +166,8 @@ class ArepoH5File(object):
         """
         return self.get_from_h5(n.COORDINATES, ptype)
 
-    def passive(self, ptype=0):
+    def passive(self,
+                ptype: int = 0) -> np.ndarray:
         """Convenience function to get passive scalars.
 
         :param ptype: Particle type
@@ -168,7 +178,8 @@ class ArepoH5File(object):
         """
         return self.get_from_h5(n.PASSIVESCALARS, ptype)
 
-    def vel(self, ptype=0):
+    def vel(self,
+            ptype: int = 0) -> np.ndarray:
         """Convenience function to get velocities.
 
         :param ptype: Particle type
@@ -179,7 +190,8 @@ class ArepoH5File(object):
         """
         return self.get_from_h5(n.VELOCITIES, ptype)
 
-    def mass(self, ptype=0):
+    def mass(self,
+             ptype: int = 0) -> np.ndarray:
         """Convenience function to get masses.
 
         :param ptype: Particle type
@@ -190,7 +202,8 @@ class ArepoH5File(object):
         """
         return self.get_from_h5(n.MASSES, ptype)
 
-    def u(self, ptype=0):
+    def u(self,
+          ptype: int = 0) -> np.ndarray:
         """Convenience function to get internal energy.
 
         :param ptype: Particle type
@@ -201,7 +214,8 @@ class ArepoH5File(object):
         """
         return self.get_from_h5(n.INTERNALENERGY, ptype)
 
-    def xnuc(self, ptype=0):
+    def xnuc(self,
+             ptype: int = 0) -> np.ndarray:
         """Convenience function to get nuclear composition.
 
         :param ptype: Particle type
@@ -212,7 +226,8 @@ class ArepoH5File(object):
         """
         return self.get_from_h5(n.NUCLEARCOMPOSITION, ptype)
 
-    def rho(self, ptype=0):
+    def rho(self,
+            ptype: int = 0) -> np.ndarray:
         """Convenience function to get density.
 
         :param ptype: Particle type
@@ -223,7 +238,8 @@ class ArepoH5File(object):
         """
         return self.get_from_h5(n.DENSITY, ptype)
 
-    def pressure(self, ptype=0):
+    def pressure(self,
+                 ptype: int = 0) -> np.ndarray:
         """Convenience function to get pressure.
 
         :param ptype: Particle type
@@ -234,7 +250,11 @@ class ArepoH5File(object):
         """
         return self.get_from_h5(n.PRESSURE, ptype)
 
-    def get_from_h5(self, field, ptype=0, from_file=False, save_to_mem=False):
+    def get_from_h5(self,
+                    field: str,
+                    ptype: int = 0,
+                    from_file: bool = False,
+                    save_to_mem: bool = False):
         """General function to get some data from the h5 file or the internal self.data cache
 
         :param field: Field to obtain data from
@@ -273,11 +293,15 @@ class ArepoH5File(object):
                 self.data[field] = val
             return val
 
-    def particle_exists(self, pid):
+    def particle_exists(self,
+                        pid: int) -> bool:
         pids = self.get_from_h5(n.PARTICLEIDS)
         return np.isin(pids, np.array([pid])).any()
 
-    def get_ids_of_largest(self, quant_name, k=10, pids=None):
+    def get_ids_of_largest(self,
+                           quant_name: str,
+                           k: int = 10,
+                           pids: list[int] = None) -> list[int]:
 
         if pids is None:
             pids = self.get_from_h5(n.PARTICLEIDS)
@@ -285,7 +309,10 @@ class ArepoH5File(object):
         quant = self.get_values_from_pids(quant_name, pids)
         return self.get_pids_of_k_largest_from_array(pids, quant, k)
 
-    def get_ids_of_smallest(self, quant_name, k=10, pids=None):
+    def get_ids_of_smallest(self,
+                            quant_name: str,
+                            k: int = 10,
+                            pids: list[int] = None) -> list[int]:
 
         if pids is None:
             pids = self.get_from_h5(n.PARTICLEIDS)
@@ -293,7 +320,9 @@ class ArepoH5File(object):
         quant = self.get_values_from_pids(quant_name, pids)
         return self.get_pids_of_k_smallest_from_array(pids, quant, k)
 
-    def get_values_from_pids(self, quant_name, pids_requested):
+    def get_values_from_pids(self,
+                             quant_name: str,
+                             pids_requested: np.ndarray) -> np.ndarray:
 
         quant = self.get_from_h5(quant_name)
         pid = self.get_from_h5(n.PARTICLEIDS)
@@ -310,18 +339,21 @@ class ArepoH5File(object):
 
         return quant[ndx]
 
-    def get_field_names(self):
+    def get_field_names(self) -> list[str]:
         field_names = []
         for field in ArepoGasFields.values():
             try:
                 self.get_from_h5(field)
                 field_names.append(field)
-            except (KeyError, ValueError) as e:
+            except (KeyError, ValueError):
                 pass
 
         return field_names
 
-    def print_particle_info(self, list_of_pids, limit=10, fields=None):
+    def print_particle_info(self,
+                            list_of_pids: np.ndarray,
+                            limit: int = 10,
+                            fields: list[str] = None) -> None:
 
         # Limit the output
         if len(list_of_pids) > limit:
@@ -348,18 +380,23 @@ class ArepoH5File(object):
             print(info_str.decode())
 
     @staticmethod
-    def get_pids_of_k_largest_from_array(pids, quant, k):
+    def get_pids_of_k_largest_from_array(pids: list[int],
+                                         quant: np.ndarray,
+                                         k: int):
         return pids[np.argpartition(quant, -k)[-k:]]
 
     @staticmethod
-    def get_pids_of_k_smallest_from_array(pids, quant, k):
+    def get_pids_of_k_smallest_from_array(pids: list[int],
+                                          quant: np.ndarray,
+                                          k: int):
         return pids[np.argpartition(quant, k)[:k]]
 
 
 class ArepoICs(ArepoH5File):
     """Class to hold information for Arepo initial conditions."""
 
-    def __init__(self, filename):
+    def __init__(self,
+                 filename: str) -> None:
         """Constructor for ArepoICs
 
         :param filename: Filename of IC file
@@ -370,7 +407,12 @@ class ArepoICs(ArepoH5File):
         """
         super(ArepoICs, self).__init__(filename)
 
-    def write_ics(self, particle_dict, config, param, add_pids=True, long_ids=False):
+    def write_ics(self,
+                  particle_dict: dict,
+                  config: Config,
+                  param: Param,
+                  add_pids: bool = True,
+                  long_ids: bool = False) -> None:
         """Write the initial conditions information to file.
 
         :param particle_dict: Particle dictionary which specifies coordinates, velocities, etc.
@@ -436,7 +478,9 @@ class ArepoICs(ArepoH5File):
         print("Done.")
 
     @staticmethod
-    def construct_header(particle_dict, config, param):
+    def construct_header(particle_dict: dict,
+                         config: Config,
+                         param: Param) -> dict:
         """Construct a header for writing IC to file.
 
         :param particle_dict: Particle dictionary
@@ -485,7 +529,8 @@ class ArepoICs(ArepoH5File):
 class ArepoSnapshot(ArepoH5File):
     """ArepoSnapshot."""
 
-    def __init__(self, filename):
+    def __init__(self,
+                 filename: str) -> None:
         """Constructor for Snapshots
 
         :param filename: Filename of snapshot
@@ -496,5 +541,5 @@ class ArepoSnapshot(ArepoH5File):
         """
         super(ArepoSnapshot, self).__init__(filename)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"ArepoSnapshot with n particles: {self.num_particles()}"

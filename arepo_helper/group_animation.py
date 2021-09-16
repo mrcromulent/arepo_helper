@@ -8,13 +8,15 @@ import utilities
 import os
 
 
-class GroupAnimation(object):
+class GroupAnimation:
     """Class to create a group of animations in a grid"""
-    plots = []
-    pbar = None
-    animation = None
+    plots: np.ndarray = None
+    pbar: tqdm = None
+    animation: ani.FuncAnimation = None
 
-    def __init__(self, plot_options_array, fps=5):
+    def __init__(self,
+                 plot_options_array: np.ndarray,
+                 fps: int = 5) -> None:
         """Constructor
 
         :param plot_options_array: Array of PlotOptions objects, where axis 2 indicates the passive of time
@@ -24,8 +26,6 @@ class GroupAnimation(object):
 
         :return: Group animation object
         :rtype: GroupAnimation
-
-        .. seealso::
         """
 
         self.poa    = plot_options_array
@@ -40,7 +40,7 @@ class GroupAnimation(object):
                                          figsize=(8 * self.ncols, 8 * self.nrows),
                                          squeeze=False)
 
-    def animate(self):
+    def animate(self) -> None:
         """Creates the animation"""
         self.pbar = tqdm(total=self.num_frames)
 
@@ -52,7 +52,7 @@ class GroupAnimation(object):
                                            repeat=True,
                                            init_func=utilities.dummy)
 
-    def init(self):
+    def init(self) -> None:
         """Initialises all plots to be animated"""
 
         for i in range(self.nrows):
@@ -61,7 +61,8 @@ class GroupAnimation(object):
                 plotter = get_plotter_func_from_plot_options(po)
                 self.plots[i, j] = plotter(po, figure=self.fig, ax=self.ax[i, j])
 
-    def animate_frame(self, t):
+    def animate_frame(self,
+                      t: int) -> np.ndarray:
         """Updates the progress bar and animates a single frame
 
         :param t: The frame number to be animated
@@ -82,7 +83,8 @@ class GroupAnimation(object):
 
         return self.plots
 
-    def save(self, filename=None):
+    def save(self,
+             filename: str = None) -> None:
         """Saves the animation to the file specified by filename
 
         :param filename: Location to save file to

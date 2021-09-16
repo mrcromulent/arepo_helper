@@ -3,14 +3,21 @@ from sim_config import Param, Config, J, Paths
 from names import n, ArepoHeader as h
 from pyhelm_eos import loadhelm_eos
 from h5_file import ArepoICs
+from typing import Union
 import numpy as np
 import os
 
 
-class ArepoSimulation(object):
+class ArepoSimulation:
     """Top level class for creating and managing AREPO simulations. """
 
-    def __init__(self, proj_name, proj_dir, js, config_eo, param_eo, version="dissipative"):
+    def __init__(self,
+                 proj_name: str,
+                 proj_dir: str,
+                 js: dict,
+                 config_eo: dict,
+                 param_eo: dict,
+                 version: str = "dissipative") -> None:
         """Creates an Arepo Simulation object using Config and Param objects and additional version information.
 
         :param proj_name: Project name
@@ -59,7 +66,8 @@ class ArepoSimulation(object):
         self.param.write_file(self.paths.param, self.ignored)
         self.config.write_file(self.paths.config, self.ignored)
 
-    def check_for_incompatibilities(self, arepo_input):
+    def check_for_incompatibilities(self,
+                                    arepo_input: Union[Config, Param]) -> None:
         """Checks for incompatible options
 
         :param arepo_input: Config or Param object
@@ -98,7 +106,8 @@ class ArepoSimulation(object):
                     if ignored:
                         self.ignored.append(name)
 
-    def check_requirement_met(self, requirement):
+    def check_requirement_met(self,
+                              requirement: dict) -> bool:
         """Checks if a particular requirement is met as specified in the Config/Param JSON file.
 
         :param requirement: Dict specifying requirement
@@ -130,8 +139,9 @@ class ArepoSimulation(object):
         else:
             raise ValueError(f"Unknown operator: {op}")
 
-    def sense_checks(self):
-        """Performs sense checks to see if you have anything incompatible in your simulation specifications."""
+    def sense_checks(self) -> None:
+        """Performs sense checks to see if you have anything incompatible in your simulation specifications.
+        """
 
         self.check_for_incompatibilities(self.param)
         self.check_for_incompatibilities(self.config)
@@ -157,11 +167,12 @@ class ArepoSimulation(object):
         if self.config.get("RELAX_RUNTIME"):
             assert self.param.get("TimeMax") >= 40.0
 
-    def copy_files_to_input(self, file_list):
+    def copy_files_to_input(self,
+                            file_list: list[str]) -> None:
         """Copies files to the input folder for your simulation (e.g. species.txt files)
 
         :param file_list: List of files to copy
-        :type file_list: list
+        :type file_list: list[str]
         """
         if file_list is not None:
             for file in file_list:
@@ -169,7 +180,7 @@ class ArepoSimulation(object):
                 target = os.path.join(self.paths.input_dir, base)
                 os.system(f"cp {file} {target}")
 
-    def write_arepo_compiler(self):
+    def write_arepo_compiler(self) -> None:
         """Writes the AREPO compiler file."""
 
         lines = [
@@ -192,7 +203,7 @@ class ArepoSimulation(object):
         # Make the compiler executable
         os.chmod(self.paths.arepo_compiler, 0o755)
 
-    def write_jobscript(self):
+    def write_jobscript(self) -> None:
         """Writes the jobscript file. """
 
         lines = [
@@ -222,7 +233,7 @@ class ArepoSimulation(object):
         with open(f"{self.paths.jobscript}", "w") as f:
             f.write("\n".join(lines))
 
-    def make_systype_file(self):
+    def make_systype_file(self) -> None:
         """Writes the Makefile.systype file."""
 
         systype = ""
@@ -235,7 +246,7 @@ class ArepoSimulation(object):
         with open(self.paths.makefile_systype, "w") as f:
             f.write(f"SYSTYPE=\"{systype}\"")
 
-    def modify_makefile(self):
+    def modify_makefile(self) -> None:
         """Removes incorrect specifications (ipo, -xCORE-AVX2) from the Raijin specifications in the Makefile."""
 
         if self.version in ["ivo_2016", "dissipative"]:
@@ -248,12 +259,11 @@ class ArepoSimulation(object):
             with open(self.paths.makefile, "w") as f:
                 f.write(data)
 
-    def validate_input_file(self, arepo_ic_file, helm_file, species_file):
+    def validate_input_file(self,
+                            arepo_ic_file: str,
+                            helm_file: str,
+                            species_file: str) -> None:
         """Performs a series of checks to determine whether your simulation will be immediately rejected.
-
-        .. notes::
-            - Checks whether all particles are within the boxsize,
-            - Checks the calculated temperature using EOS_DEGENERATE
 
         :param arepo_ic_file: Location of Arepo Initial Conditions file
         :type arepo_ic_file: str
@@ -261,6 +271,11 @@ class ArepoSimulation(object):
         :type helm_file: str
         :param species_file: Species.txt file
         :type species_file: str
+
+        .. note::
+            - Checks whether all particles are within the boxsize,
+            - Checks the calculated temperature using EOS_DEGENERATE
+
         """
 
         ic_h5 = ArepoICs(arepo_ic_file)
