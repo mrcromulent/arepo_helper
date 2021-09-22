@@ -270,10 +270,7 @@ Thumbs.db #thumbnail cache on Windows
 
 # User added
 pyvenv.cfg
-lib64
-/bin/
-/include/
-/lib/
-/arepo_helper/data/source/**
-/arepo_helper/misc/
 /.idea/
+/src/data/snapshots/*.png
+/src/data/snapshots/*.mp4
+/src/data/snapshots/areporun_cache

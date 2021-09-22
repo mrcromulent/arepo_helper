@@ -1,0 +1,1608 @@
+{
+    "date": "Fri Jul 15 23:02:22 2016 +0200",
+    "heading": "Code compile time options",
+    "default_value": false,
+    "data": [
+        {
+            "heading": "Basic operation",
+            "items": [
+                {
+                    "name": "NTYPES",
+                    "value": 6,
+                    "docs": "Number of particle types",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "PERIODIC",
+                    "value": true,
+                    "docs": "Has to be always enabled for legacy reasons.",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "COOLING",
+                    "value": false,
+                    "docs": "If COOLING is set, then CoolingOn must equal 1, and vice versa. This is to provide rough assurance that you are running a given parameter file with the correct executable.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "CoolingOn",
+                            "operator": "EQ",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "name": "GAMMA",
+                    "value": false,
+                    "docs": "Heat capacity ratio. Try 1.4 if unsure.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "ISOTHERM_EQS",
+                    "value": false,
+                    "docs": "This special option makes the gas behave like an isothermal gas with equation of state P = c_s^2 rho. The sound-speed c_s is set by the thermal energy per unit mass  in the intial conditions, i.e. c_s^2=u. If the value for u is zero, then the initial gas temperature in the parameter file is used to define the sound speed according to c_s^2= k T/m_p, where m_p is the proton mass.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RIEMANN_GAMMA",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "heading": "MPI/Threading",
+            "items": [
+                {
+                    "name": "NUM_THREADS",
+                    "value": false,
+                    "docs": "When using OpenMP, with the given number of threads per MPI task.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "IMPOSE_PINNING",
+                    "value": false,
+                    "docs": "Enforce pinning of MPI tasks to cores if MPI does not do it",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "IMPOSE_PINNING_OVERRIDE_MODE",
+                    "value": false,
+                    "docs": "If pinning is specified, overrides any native pinning set by the native MPI implementation",
+                    "required": false, 
+					"ignored_if": [
+                        {
+                            "name": "IMPOSE_PINNING",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ],
+					"requirements": []
+                }
+            ]
+        },
+        {
+            "heading": "Mesh Type",
+            "items": [
+                {
+                    "name": "VORONOI",
+                    "value": true,
+                    "docs": "Voronoi unstructured moving mesh to be used",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                }
+            ]
+        },
+        {
+            "heading": "SR/GR",
+            "items": [
+                {
+                    "name": "SPECIAL_RELATIVITY",
+                    "value": false,
+                    "docs": "Special relativistic hydro solver",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "VORONOI_STATIC_MESH",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "SPECIAL_RELATIVITY_HLLC",
+                    "value": false,
+                    "docs": "Forces use of Riemann HLLC solver when using GR or SR",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "GENERAL_RELATIVITY",
+                    "value": false,
+                    "docs": "General relativistic hydro solver",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "VORONOI_STATIC_MESH",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "METRIC_TYPE",
+                    "value": false,
+                    "docs": "GR Metric. 1 = Schwarzschild. 2 = Kerr BH, etc.",
+                    "required": false, 
+					"ignored_if": [
+                        {
+                            "name": "GENERAL_RELATIVITY",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ],
+					"requirements": []
+                },
+                {
+                    "name": "ATMOSPHERE_GENERAL_RELATIVITY",
+                    "value": false,
+                    "docs": "Applies a simple treatment of atmosphere in GR.",
+                    "required": false, 
+					"ignored_if": [
+                        {
+                            "name": "GENERAL_RELATIVITY",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ],
+					"requirements": []
+                }
+            ]
+        },
+        {
+            "heading": "MHD",
+            "items": [
+                {
+                    "name": "MHD",
+                    "value": false,
+                    "docs": "Master switch for ideal MHD.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RIEMANN_HLLD",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "MHD_POWELL",
+                    "value": false,
+                    "docs": "Powell div(B) cleaning scheme for magnetohydrodynamics",
+                    "required": false, 
+					"ignored_if": [
+                        {
+                            "name": "MHD",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
+					"requirements": []
+                },
+                {
+                    "name": "MHD_POWELL_LIMIT_TIMESTEP",
+                    "value": false,
+                    "docs": "Sets a floor on the timestep based on the Powell technique",
+                    "required": false, 
+					"ignored_if": [
+                        {
+                            "name": "MHD_POWELL",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
+					"requirements": []
+                },
+                {
+                    "name": "MHD_SEEDFIELD",
+                    "value": false,
+                    "docs": "Uniform magnetic seed field of specified orientation and strength set up after reading in IC",
+                    "required": false, 
+					"ignored_if": [
+                        {
+                            "name": "MHD",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
+					"requirements": [
+                        {
+                            "name": "MHDSeedDir",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "MHDSeedValue",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "heading": "Riemann solver",
+            "items": [
+                {
+                    "name": "VARIABLE_GAMMA",
+                    "value": true,
+                    "docs": "Heat capacity ratio allowed to vary",
+                    "required": false, 
+					"ignored_if": [
+                    ],
+					"requirements": [
+                        {
+                            "name": "GAMMA",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ]
+                },
+                {
+                    "name": "RIEMANN_HLL",
+                    "value": false,
+                    "docs": "Harten–Lax–van Leer Riemann solver",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RIEMANN_HLLC",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_ROSUNOV",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_HLLD",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_GAMMA",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "RIEMANN_HLLC",
+                    "value": false,
+                    "docs": "Harten–Lax–van Leer Contact Riemann solver",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RIEMANN_HLL",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_ROSUNOV",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_HLLD",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_GAMMA",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "RIEMANN_ROSUNOV",
+                    "value": false,
+                    "docs": "TODO: ???",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RIEMANN_HLL",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_HLLC",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_HLLD",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_GAMMA",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "RIEMANN_HLLD",
+                    "value": true,
+                    "docs": "Harten–Lax–van Leer Discontinuity Riemann solver",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RIEMANN_HLL",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_HLLC",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_ROSUNOV",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_GAMMA",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "RIEMANN_GAMMA",
+                    "value": false,
+                    "docs": "Riemann Gamma Solver",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RIEMANN_HLL",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_HLLC",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_ROSUNOV",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "RIEMANN_HLLD",
+                            "operator": "NEQ",
+                            "value": true
+                        },
+                        {
+                            "name": "ISOTHERM_EQS",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "heading": "Mesh motion and regularization",
+            "items": [
+                {
+                    "name": "VORONOI_STATIC_MESH",
+                    "value": false,
+                    "docs": "Assumes the mesh to be static, i.e. to not change with time. The vertex velocities of all mesh-generating points is set to zero and domain decomposition is disabled.",
+                    "required": false, 
+					"ignored_if": [
+                        {
+                            "name": "VORONOI",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
+					"requirements": []
+                },
+                {
+                    "name": "REGULARIZE_MESH_CM_DRIFT",
+                    "value": false,
+                    "docs": "Move mesh generating point towards center of mass to make cells rounder.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "VORONOI_STATIC_MESH",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ]
+                },
+                {
+                    "name": "REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED",
+                    "value": false,
+                    "docs": "Limit mesh regularization speed by local sound speed",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "VORONOI_STATIC_MESH",
+                            "operator": "EQ",
+                            "value": false
+                        }
+                    ]
+                },
+                {
+                    "name": "REGULARIZE_MESH_FACE_ANGLE",
+                    "value": false,
+                    "docs": "Regularises mesh face angles",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "VORONOI_STATIC_MESH",
+                            "operator": "EQ",
+                            "value": false
+                        },
+                        {
+                            "name": "CellMaxAngleFactor",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "CellShapingFactor",
+                            "operator": "EQ",
+                            "value": null
+                        }
+                    ]
+                },
+                {
+                    "name": "OUTPUT_MESH_FACE_ANGLE",
+                    "value": false,
+                    "docs": "Outputs the mesh face angles",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                }
+            ]
+        },
+        {
+            "heading": "Time integration options",
+            "items": [
+                {
+                    "name": "FORCE_EQUAL_TIMESTEPS",
+                    "value": false,
+                    "docs": "Timestep is global and set by AREPO",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "TREE_BASED_TIMESTEPS",
+                    "value": false,
+                    "docs": "Non-local timesteps (taking signal speed into account)",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "FORCE_EQUAL_TIMESTEPS",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "DECOUPLE_TIMESTEPS",
+                    "value": false,
+                    "docs": "Allows different timebins for gravity and hydro. use only WITHOUT FORCE_EQUAL_TIMESTEPS",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "FORCE_EQUAL_TIMESTEPS",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "RUNGE_KUTTA_FULL_UPDATE",
+                    "value": false,
+                    "docs": "Refines using an exact Runge Kutta method",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                }
+            ]
+        },
+        {
+            "heading": "Image generation",
+            "items": [
+                {
+                    "name": "VORONOI_MESHOUTPUT",
+                    "value": false,
+                    "docs": "2D and 3D mesh output",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "VORONOI_FREQUENT_IMAGES",
+                    "value": false,
+                    "docs": "creates images with frequency 'TimeBetweenImages' given in parameterfile, independent of snapshots",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                }
+            ]
+        },
+        {
+            "heading": "Refinement and derefinement",
+            "items": [
+                {
+                    "name": "REFINEMENT_SPLIT_CELLS",
+                    "value": false,
+                    "docs": "Cells can be split (increasing resolution) during refinement",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "REFINEMENT_MERGE_CELLS",
+                    "value": false,
+                    "docs": "Cells can be merged (decreasing resolution) during refinement",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "REFINEMENT_VOLUME_LIMIT",
+                    "value": false,
+                    "docs": "Limit the volume of cells and the maximum volume difference between neighboring cels",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "DEREFINE_GENTLY",
+                    "value": false,
+                    "docs": "Prevent derefinement in regions of strong local changes of pressure or density. Cells will only be refined if they temperature of surrounding cells is sufficiently similar (within a factor GENTLE_DEREFINE_FACTOR, which has currently a default value of 1.2).",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                }
+            ]
+        },
+        {
+            "heading": "Add or relax mesh",
+            "items": [
+                {
+                    "name": "MESHRELAX",
+                    "value": false,
+                    "docs": "This keeps the mass constant and only regularises the mesh",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "MESHRELAX_DENSITY_IN_INPUT",
+                    "value": false,
+                    "docs": "Attempts to relax, but I have had lots of numerical problems with this option",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                }
+            ]
+        },
+        {
+            "heading": "Gravity treatment",
+            "items": [
+                {
+                    "name": "SELFGRAVITY",
+                    "value": true,
+                    "docs": "Particles are mutually attracted by their own mass",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "HIERARCHICAL_GRAVITY",
+                    "value": true,
+                    "docs": "Use hierarchical splitting of the time integration of the gravity",
+                    "required": false, 
+					"ignored_if": [
+                        {
+                            "name": "SELFGRAVITY",
+                            "operator": "NEQ",
+                            "value": true
+                        }
+                    ],
+					"requirements": []
+                },
+                {
+                    "name": "CELL_CENTER_GRAVITY",
+                    "value": true,
+                    "docs": "Uses geometric centers to calculate gravity of cells",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "HIERARCHICAL_GRAVITY",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "GRAVITY_NOT_PERIODIC",
+                    "value": false,
+                    "docs": "Controls whether gravity is periodic or not independently from PERIODIC.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "PeriodicBoundariesOn",
+                            "operator": "EQ",
+                            "value": 0
+                        }
+                    ]
+                },
+                {
+                    "name": "ALLOW_DIRECT_SUMMATION",
+                    "value": true,
+                    "docs": "Performed direct summation instead of tree-based gravity if number of active particles < DIRECT_SUMMATION_THRESHOLD (= 3000 unless specified differently here)",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "DIRECTION_SUMMATION_THRESHOLD",
+                    "value": false,
+                    "docs": "Try 1000",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "EXTERNALGRAVITY",
+                    "value": false,
+                    "docs": "master switch for external potential",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "COMPUTE_POTENTIAL_ENERGY",
+                    "value": false,
+                    "docs": "Seems to just be identical to EVALPOTENTIAL but for backwards compatibility",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "EVALPOTENTIAL",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "heading": "Gravity softening",
+            "items": [
+                {
+                    "name": "NSOFTTYPES",
+                    "value": false,
+                    "docs": "Number of different softening values to which the particle types can be mapped. Try 4?",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "NSOFTTYPES",
+                            "operator": "MIN",
+                            "value": 2
+                        }
+                    ]
+                },
+                {
+                    "name": "ADAPTIVE_HYDRO_SOFTENING",
+                    "value": false,
+                    "docs": "Adaptive softening of gas cells depending on their size",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "NSOFTTYPES_HYDRO",
+                            "operator": "NEQ",
+                            "value": false
+                        },
+                        {
+                            "name": "MinimumComovingHydroSoftening",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "AdaptiveHydroSofteningSpacing",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
+                },
+                {
+                    "name": "NSOFTTYPES_HYDRO",
+                    "value": false,
+                    "docs": "Used to override the default value of 64.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "ADAPTIVE_HYDRO_SOFTENING",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "heading": "TreePM options",
+            "items": [
+                {
+                    "name": "PMGRID",
+                    "value": false,
+                    "docs": "Enables particle mesh; number of cells used for grid in each dimension.   This enables the TreePM method, i.e. the long-range force is computed with a PM-algorithm, and the short range force with the tree. The parameter has to be set to the size of the mesh that should be used, e.g. 64, 128, 256, etc. The mesh dimensions need not necessarily be a power of two, but the FFT is fastest for such a choice.  Note: If the simulation is not in a periodic box, then a FFT method for vacuum boundaries is employed, using a mesh with dimension twice that specified by PMGRID. Recommended value for periodic boxes, twice the cube root of the number of dark matter particles, i.e. 512 for a 256^3 simulation.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "ASMTH",
+                    "value": false,
+                    "docs": "This can be used to override the value assumed for the scale that defines the long-range/short-range force-split in the TreePM algorithm. The default value is 1.25, in mesh-cells.",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "PMGRID",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "RCUT",
+                    "value": false,
+                    "docs": "This can be used to override the maximum radius in which the short-range tree-force is evaluated (in case the TreePM algorithm is used). The default value is 4.5, given in mesh-cells.",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "PMGRID",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "ONLY_PM",
+                    "value": false,
+                    "docs": "This option disables the short-range gravitational force calculation by the tree, i.e. the gravitational force only consists of the PM-force. Not recommended.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "PMGRID",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "heading": "Things that are always recommended",
+            "items": [
+                {
+                    "name": "ENDIAN_SWAP_ENDIAN_READIC",
+                    "value": false,
+                    "docs": "Enable automatic ENDIAN swapping for reading ICs",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "CHUNKING",
+                    "value": true,
+                    "docs": "will calculated the gravity force in interleaved blocks. This can reduce imbalances in case multiple iterations due to insufficient buffer size need to be done",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                }
+            ]
+        },
+        {
+            "heading": "Precision",
+            "items": [
+                {
+                    "name": "DOUBLEPRECISION",
+                    "value": 1,
+                    "docs": "Mode of double precision: not defined: single; 1: full double precision 2: mixed, 3: mixed, fewer single precisions; unless short of memory, use 1.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "DOUBLEPRECISION_FFTW",
+                    "value": false,
+                    "docs": "This enables the use of double precision variables for storing the fields that are processed with the Fourier transforms. If this is set, the code will also then use the double-precision version of FTTW for the PM gravity calculations.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_IN_DOUBLEPRECISION",
+                    "value": false,
+                    "docs": "Snapshots written in double precision",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "INPUT_IN_DOUBLEPRECISION",
+                    "value": false,
+                    "docs": "ICs in double precision",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "NGB_TREE_DOUBLEPRECISION",
+                    "value": false,
+                    "docs": "Double precision used for neighbour node extension",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                }
+
+            ]
+        },
+        {
+            "heading": "Subfind",
+            "items": [
+                {
+                    "name": "SUBFIND",
+                    "value": false,
+                    "docs": "Enables substructure finder",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "SAVE_HSML_IN_SNAPSHOT",
+                    "value": false,
+                    "docs": "Saves smoothing length in snapshots",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                }
+            ]
+        },
+        {
+            "heading": "Passive Tracers",
+            "items": [
+                {
+                    "name": "TRACER_FIELD",
+                    "value": false,
+                    "docs": "Passive scalar field which is advected in proportion to the fluid mass fluxes",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "TRACER_MC",
+                    "value": false,
+                    "docs": "Monte carlo tracer. Value specifies particle type",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "GENERATE_TRACER_MC_IN_ICS",
+                    "value": false,
+                    "docs": "Adds a fixed number of Monte Carlo tracers (value specified in param file)",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "TRACER_PARTICLE",
+                    "value": false,
+                    "docs": "Velocity field tracer master switch. Value specifies particle type",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "GENERATE_TRACER_PARTICLE_IN_ICS",
+                    "value": false,
+                    "docs": "Add tracer particles at positions of cell vertices in ICs",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                }
+            ]
+        },
+        {
+            "heading": "Special Behaviour",
+            "items": [
+                {
+                    "name": "VORONOI_DYNAMIC_UPDATE",
+                    "value": true,
+                    "docs": "Keeps track of mesh connectivity, which speeds up mesh construction",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "NO_MPI_IN_PLACE",
+                    "value": false,
+                    "docs": "TODO: ???",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "NO_ISEND_IRECV_IN_DOMAIN",
+                    "value": true,
+                    "docs": "TODO: ???",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "FIX_PATHSCALE_MPI_STATUS_IGNORE_BUG",
+                    "value": true,
+                    "docs": "TODO: ???",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "ALLOWEXTRAPARAMS",
+                    "value": false,
+                    "docs": "Allows unused parameters in parameter file",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OVERRIDE_PEANOGRID_WARNING",
+                    "value": false,
+                    "docs": "Overrides warning which suggests increasing BITS_PER_DIMENSION",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                }
+            ]
+        },
+        {
+            "heading": "Input/Output",
+            "items": [
+                {
+                    "name": "UPDATE_GRADIENTS_FOR_OUTPUT",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "GODUNOV_STATS",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_PRESSURE_GRADIENT",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_DENSITY_GRADIENT",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_VELOCITY_GRADIENT",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_BFIELD_GRADIENT",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_VERTEX_VELOCITY",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_VERTEX_VELOCITY_DIVERGENCE",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_VOLUME",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_CENTER_OF_MASS",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_SURFACE_AREA",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_PRESSURE",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "EVALPOTENTIAL",
+                    "value": false,
+                    "docs": "",
+                    "required": false,
+					"ignored_if": [],
+					"requirements": []
+                },
+                {
+                    "name": "OUTPUTPOTENTIAL",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "EVALPOTENTIAL",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "name": "OUTPUTACCELERATION",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUTTIMESTEP",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_SOFTENINGS",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUTGRAVINTERACTIONS",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "HAVE_HDF5",
+                    "value": true,
+                    "docs": "needed when HDF5 I/O support is desired",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_XDMF",
+                    "value": false,
+                    "docs": "writes an .xmf file for each snapshot, which can be read by visit (with the hdf5 snapshot)",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUTCOOLRATE",
+                    "value": false,
+                    "docs": "Outputs the cooling and conduction rate if enabled",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_DIVVEL",
+                    "value": false,
+                    "docs": "Output velocity divergence",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_CURLVEL",
+                    "value": false,
+                    "docs": "Output velocity curl",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_VORTICITY",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_MACHNUM",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_ENTROPY",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "OUTPUT_CSND",
+                    "value": false,
+                    "docs": "",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                }
+            ]
+        },
+        {
+            "heading": "Testing and Debugging options",
+            "items": [
+                {
+                    "name": "DEBUG",
+                    "value": true,
+                    "docs": "Enables core dumps",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "HOST_MEMORY_REPORTING",
+                    "value": true,
+                    "docs": "Reports after start-up the available system memory by analyzing/proc/meminfo",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                }
+            ]
+        },
+        {
+            "heading": "Degenerate Equation of State",
+            "items": [
+                {
+                    "name": "EOS_DEGENERATE",
+                    "value": true,
+                    "docs": "Master switch for degenerate matter, with primitive quantities found using Helmholtz EOS.",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "VARIABLE_GAMMA",
+                            "operator": "EQ",
+                            "value": true
+                        },
+                        {
+                            "name": "EosTable",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "EosSpecies",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
+                },
+                {
+                    "name": "EOS_COULOMB_CORRECTIONS",
+                    "value": true,
+                    "docs": "Applies Coulomb corrections to Helmholtz EOS",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "EOS_COULOMB_CORRECTIONS_SMOOTH",
+                    "value": false,
+                    "docs": "Applies a Butterworth LPF to smooth corrections",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "EOS_NSPECIES",
+                    "value": false,
+                    "docs": "Number of degenerate matter species",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "VARIABLE_GAMMA",
+                            "operator": "EQ",
+                            "value": true
+                        },
+                        {
+                            "name": "EosTable",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "EosSpecies",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
+                },
+                {
+                    "name": "RELAXOBJECT",
+                    "value": false,
+                    "docs": "Calls the relaxation routine in relaxobject.c",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RelaxBaseFac",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
+                },
+                {
+                    "name": "RELAXOBJECT_COOLING",
+                    "value": false,
+                    "docs": "Removes energy from the system until the desired temperature is reached",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "RelaxTemperature",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
+                },
+                {
+                    "name": "RELAXOBJECT_COOLING2",
+                    "value": false,
+                    "docs": "used for WD+HeShell relaxation",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "TempCore",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "TempShell",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "ShellBaseRadius",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "TempMin",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "RTempMin",
+                            "operator": "NEQ",
+                            "value": null
+                        },
+                        {
+                            "name": "BackgroundTemp",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
+                },
+                {
+                    "name": "RELAXOBJECT_BINARY",
+                    "value": false,
+                    "docs": "Attempts to relax a binary system",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "PASSIVE_SCALARS",
+                            "operator": "NEQ",
+                            "value": false
+                        }
+                    ]
+                },
+                {
+                    "name": "RELAX_RUNTIME",
+                    "value": false,
+                    "docs": "the runtime is assumed to be 10 times the dynamical or acoustic time",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "INSPIRAL",
+                    "value": false,
+                    "docs": "Attempts to perform matter inspiral",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "InspiralVelocity",
+                            "operator": "NEQ",
+                            "value": null
+                        }
+                    ]
+                    
+                },
+                {
+                    "name": "PASSIVE_SCALARS",
+                    "value": false,
+                    "docs": "number of passive scalar fields advected with fluid (default: 0)",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                }
+            ]
+        },
+        {
+            "heading": "Nuclear Network",
+            "items": [
+                {
+                    "name": "NUCLEAR_NETWORK",
+                    "value": false,
+                    "docs": "Turns on nuclear reactions",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "OUTPUT_DIVVEL",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                    
+                },
+                {
+                    "name": "NETWORK_NSE",
+                    "value": false,
+                    "docs": "Nuclear reactions are evaluated w.r.t NSE",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "NETWORK_PARDISO",
+                    "value": false,
+                    "docs": "Nuclear reactions are evaluated w.r.t Pardiso",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "NETWORK_SCREENING",
+                    "value": false,
+                    "docs": "Applies screening to the network",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "REACLIB1",
+                    "value": false,
+                    "docs": "Uses network rates specified at https://reaclib.jinaweb.org/",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "NUCLEAR_NETWORK_DETONATE",
+                    "value": false,
+                    "docs": "Hmm I don't know about this one...",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "NUCLEAR_NETWORK_DETONATE_CORE",
+                    "value": false,
+                    "docs": "Triggers detonation of core during run",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "NUCLEAR_NETWORK_DETONATE_POSITION",
+                    "value": false,
+                    "docs": "Sets location of detonation at a certain radius specified by the user in a file",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                },
+                {
+                    "name": "NUCLEAR_NETWORK_TIMESTEP_LIMITER",
+                    "value": false,
+                    "docs": "Limits timestep using a maximum energy difference",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": [
+                        {
+                            "name": "FORCE_EQUAL_TIMESTEPS",
+                            "operator": "EQ",
+                            "value": true
+                        }
+                    ]
+                    
+                },
+                {
+                    "name": "NUCLEAR_NETWORK_LIMIT_COMPOSITION_CHANGE",
+                    "value": false,
+                    "docs": "Limits changes in composition below a certain value",
+                    "required": false, 
+					"ignored_if": [],
+					"requirements": []
+                    
+                }
+            ]
+        }
+    ]
+}
