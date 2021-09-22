@@ -110,7 +110,7 @@ def test_species():
     asl.estimate_e_from_temp(1e7, xnuc)
 
 
-# @pytest.mark.skip(reason="Requires generalisation")
+@pytest.mark.skip(reason="Requires generalisation")
 def test_simulation(tmpdir):
     from arepo_helper.sim_config import J, Paths
     from arepo_helper.h5_file import ArepoICs
