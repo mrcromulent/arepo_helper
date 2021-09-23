@@ -54,11 +54,10 @@ class ArepoRun:
 
     def map_header(self) -> None:
         """Searches all snapshots for the boxsize and records it in self.run_header."""
-        pass
-        # snap = self.snapshots[0]
-        # d = [ArepoHeader.BOXSIZE]
-        # for key in d:
-        #     self.run_header[key] = snap.get_from_h5(key)
+        snap = self.snapshots[0]
+        d = [ArepoHeader.BOXSIZE]
+        for key in d:
+            self.run_header[key] = snap.get_from_h5(key)
 
     def map_maxima_minima(self) -> None:
         """Maps the maxima and minima of every quantity in utilities.plot_quantities."""

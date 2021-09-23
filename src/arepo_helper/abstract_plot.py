@@ -60,7 +60,10 @@ class PlotOptions:
     def find_inner_boxsize(self) -> float:
         """Returns the inner boxsize of the self.ar space"""
 
-        return float(self.ar.snapshots[self.t_idx].get_from_h5(ArepoHeader.BOXSIZE))
+        if self.aa.inner_boxsize is None:
+            return self.ar.run_header[n.BOXSIZE]
+        else:
+            return self.aa.inner_boxsize
 
     def compute_title(self) -> None:
         """Computes the title"""
