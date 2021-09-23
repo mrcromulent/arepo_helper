@@ -13,7 +13,6 @@ from arepo_helper.run import ArepoRun
 from pyhelm_eos import loadhelm_eos
 from arepo_helper.const import msol
 from arepo_helper.names import n
-from definitions import DATA_DIR
 import matplotlib.pyplot as plt
 import numpy as np
 import create_ics
@@ -25,7 +24,8 @@ import pyeos
 import ic
 import os
 
-
+import pkg_resources
+DATA_DIR = pkg_resources.resource_filename('arepo_helper', 'src/data/')
 opal_file = os.path.join(DATA_DIR, "eostable", "EOS5_data")
 helm_file = os.path.join(DATA_DIR, "eostable", "helm_table_541_201.dat")
 species_file = os.path.join(DATA_DIR, "eostable", "species05.txt")
@@ -73,7 +73,6 @@ def test_run():
 
 
 def test_h5_file():
-    from arepo_helper.h5_file import ArepoSnapshot
     asl = ArepoSpeciesList(species_file)
     ar = ArepoRun.from_directory(arepo_dir)
     center = np.array([5e9, 5e9, 5e9])

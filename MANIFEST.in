@@ -1,1 +1,8 @@
-include src/cpp_libs/include/*.h
+include src/data/snapshots/*
+include src/data/eostable/*
+include src/data/param/*
+include src/data/config/*
+include src/data/wdec/*
+requirements.txt
+recursive-include src/data *
+include src/data/eostable/species05.txt

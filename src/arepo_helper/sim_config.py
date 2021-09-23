@@ -1,4 +1,3 @@
-from definitions import DATA_DIR, AREPO_SRC_DIR
 from .utilities import arepo_git_versions
 from typing import Any, Optional, Dict
 import textwrap
@@ -7,6 +6,10 @@ import pprint
 import json
 import git
 import os
+
+import pkg_resources
+DATA_DIR = pkg_resources.resource_filename('arepo_helper', 'src/data/')
+AREPO_SRC_DIR = "/home/pierre/Desktop/AREPO/source"
 
 
 class J:

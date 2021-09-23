@@ -6,11 +6,12 @@ import os
 
 
 def get_cpp_sources():
-    return [os.path.abspath(file) for file in sorted(glob.glob("./src/cpp_libs/src/*.cpp"))]
+    return [file for file in sorted(glob.glob("src/cpp_libs/src/*.cpp"))]
 
 
 def get_cpp_headers():
-    return [os.path.abspath(file) for file in sorted(glob.glob("./src/cpp_libs/src/*.h"))]
+    return [file for file in sorted(glob.glob("src/cpp_libs/src/*.h"))]
+
 
 # NCI
 # install_py_modules = True
@@ -33,7 +34,7 @@ python_lib = info["stdlib"]
 numpy_incl = os.path.join(np.get_include(), "numpy")
 
 # Source files and definitions for this thing
-include_dirs = [python_incl, numpy_incl, armadillo_incl, hdf5_incl, os.path.abspath("./src/cpp_libs/src/")]
+include_dirs = [python_incl, numpy_incl, armadillo_incl, hdf5_incl, "src/cpp_libs/src/"]
 library_dirs = [python_lib, armadillo_lib, hdf5_lib_dir]
 libraries = ["gsl", "gslcblas", "m", "armadillo", "hdf5"]
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"), ('H5_BUILT_AS_DYNAMIC_LIB', True)]
@@ -52,4 +53,6 @@ for name in ["pyhelm_eos", "ic", "create_ics", "arepo_vis", "pyeos", "pyopal_eos
                   sources=sources)
     )
 
-setup(ext_modules=ext_modules)
+setup(ext_modules=ext_modules,
+      package_data={'': ['src/data/eostable/species05.txt']},
+      include_package_data=True)
