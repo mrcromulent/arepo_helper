@@ -60,7 +60,7 @@ class PlotOptions:
     def find_inner_boxsize(self) -> float:
         """Returns the inner boxsize of the self.ar space"""
 
-        if self.aa.inner_boxsize is None:
+        if self.aa.inner_boxsize == 0.0:
             return self.ar.run_header[n.BOXSIZE]
         else:
             return self.aa.inner_boxsize
@@ -80,7 +80,7 @@ class ScatterPlotOptions(PlotOptions):
     cmap: str = None
     scmp: ScalarMappable = None
     norm: SymLogNorm = None
-    include_colorbar: bool = True
+    include_colorbar: bool = False
     cbar_lims: [float, float] = [None, None]
     zlim: [float, float] = [None, None]
     log_cmap: bool = True
@@ -210,7 +210,7 @@ class PColorPlotOptions(PlotOptions):
     plot_type: str = "PColor"
     resolution: int = 1024
     numthreads: int = 1
-    include_colorbar: bool = True
+    include_colorbar: bool = False
     cmap: str = None
     scmp: ScalarMappable = None
     norm: SymLogNorm = None
@@ -218,7 +218,7 @@ class PColorPlotOptions(PlotOptions):
     zlim: List[float] = [None, None]
     log_cmap: bool = True
     select_column: int = None
-    contours: bool = True
+    contours: bool = False
 
     def __init__(self,
                  ar: ArepoRun,

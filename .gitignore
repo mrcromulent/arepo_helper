@@ -271,6 +271,3 @@ Thumbs.db #thumbnail cache on Windows
 # User added
 pyvenv.cfg
 /.idea/
-/src/data/snapshots/*.png
-/src/data/snapshots/*.mp4
-/src/data/snapshots/areporun_cache

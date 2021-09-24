@@ -24,8 +24,7 @@ import pyeos
 import ic
 import os
 
-import pkg_resources
-DATA_DIR = pkg_resources.resource_filename('arepo_helper', 'src/data/')
+DATA_DIR = "/home/pierre/Desktop/data/"
 opal_file = os.path.join(DATA_DIR, "eostable", "EOS5_data")
 helm_file = os.path.join(DATA_DIR, "eostable", "helm_table_541_201.dat")
 species_file = os.path.join(DATA_DIR, "eostable", "species05.txt")
@@ -109,7 +108,7 @@ def test_species():
     asl.estimate_e_from_temp(1e7, xnuc)
 
 
-@pytest.mark.skip(reason="Requires generalisation")
+# @pytest.mark.skip(reason="Requires generalisation")
 def test_simulation(tmpdir):
     from arepo_helper.sim_config import J, Paths
     from arepo_helper.h5_file import ArepoICs

@@ -7,8 +7,7 @@ import json
 import git
 import os
 
-import pkg_resources
-DATA_DIR = pkg_resources.resource_filename('arepo_helper', 'src/data/')
+DATA_DIR = "/home/pierre/Desktop/data/"
 AREPO_SRC_DIR = "/home/pierre/Desktop/AREPO/source"
 
 

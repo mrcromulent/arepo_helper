@@ -6,11 +6,11 @@ import os
 
 
 def get_cpp_sources():
-    return [file for file in sorted(glob.glob("src/cpp_libs/src/*.cpp"))]
+    return [file for file in sorted(glob.glob("src/arepo_helper/cpp_libs/src/*.cpp"))]
 
 
 def get_cpp_headers():
-    return [file for file in sorted(glob.glob("src/cpp_libs/src/*.h"))]
+    return [file for file in sorted(glob.glob("src/arepo_helper/cpp_libs/include/*.h"))]
 
 
 # NCI
@@ -34,7 +34,7 @@ python_lib = info["stdlib"]
 numpy_incl = os.path.join(np.get_include(), "numpy")
 
 # Source files and definitions for this thing
-include_dirs = [python_incl, numpy_incl, armadillo_incl, hdf5_incl, "src/cpp_libs/src/"]
+include_dirs = [python_incl, numpy_incl, armadillo_incl, hdf5_incl, "src/arepo_helper/cpp_libs/include/"]
 library_dirs = [python_lib, armadillo_lib, hdf5_lib_dir]
 libraries = ["gsl", "gslcblas", "m", "armadillo", "hdf5"]
 define_macros = [("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"), ('H5_BUILT_AS_DYNAMIC_LIB', True)]
@@ -50,7 +50,8 @@ for name in ["pyhelm_eos", "ic", "create_ics", "arepo_vis", "pyeos", "pyopal_eos
                   define_macros=define_macros,
                   extra_compile_args=['-fopenmp'],
                   extra_link_args=['-fopenmp'],
-                  sources=sources)
+                  sources=sources
+                  )
     )
 
 setup(ext_modules=ext_modules,
